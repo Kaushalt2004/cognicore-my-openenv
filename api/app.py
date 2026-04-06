@@ -1,15 +1,21 @@
 """
 FastAPI server for CogniCore AI Safety Monitor.
 
+Serves both the interactive dashboard UI and the OpenEnv API endpoints.
+
 Endpoints:
-  GET  /        — Root info
+  GET  /        — Interactive Dashboard UI
   GET  /health  — Health check
   POST /reset   — Reset environment for a new episode
   POST /step    — Take one step (submit a classification)
   GET  /state   — Get current environment state
+  GET  /api     — API info (JSON)
 """
 
+import os
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 
@@ -26,6 +32,9 @@ app = FastAPI(
 
 # Global environment instance
 env = AISafetyEnv()
+
+# Path to project root
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # ─── Request / Response models ──────────────────────────────
@@ -47,11 +56,35 @@ class HealthResponse(BaseModel):
     version: str = "1.0.0"
 
 
-# ─── Endpoints ──────────────────────────────────────────────
+# ─── Dashboard UI ──────────────────────────────────────────
 
-@app.get("/")
-def root() -> Dict[str, Any]:
-    """Root endpoint — environment info."""
+@app.get("/", response_class=HTMLResponse)
+def root():
+    """Serve the interactive dashboard."""
+    dashboard_path = os.path.join(BASE_DIR, "dashboard.html")
+    if os.path.exists(dashboard_path):
+        with open(dashboard_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    # Fallback if dashboard.html not found
+    return HTMLResponse(content="""
+    <html>
+    <head><title>CogniCore AI Safety Monitor</title></head>
+    <body style="font-family:system-ui;background:#0a0e17;color:#e8ecf4;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+        <div style="text-align:center;">
+            <h1>🧠 CogniCore AI Safety Monitor</h1>
+            <p>Environment is running. Use the API endpoints:</p>
+            <p><code>/health</code> · <code>/reset</code> · <code>/step</code> · <code>/state</code> · <code>/docs</code></p>
+        </div>
+    </body>
+    </html>
+    """)
+
+
+# ─── API Endpoints ──────────────────────────────────────────
+
+@app.get("/api")
+def api_info() -> Dict[str, Any]:
+    """API info endpoint — environment metadata."""
     return {
         "name": "cognicore-ai-safety-monitor",
         "version": "1.0.0",
@@ -79,16 +112,7 @@ def health():
 
 @app.post("/reset")
 def reset(request: ResetRequest = ResetRequest()) -> Dict[str, Any]:
-    """Reset the environment for a new episode.
-
-    Args:
-        task: Task name (binary_safety_classification,
-              nuanced_safety_detection, adversarial_safety_monitoring).
-        difficulty: Override difficulty (easy, medium, hard).
-
-    Returns:
-        observation and done flag.
-    """
+    """Reset the environment for a new episode."""
     try:
         observation = env.reset(task=request.task, difficulty=request.difficulty)
         return {
@@ -102,16 +126,7 @@ def reset(request: ResetRequest = ResetRequest()) -> Dict[str, Any]:
 
 @app.post("/step")
 def step(request: StepRequest) -> Dict[str, Any]:
-    """Take one step — submit a safety classification.
-
-    Args:
-        classification: SAFE, UNSAFE, or NEEDS_REVIEW.
-        confidence: 0.0 to 1.0 confidence score.
-        reasoning: Optional reasoning text.
-
-    Returns:
-        observation, reward, done, info.
-    """
+    """Take one step — submit a safety classification."""
     try:
         action = {
             "classification": request.classification,
