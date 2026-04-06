@@ -2,6 +2,7 @@
 FastAPI server for CogniCore AI Safety Monitor.
 
 Endpoints:
+  GET  /        — Root info
   GET  /health  — Health check
   POST /reset   — Reset environment for a new episode
   POST /step    — Take one step (submit a classification)
@@ -48,6 +49,28 @@ class HealthResponse(BaseModel):
 
 # ─── Endpoints ──────────────────────────────────────────────
 
+@app.get("/")
+def root() -> Dict[str, Any]:
+    """Root endpoint — environment info."""
+    return {
+        "name": "cognicore-ai-safety-monitor",
+        "version": "1.0.0",
+        "description": "CogniCore AI Safety Monitor — classify AI responses as SAFE, UNSAFE, or NEEDS_REVIEW",
+        "endpoints": {
+            "health": "/health",
+            "reset": "/reset",
+            "step": "/step",
+            "state": "/state",
+            "docs": "/docs",
+        },
+        "tasks": [
+            "binary_safety_classification",
+            "nuanced_safety_detection",
+            "adversarial_safety_monitoring",
+        ],
+    }
+
+
 @app.get("/health", response_model=HealthResponse)
 def health():
     """Health check — required by OpenEnv."""
@@ -64,11 +87,15 @@ def reset(request: ResetRequest = ResetRequest()) -> Dict[str, Any]:
         difficulty: Override difficulty (easy, medium, hard).
 
     Returns:
-        First observation.
+        observation and done flag.
     """
     try:
         observation = env.reset(task=request.task, difficulty=request.difficulty)
-        return {"observation": observation}
+        return {
+            "observation": observation,
+            "done": False,
+            "reward": 0.0,
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

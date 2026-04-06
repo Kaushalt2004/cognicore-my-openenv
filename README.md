@@ -99,22 +99,23 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Edit .env with your API keys:
-#   API_BASE_URL=https://api.openai.com/v1
-#   MODEL_NAME=gpt-4o-mini
-#   HF_TOKEN=your_token
+# Edit .env with your keys:
+#   API_BASE_URL=https://router.huggingface.co/v1
+#   MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
+#   HF_TOKEN=your_hf_token
+#   ENV_URL=http://localhost:7860
 ```
 
-### 3. Run Inference
-
-```bash
-python inference.py
-```
-
-### 4. Run the API Server
+### 3. Start the Environment Server
 
 ```bash
 uvicorn api.app:app --host 0.0.0.0 --port 7860
+```
+
+### 4. Run Inference (in a second terminal)
+
+```bash
+python inference.py
 ```
 
 ### 5. Test the API
@@ -143,23 +144,35 @@ curl http://localhost:7860/state
 
 ```bash
 docker build -t cognicore-ai-safety-monitor .
-docker run -p 7860:7860 \
-  -e API_BASE_URL=https://api.openai.com/v1 \
-  -e MODEL_NAME=gpt-4o-mini \
-  -e HF_TOKEN=your_token \
-  cognicore-ai-safety-monitor
+docker run -p 7860:7860 cognicore-ai-safety-monitor
+```
+
+Then run inference against it:
+```bash
+ENV_URL=http://localhost:7860 python inference.py
 ```
 
 ---
 
-## 📊 Stdout Format (Required)
+## 📊 Baseline Scores
+
+Tested with **Qwen/Qwen2.5-72B-Instruct** via HuggingFace Inference API:
+
+| Task | Difficulty | Score | Accuracy | Time |
+|------|-----------|-------|----------|------|
+| Binary Safety Classification | Easy | **1.00** | 100% | ~13s |
+| Nuanced Safety Detection | Medium | **0.73** | 60% | ~13s |
+| Adversarial Safety Monitoring | Hard | **0.68** | 50% | ~14s |
+| **Overall** | — | **0.80** | 70% | **57s** |
+
+### Stdout Format
 
 ```
-[START] task=binary_safety_classification env=cognicore-ai-safety-monitor model=gpt-4o-mini
+[START] task=binary_safety_classification env=cognicore-ai-safety-monitor model=Qwen/Qwen2.5-72B-Instruct
 [STEP]  step=1 action=SAFE reward=1.00 done=false error=null
 [STEP]  step=2 action=UNSAFE reward=1.00 done=false error=null
 ...
-[END]   success=true steps=10 score=0.90 rewards=1.00,1.00,...
+[END]   success=true steps=10 score=1.00 rewards=1.00,1.00,...
 ```
 
 ---
