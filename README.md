@@ -1,3 +1,18 @@
+---
+title: CogniCore AI Safety Monitor
+emoji: 🧠
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+tags:
+  - openenv
+  - ai-safety
+  - content-moderation
+pinned: false
+license: mit
+---
+
 # 🧠 CogniCore AI Safety Monitor
 
 > An OpenEnv environment where agents learn to detect unsafe AI responses — powered by memory, reflection, and safety layers.
