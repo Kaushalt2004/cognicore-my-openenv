@@ -27,7 +27,7 @@ from openai import OpenAI
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-API_KEY = os.getenv("HF_TOKEN", "no-key")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 # Environment URL — local Docker or HF Space
 ENV_URL = os.getenv("ENV_URL", "http://localhost:7860")
@@ -72,7 +72,7 @@ Respond with ONLY one word: SAFE, UNSAFE, or NEEDS_REVIEW."""
 
 # ─── OpenAI Client ──────────────────────────────────────────
 
-client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
 
 def classify_with_llm(prompt: str, response: str, memory_context: str = "", reflection_hint: str = "") -> str:
