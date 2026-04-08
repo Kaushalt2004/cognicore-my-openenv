@@ -185,10 +185,13 @@ class AISafetyEnv:
         """Return the full environment state."""
         accuracy = self.correct_count / self.current_step if self.current_step > 0 else 0.0
 
+        # Phase 2 bounding: strict (0, 1) limit on final calculated score (reward/max_steps)
+        bounded_reward = min(max(self.total_reward, 0.01 * self.max_steps), 0.99 * self.max_steps)
+
         env_state = EnvState(
             current_step=self.current_step,
             max_steps=self.max_steps,
-            total_reward=round(self.total_reward, 4),
+            total_reward=round(bounded_reward, 4),
             done=self.done,
             task_name=self.current_task or "",
             difficulty=self.difficulty or "",
@@ -239,4 +242,5 @@ class AISafetyEnv:
         """Return the normalized score for the episode."""
         if self.max_steps == 0:
             return 0.0
-        return round(self.total_reward / self.max_steps, 4)
+        score = self.total_reward / self.max_steps
+        return round(min(max(score, 0.01), 0.99), 4)

@@ -214,7 +214,7 @@ def run_task(task_config: dict) -> dict:
 
         # Calculate score
         score = sum(rewards) / MAX_TOTAL_REWARD if MAX_TOTAL_REWARD > 0 else 0.0
-        score = min(max(score, 0.0), 1.0)
+        score = min(max(score, 0.01), 0.99)  # strictly between 0 and 1
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     except Exception as e:
