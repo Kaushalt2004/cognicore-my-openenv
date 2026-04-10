@@ -1,3 +1,13 @@
+---
+title: CogniCore AI Safety Monitor
+emoji: 🧠
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: true
+---
+
 # 🧠 CogniCore AI Safety Monitor
 
 **An OpenEnv environment for benchmarking AI safety classifiers with memory-augmented context, metacognitive reflection, and multi-dimensional grading.**
