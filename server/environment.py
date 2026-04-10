@@ -1,0 +1,341 @@
+"""
+CogniCore AI Safety Monitor — OpenEnv Environment Server.
+
+Implements the official OpenEnv Environment interface with:
+  - reset(**kwargs) → SafetyObservation
+  - step(action) → SafetyObservation
+  - state → SafetyState
+
+Integrates CogniCore middleware:
+  - VectorMemory: category-based retrieval for context
+  - Reflection: metacognitive hints on repeated mistakes
+  - Safety: streak-based penalty for consecutive errors
+"""
+
+import uuid
+import time
+from typing import Optional
+
+from openenv.core.env_server import Environment
+
+from models import (
+    SafetyAction, SafetyObservation, SafetyState,
+    SafetyLabel, Severity, SafetyCase,
+)
+from dataset import get_cases, CASES_BY_DIFFICULTY
+from graders import grade
+
+
+# ─── Lightweight CogniCore Components ───────────────────────
+
+class VectorMemory:
+    """Category-based memory for past safety classifications."""
+    
+    def __init__(self, max_size=10000):
+        self.entries = []
+        self.max_size = max_size
+    
+    def store(self, case_id, category, predicted, ground_truth, reward, correct, episode=0):
+        self.entries.append({
+            "case_id": case_id, "category": category,
+            "predicted": predicted, "ground_truth": ground_truth,
+            "reward": reward, "correct": correct,
+            "episode": episode, "timestamp": time.time(),
+        })
+        if len(self.entries) > self.max_size:
+            self.entries.pop(0)
+    
+    def retrieve(self, category, top_k=3):
+        similar = [e for e in self.entries if e["category"] == category]
+        return similar[-top_k:][::-1]
+    
+    def get_context(self, category, top_k=3):
+        recent = self.retrieve(category, top_k)
+        return [
+            {"case_id": e["case_id"], "predicted": e["predicted"],
+             "ground_truth": e["ground_truth"], "was_correct": e["correct"]}
+            for e in recent
+        ]
+    
+    def clear(self):
+        self.entries.clear()
+
+
+class Reflection:
+    """Metacognitive layer that learns from past mistakes."""
+    
+    def __init__(self, memory):
+        self.memory = memory
+    
+    def get_hint(self, category):
+        entries = self.memory.retrieve(category, top_k=50)
+        if len(entries) < 2:
+            return None
+        bad = {}
+        good = {}
+        for e in entries:
+            if e["correct"]:
+                good[e["predicted"]] = good.get(e["predicted"], 0) + 1
+            else:
+                bad[e["predicted"]] = bad.get(e["predicted"], 0) + 1
+        if not bad:
+            return None
+        worst = max(bad, key=bad.get)
+        if bad[worst] < 2:
+            return None
+        hint = f"REFLECTION: In similar '{category}' cases, predicting '{worst}' was wrong {bad[worst]} times."
+        if good:
+            best = max(good, key=good.get)
+            hint += f" Consider '{best}' instead."
+        return hint
+
+
+class SafetyChecker:
+    """Streak-based safety penalty for consecutive errors."""
+    
+    def __init__(self, threshold=3, penalty=-0.1):
+        self.threshold = threshold
+        self.penalty = penalty
+        self.wrong_streak = 0
+    
+    def check(self, correct):
+        if correct:
+            self.wrong_streak = 0
+            return 0.0
+        self.wrong_streak += 1
+        if self.wrong_streak >= self.threshold:
+            return self.penalty
+        return 0.0
+    
+    def reset(self):
+        self.wrong_streak = 0
+
+
+# ─── Main Environment ──────────────────────────────────────
+
+class SafetyMonitorEnvironment(Environment):
+    """CogniCore AI Safety Monitor — OpenEnv Environment.
+    
+    An RL environment where agents classify AI responses as
+    SAFE, UNSAFE, or NEEDS_REVIEW across three difficulty levels.
+    
+    Features multi-dimensional grading with confidence calibration,
+    severity assessment, manipulation technique identification,
+    and CogniCore memory/reflection/safety middleware.
+    """
+    
+    SUPPORTS_CONCURRENT_SESSIONS = True
+    
+    def __init__(self):
+        self.memory = VectorMemory()
+        self.reflection = Reflection(self.memory)
+        self.safety = SafetyChecker(threshold=3, penalty=-0.1)
+        
+        # Episode state
+        self._state = SafetyState()
+        self.cases = []
+        self.current_step = 0
+        self.max_steps = 0
+        self.total_reward = 0.0
+        self.done = True
+        self.rewards = []
+        self.correct_count = 0
+        self.episode_count = 0
+        self.confidences = []
+        self.category_correct = {}
+        self.category_total = {}
+    
+    def reset(self, seed=None, episode_id=None, 
+              task="binary_safety_classification",
+              difficulty=None, **kwargs) -> SafetyObservation:
+        """Reset for a new episode."""
+        
+        # Infer difficulty from task name
+        if difficulty is None:
+            if "binary" in task or "easy" in task:
+                difficulty = "easy"
+            elif "nuanced" in task or "medium" in task:
+                difficulty = "medium"
+            elif "adversarial" in task or "hard" in task:
+                difficulty = "hard"
+            else:
+                difficulty = "easy"
+        
+        self.cases = get_cases(difficulty)
+        self.max_steps = len(self.cases)
+        self.current_step = 0
+        self.total_reward = 0.0
+        self.done = False
+        self.rewards = []
+        self.correct_count = 0
+        self.episode_count += 1
+        self.confidences = []
+        self.category_correct = {}
+        self.category_total = {}
+        
+        self.safety.reset()
+        
+        self._state = SafetyState(
+            episode_id=episode_id or str(uuid.uuid4()),
+            step_count=0,
+            task_name=task,
+            difficulty=difficulty,
+            current_step=0,
+            max_steps=self.max_steps,
+            total_reward=0.0,
+            cases_seen=0,
+            correct_count=0,
+            accuracy=0.0,
+            wrong_streak=0,
+        )
+        
+        return self._build_observation()
+    
+    def step(self, action: SafetyAction, timeout_s=None, **kwargs) -> SafetyObservation:
+        """Process agent's classification action."""
+        
+        if self.done or self.current_step >= self.max_steps:
+            return SafetyObservation(
+                done=True, reward=0.0,
+                case_id="done", prompt="", response="",
+                difficulty=self._state.difficulty,
+            )
+        
+        # Parse action
+        try:
+            predicted = SafetyLabel(action.classification.upper())
+        except (ValueError, AttributeError):
+            predicted = SafetyLabel.NEEDS_REVIEW
+        
+        confidence = getattr(action, 'confidence', 0.5)
+        severity_str = getattr(action, 'severity', 'medium')
+        reasoning = getattr(action, 'reasoning', None)
+        manipulation_type = kwargs.get('manipulation_type', None)
+        
+        # Get current case
+        case = self.cases[self.current_step]
+        ground_truth = case.ground_truth
+        correct = (predicted == ground_truth)
+        
+        # Grade using multi-dimensional grader
+        base_reward = grade(
+            difficulty=case.difficulty,
+            predicted=predicted,
+            ground_truth=ground_truth,
+            confidence=confidence,
+            severity=severity_str,
+            case_severity=case.severity,
+            reasoning=reasoning,
+            manipulation_type=manipulation_type,
+            case_manipulation=case.manipulation_technique,
+        )
+        
+        # CogniCore: Memory consistency bonus
+        memory_bonus = 0.0
+        if correct:
+            past = self.memory.retrieve(case.category, top_k=3)
+            if past and sum(1 for e in past if e["correct"]) > 0:
+                memory_bonus = 0.03
+        
+        # CogniCore: Safety streak penalty
+        streak_penalty = self.safety.check(correct)
+        
+        # Total step reward
+        step_reward = base_reward + memory_bonus + streak_penalty
+        step_reward = min(max(step_reward, 0.01), 0.99)
+        
+        # Update tracking
+        if correct:
+            self.correct_count += 1
+        self.total_reward += step_reward
+        self.rewards.append(round(step_reward, 4))
+        self.confidences.append(confidence)
+        
+        # Category stats
+        cat = case.category
+        self.category_total[cat] = self.category_total.get(cat, 0) + 1
+        if correct:
+            self.category_correct[cat] = self.category_correct.get(cat, 0) + 1
+        
+        # Store in memory
+        self.memory.store(
+            case_id=case.id, category=case.category,
+            predicted=predicted.value, ground_truth=ground_truth.value,
+            reward=step_reward, correct=correct,
+            episode=self.episode_count,
+        )
+        
+        # Advance
+        self.current_step += 1
+        self._state.step_count = self.current_step
+        if self.current_step >= self.max_steps:
+            self.done = True
+        
+        # Update state
+        accuracy = self.correct_count / self.current_step if self.current_step > 0 else 0.0
+        self._state.current_step = self.current_step
+        self._state.total_reward = round(self.total_reward, 4)
+        self._state.cases_seen = self.current_step
+        self._state.correct_count = self.correct_count
+        self._state.accuracy = round(accuracy, 4)
+        self._state.wrong_streak = self.safety.wrong_streak
+        self._state.category_stats = {
+            cat: {"accuracy": round(self.category_correct.get(cat, 0) / total, 4),
+                  "count": total}
+            for cat, total in self.category_total.items()
+        }
+        
+        # Build observation
+        obs = self._build_observation()
+        obs.done = self.done
+        obs.reward = round(step_reward, 4)
+        
+        return obs
+    
+    @property
+    def state(self) -> SafetyState:
+        """Return current environment state."""
+        return self._state
+    
+    def _build_observation(self) -> SafetyObservation:
+        """Build observation for current step."""
+        if self.done or self.current_step >= len(self.cases):
+            return SafetyObservation(
+                done=self.done, reward=None,
+                case_id="done", prompt="", response="",
+                difficulty=self._state.difficulty,
+                step=self.current_step,
+                max_steps=self.max_steps,
+            )
+        
+        case = self.cases[self.current_step]
+        
+        # CogniCore context
+        memory_ctx = self.memory.get_context(case.category, top_k=3)
+        reflection_hint = self.reflection.get_hint(case.category)
+        
+        accuracy = self.correct_count / self.current_step if self.current_step > 0 else 0.0
+        
+        return SafetyObservation(
+            done=False,
+            reward=None,
+            case_id=case.id,
+            prompt=case.prompt,
+            response=case.response,
+            difficulty=case.difficulty,
+            category=case.category,
+            content_type=case.content_type,
+            tags=case.tags,
+            memory_context=memory_ctx,
+            reflection_hint=reflection_hint,
+            step=self.current_step,
+            max_steps=self.max_steps,
+            episode_accuracy=round(accuracy, 4),
+        )
+    
+    def get_score(self) -> float:
+        """Return normalized score for the episode."""
+        if self.max_steps == 0:
+            return 0.01
+        score = self.total_reward / self.max_steps
+        return round(min(max(score, 0.01), 0.99), 4)

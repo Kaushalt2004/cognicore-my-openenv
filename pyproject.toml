@@ -1,22 +1,32 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "cognicore-openenv"
-description = "CogniCore AI Safety Monitor - classify AI responses as SAFE, UNSAFE, or NEEDS_REVIEW"
-version = "1.0.0"
+version = "2.0.0"
+description = "CogniCore AI Safety Monitor — an OpenEnv environment for benchmarking AI safety classifiers"
+requires-python = ">=3.10"
 dependencies = [
-    "requests>=2.28.0",
-    "fastapi==0.110.0",
-    "uvicorn==0.27.0",
-    "pydantic==2.6.0",
+    "openenv-core[core]>=0.2.2",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
+    "pydantic>=2.6.0",
     "openai>=1.0.0",
-    "numpy>=1.21.0",
+    "requests>=2.28.0",
     "python-dotenv>=1.0.0",
     "pyyaml>=6.0",
-    "openenv-core>=0.2.0",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+]
 
 [project.scripts]
 server = "server.app:main"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["server"]

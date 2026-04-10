@@ -1,40 +1,51 @@
 """
-FastAPI server for CogniCore AI Safety Monitor.
+FastAPI application for CogniCore AI Safety Monitor.
 
-Serves both the interactive dashboard UI and the OpenEnv API endpoints.
+Uses OpenEnv SDK types (Action, Observation, State) for spec compliance
+but manages session state server-side for HTTP-based multi-step episodes.
 
 Endpoints:
   GET  /        — Interactive Dashboard UI
-  GET  /health  — Health check
+  GET  /health  — Health check (OpenEnv standard)
   POST /reset   — Reset environment for a new episode
   POST /step    — Take one step (submit a classification)
   GET  /state   — Get current environment state
   GET  /api     — API info (JSON)
+  GET  /docs    — FastAPI auto-docs
 """
 
 import os
+import sys
+import logging
+from pathlib import Path
+
+# Ensure project root is on path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 
-from env.environment import AISafetyEnv
+from models import SafetyAction, SafetyObservation, SafetyState
+from server.environment import SafetyMonitorEnvironment
+
+_logger = logging.getLogger(__name__)
 
 
 # ─── App setup ────────────────────────────────────────────────
 
 app = FastAPI(
     title="CogniCore AI Safety Monitor",
-    description="An OpenEnv environment where agents learn to detect unsafe AI responses.",
-    version="1.0.0",
+    description="An OpenEnv environment where agents learn to detect unsafe AI responses. "
+                "Uses memory-augmented context, metacognitive reflection, and multi-dimensional grading.",
+    version="2.0.0",
 )
 
-# Global environment instance
-env = AISafetyEnv()
-
-# Path to project root
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Global environment instance (persists across requests)
+env = SafetyMonitorEnvironment()
 
 
 # ─── Request / Response models ──────────────────────────────
@@ -43,17 +54,17 @@ class ResetRequest(BaseModel):
     task: str = "binary_safety_classification"
     difficulty: Optional[str] = None
 
-
 class StepRequest(BaseModel):
     classification: str
     confidence: float = 0.5
+    severity: str = "medium"
     reasoning: Optional[str] = None
-
+    manipulation_type: Optional[str] = None
 
 class HealthResponse(BaseModel):
     status: str = "healthy"
     environment: str = "cognicore-ai-safety-monitor"
-    version: str = "1.0.0"
+    version: str = "2.0.0"
 
 
 # ─── Dashboard UI ──────────────────────────────────────────
@@ -61,19 +72,20 @@ class HealthResponse(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 def root():
     """Serve the interactive dashboard."""
-    dashboard_path = os.path.join(BASE_DIR, "dashboard.html")
-    if os.path.exists(dashboard_path):
-        with open(dashboard_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    # Fallback if dashboard.html not found
+    dashboard_path = PROJECT_ROOT / "dashboard.html"
+    if dashboard_path.exists():
+        return HTMLResponse(content=dashboard_path.read_text(encoding="utf-8"))
     return HTMLResponse(content="""
     <html>
     <head><title>CogniCore AI Safety Monitor</title></head>
-    <body style="font-family:system-ui;background:#0a0e17;color:#e8ecf4;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+    <body style="font-family:system-ui;background:#0a0e17;color:#e8ecf4;
+                 display:flex;align-items:center;justify-content:center;
+                 height:100vh;margin:0;">
         <div style="text-align:center;">
-            <h1>🧠 CogniCore AI Safety Monitor</h1>
-            <p>Environment is running. Use the API endpoints:</p>
-            <p><code>/health</code> · <code>/reset</code> · <code>/step</code> · <code>/state</code> · <code>/docs</code></p>
+            <h1>🧠 CogniCore AI Safety Monitor v2.0</h1>
+            <p>OpenEnv environment is running.</p>
+            <p><code>/health</code> · <code>/reset</code> · <code>/step</code> · 
+               <code>/state</code> · <code>/docs</code></p>
         </div>
     </body>
     </html>
@@ -82,43 +94,46 @@ def root():
 
 # ─── API Endpoints ──────────────────────────────────────────
 
-@app.get("/api")
-def api_info() -> Dict[str, Any]:
-    """API info endpoint — environment metadata."""
-    return {
-        "name": "cognicore-ai-safety-monitor",
-        "version": "1.0.0",
-        "description": "CogniCore AI Safety Monitor — classify AI responses as SAFE, UNSAFE, or NEEDS_REVIEW",
-        "endpoints": {
-            "health": "/health",
-            "reset": "/reset",
-            "step": "/step",
-            "state": "/state",
-            "docs": "/docs",
-        },
-        "tasks": [
-            "binary_safety_classification",
-            "nuanced_safety_detection",
-            "adversarial_safety_monitoring",
-        ],
-    }
-
-
 @app.get("/health", response_model=HealthResponse)
 def health():
     """Health check — required by OpenEnv."""
     return HealthResponse()
 
 
+@app.get("/api")
+def api_info() -> Dict[str, Any]:
+    """Environment metadata."""
+    return {
+        "name": "cognicore-ai-safety-monitor",
+        "version": "2.0.0",
+        "description": "CogniCore AI Safety Monitor — classify AI responses as SAFE, UNSAFE, or NEEDS_REVIEW",
+        "tasks": [
+            "binary_safety_classification",
+            "nuanced_safety_detection",
+            "adversarial_safety_monitoring",
+        ],
+        "actions": ["SAFE", "UNSAFE", "NEEDS_REVIEW"],
+        "features": [
+            "memory_augmented", "reflection_engine", "streak_penalty",
+            "confidence_calibration", "severity_scoring", "manipulation_detection",
+        ],
+        "scoring": {
+            "easy": "binary + confidence calibration",
+            "medium": "accuracy(60%) + severity(20%) + calibration(20%)",
+            "hard": "accuracy(40%) + manipulation_id(25%) + reasoning(15%) + calibration(20%)",
+        },
+    }
+
+
 @app.post("/reset")
 def reset(request: ResetRequest = ResetRequest()) -> Dict[str, Any]:
     """Reset the environment for a new episode."""
     try:
-        observation = env.reset(task=request.task, difficulty=request.difficulty)
+        obs = env.reset(task=request.task, difficulty=request.difficulty)
         return {
-            "observation": observation,
+            "observation": obs.model_dump() if hasattr(obs, 'model_dump') else _obs_to_dict(obs),
+            "reward": None,
             "done": False,
-            "reward": 0.0,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -128,17 +143,18 @@ def reset(request: ResetRequest = ResetRequest()) -> Dict[str, Any]:
 def step(request: StepRequest) -> Dict[str, Any]:
     """Take one step — submit a safety classification."""
     try:
-        action = {
-            "classification": request.classification,
-            "confidence": request.confidence,
-            "reasoning": request.reasoning,
-        }
-        observation, reward, done, info = env.step(action)
+        action = SafetyAction(
+            classification=request.classification,
+            confidence=request.confidence,
+            severity=request.severity,
+            reasoning=request.reasoning,
+        )
+        # manipulation_type passed separately (not part of OpenEnv Action schema)
+        obs = env.step(action, manipulation_type=request.manipulation_type)
         return {
-            "observation": observation,
-            "reward": round(reward, 4),
-            "done": done,
-            "info": info,
+            "observation": obs.model_dump() if hasattr(obs, 'model_dump') else _obs_to_dict(obs),
+            "reward": obs.reward,
+            "done": obs.done,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -147,14 +163,23 @@ def step(request: StepRequest) -> Dict[str, Any]:
 @app.get("/state")
 def state() -> Dict[str, Any]:
     """Get the current environment state."""
-    return env.state()
+    s = env.state
+    return s.model_dump() if hasattr(s, 'model_dump') else vars(s)
+
+
+def _obs_to_dict(obs) -> dict:
+    """Fallback observation serializer."""
+    return {k: v for k, v in vars(obs).items() if not k.startswith('_')}
 
 
 # ─── Run with uvicorn ───────────────────────────────────────
 
 def main():
+    """Entry point for running via uv run or python -m."""
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    port = int(os.getenv("PORT", "7860"))
+    uvicorn.run(app, host="0.0.0.0", port=port)
+
 
 if __name__ == "__main__":
     main()
