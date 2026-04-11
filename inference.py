@@ -278,9 +278,16 @@ def run_task(task_config: dict) -> dict:
             # Step
             step_result = env_step(action)
             
-            reward = step_result.get("reward", 0.0)
+            # Parse structured reward (dict with value) or plain float
+            raw_reward = step_result.get("reward", 0.0)
+            if isinstance(raw_reward, dict):
+                reward = raw_reward.get("value", 0.0)
+            else:
+                reward = float(raw_reward) if raw_reward is not None else 0.0
+            
             done = step_result.get("done", False)
-            error = step_result.get("info", {}).get("error") if isinstance(step_result.get("info"), dict) else None
+            info = step_result.get("info", {})
+            error = info.get("error") if isinstance(info, dict) else None
             obs = step_result.get("observation", {})
             
             rewards.append(reward)

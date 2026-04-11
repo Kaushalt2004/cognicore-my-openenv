@@ -8,7 +8,7 @@ to ensure full spec compliance with the OpenEnv framework.
 from typing import Any, Dict, List, Optional
 from enum import Enum
 
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
 
 try:
     from openenv.core.env_server.types import Action, Observation, State
@@ -87,6 +87,48 @@ class SafetyObservation(Observation):
     )
 
 
+class SafetyReward(BaseModel):
+    """Structured reward with full penalty breakdown.
+    
+    Provides transparent scoring so agents can learn from each component.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    value: float = Field(..., ge=-1.0, le=1.0,
+        description="Net reward after all bonuses and penalties")
+    base_score: float = Field(..., ge=0.0, le=1.0,
+        description="Raw grader score before bonuses/penalties")
+    delta: float = Field(default=0.0, ge=-1.0, le=1.0,
+        description="Improvement over previous best score")
+    memory_bonus: float = Field(default=0.0, ge=0.0, le=0.1,
+        description="Bonus for consistency with past correct answers")
+    streak_penalty: float = Field(default=0.0, ge=-1.0, le=0.0,
+        description="Penalty for consecutive wrong answers")
+    confidence_penalty: float = Field(default=0.0, ge=-1.0, le=0.0,
+        description="Penalty for miscalibrated confidence")
+    step_penalty: float = Field(default=-0.01,
+        description="Small fixed cost per step to encourage efficiency")
+    explanation: str = Field(default="",
+        description="Human-readable explanation of the score")
+
+
+class StepInfo(BaseModel):
+    """Detailed info returned with each step for agent debugging."""
+    model_config = ConfigDict(extra="forbid")
+
+    case_id: str = Field(default="", description="Case that was evaluated")
+    ground_truth: Optional[str] = Field(default=None, description="Correct label")
+    predicted: Optional[str] = Field(default=None, description="Agent's prediction")
+    correct: bool = Field(default=False, description="Whether prediction was correct")
+    current_score: float = Field(default=0.0, ge=0.0, le=1.0,
+        description="Score for this step")
+    best_score: float = Field(default=0.0, ge=0.0, le=1.0,
+        description="Best score achieved so far in episode")
+    terminated_by: Optional[str] = Field(default=None,
+        description="What ended the episode: max_steps, perfect_score, or None")
+    error: Optional[str] = Field(default=None, description="Error message if any")
+
+
 class SafetyState(State):
     """Extended state for the safety monitor environment."""
     task_name: str = Field(default="", description="Name of current task")
@@ -94,6 +136,7 @@ class SafetyState(State):
     current_step: int = Field(default=0, description="Current step")
     max_steps: int = Field(default=10, description="Max steps in task")
     total_reward: float = Field(default=0.0, description="Accumulated reward")
+    best_score: float = Field(default=0.0, description="Best score in episode")
     cases_seen: int = Field(default=0, description="Cases processed")
     correct_count: int = Field(default=0, description="Correct classifications")
     accuracy: float = Field(default=0.0, description="Running accuracy")
@@ -140,6 +183,8 @@ __all__ = [
     "Severity",
     "SafetyAction",
     "SafetyObservation",
+    "SafetyReward",
+    "StepInfo",
     "SafetyState",
     "SafetyCase",
 ]

@@ -134,6 +134,7 @@ def reset(request: ResetRequest = ResetRequest()) -> Dict[str, Any]:
             "observation": obs.model_dump() if hasattr(obs, 'model_dump') else _obs_to_dict(obs),
             "reward": None,
             "done": False,
+            "info": {},
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -141,7 +142,10 @@ def reset(request: ResetRequest = ResetRequest()) -> Dict[str, Any]:
 
 @app.post("/step")
 def step(request: StepRequest) -> Dict[str, Any]:
-    """Take one step — submit a safety classification."""
+    """Take one step — submit a safety classification.
+    
+    Returns structured reward with full penalty breakdown and step info.
+    """
     try:
         action = SafetyAction(
             classification=request.classification,
@@ -151,10 +155,16 @@ def step(request: StepRequest) -> Dict[str, Any]:
         )
         # manipulation_type passed separately (not part of OpenEnv Action schema)
         obs = env.step(action, manipulation_type=request.manipulation_type)
+        
+        # Get structured reward and step info
+        reward_data = env.last_reward
+        step_info = env.last_step_info
+        
         return {
             "observation": obs.model_dump() if hasattr(obs, 'model_dump') else _obs_to_dict(obs),
-            "reward": obs.reward,
+            "reward": reward_data.model_dump() if reward_data else {"value": obs.reward},
             "done": obs.done,
+            "info": step_info.model_dump() if step_info else {},
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
