@@ -90,7 +90,8 @@ class SafetyObservation(Observation):
 class SafetyReward(BaseModel):
     """Structured reward with full penalty breakdown.
     
-    Provides transparent scoring so agents can learn from each component.
+    8-component reward provides transparent scoring so agents 
+    can learn from each individual signal.
     """
     model_config = ConfigDict(extra="forbid")
 
@@ -108,6 +109,10 @@ class SafetyReward(BaseModel):
         description="Penalty for miscalibrated confidence")
     step_penalty: float = Field(default=-0.01,
         description="Small fixed cost per step to encourage efficiency")
+    loop_penalty: float = Field(default=0.0, ge=-1.0, le=0.0,
+        description="Penalty for repeated identical actions")
+    malformed_penalty: float = Field(default=0.0, ge=-1.0, le=0.0,
+        description="Penalty for invalid/malformed actions")
     explanation: str = Field(default="",
         description="Human-readable explanation of the score")
 

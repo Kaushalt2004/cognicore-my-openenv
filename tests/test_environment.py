@@ -260,5 +260,178 @@ class TestMemoryBonus(unittest.TestCase):
         # Memory bonus may or may not apply depending on category matching
 
 
+class TestInspectAction(unittest.TestCase):
+    """Test the INSPECT action for multi-step RL (Gap 1)."""
+
+    def setUp(self):
+        from server.environment import SafetyMonitorEnvironment
+        self.env = SafetyMonitorEnvironment()
+
+    def test_inspect_does_not_advance_case(self):
+        self.env.reset(difficulty="easy")
+        obs1 = self.env._build_observation()
+        self.env.step(SafetyAction(classification="INSPECT", confidence=0.5))
+        obs2 = self.env._build_observation()
+        # Case should not advance — same case_id
+        self.assertEqual(obs1.case_id, obs2.case_id)
+
+    def test_inspect_returns_small_reward(self):
+        self.env.reset(difficulty="easy")
+        self.env.step(SafetyAction(classification="INSPECT", confidence=0.5))
+        reward = self.env.last_reward
+        self.assertIsNotNone(reward)
+        self.assertGreaterEqual(reward.value, 0.01)
+        self.assertLessEqual(reward.value, 0.99)
+        # Base score should be 0 for inspect
+        self.assertEqual(reward.base_score, 0.0)
+
+    def test_inspect_then_classify(self):
+        self.env.reset(difficulty="easy")
+        # Inspect first
+        self.env.step(SafetyAction(classification="INSPECT", confidence=0.5))
+        # Then classify
+        self.env.step(SafetyAction(classification="SAFE", confidence=0.9))
+        reward = self.env.last_reward
+        self.assertGreater(reward.base_score, 0.0)
+
+    def test_repeated_inspect_gets_loop_penalty(self):
+        self.env.reset(difficulty="easy")
+        self.env.step(SafetyAction(classification="INSPECT", confidence=0.5))
+        self.env.step(SafetyAction(classification="INSPECT", confidence=0.5))
+        reward = self.env.last_reward
+        self.assertLess(reward.loop_penalty, 0.0,
+                       "Repeated INSPECT should trigger loop penalty")
+
+
+class TestMalformedAction(unittest.TestCase):
+    """Test malformed action rejection and penalty (Gap 2)."""
+
+    def setUp(self):
+        from server.environment import SafetyMonitorEnvironment
+        self.env = SafetyMonitorEnvironment()
+
+    def test_invalid_classification_rejected(self):
+        self.env.reset(difficulty="easy")
+        self.env.step(SafetyAction(classification="INVALID_LABEL", confidence=0.5))
+        reward = self.env.last_reward
+        self.assertLess(reward.malformed_penalty, 0.0,
+                       "Invalid classification should get malformed penalty")
+
+    def test_malformed_does_not_advance_case(self):
+        self.env.reset(difficulty="easy")
+        obs1 = self.env._build_observation()
+        self.env.step(SafetyAction(classification="GARBAGE", confidence=0.5))
+        obs2 = self.env._build_observation()
+        self.assertEqual(obs1.case_id, obs2.case_id,
+                        "Malformed action should not advance the case")
+
+    def test_random_string_malformed(self):
+        self.env.reset(difficulty="easy")
+        self.env.step(SafetyAction(classification="banana", confidence=0.5))
+        info = self.env.last_step_info
+        self.assertIsNotNone(info.error)
+        self.assertIn("invalid_classification", info.error)
+
+    def test_empty_string_malformed(self):
+        self.env.reset(difficulty="easy")
+        self.env.step(SafetyAction(classification="", confidence=0.5))
+        reward = self.env.last_reward
+        self.assertLess(reward.malformed_penalty, 0.0)
+
+
+class TestAntiLoopPenalty(unittest.TestCase):
+    """Test anti-loop penalty for repeated identical actions (Gap 4)."""
+
+    def setUp(self):
+        from server.environment import SafetyMonitorEnvironment
+        self.env = SafetyMonitorEnvironment()
+
+    def test_repeated_same_action_penalized(self):
+        self.env.reset(difficulty="easy")
+        # Submit same classification twice
+        self.env.step(SafetyAction(classification="SAFE", confidence=0.50))
+        self.env.step(SafetyAction(classification="SAFE", confidence=0.50))
+        reward = self.env.last_reward
+        self.assertLess(reward.loop_penalty, 0.0,
+                       "Exact same action submitted twice should get loop penalty")
+
+    def test_different_actions_no_penalty(self):
+        self.env.reset(difficulty="easy")
+        self.env.step(SafetyAction(classification="SAFE", confidence=0.9))
+        self.env.step(SafetyAction(classification="UNSAFE", confidence=0.8))
+        reward = self.env.last_reward
+        self.assertEqual(reward.loop_penalty, 0.0,
+                        "Different actions should not get loop penalty")
+
+    def test_same_label_different_confidence_no_penalty(self):
+        self.env.reset(difficulty="easy")
+        self.env.step(SafetyAction(classification="SAFE", confidence=0.9))
+        self.env.step(SafetyAction(classification="SAFE", confidence=0.5))
+        reward = self.env.last_reward
+        self.assertEqual(reward.loop_penalty, 0.0,
+                        "Same label but different confidence should not trigger loop penalty")
+
+
+class TestDeterminism(unittest.TestCase):
+    """Test that grading is 100% deterministic and reproducible (Gap 3)."""
+
+    def setUp(self):
+        from server.environment import SafetyMonitorEnvironment
+        self.env1 = SafetyMonitorEnvironment()
+        self.env2 = SafetyMonitorEnvironment()
+
+    def test_same_episode_same_rewards(self):
+        """Two identical episodes must produce identical rewards."""
+        rewards1 = []
+        rewards2 = []
+        
+        self.env1.reset(difficulty="easy")
+        self.env2.reset(difficulty="easy")
+        
+        for case in EASY_CASES:
+            action = SafetyAction(
+                classification=case.ground_truth.value,
+                confidence=0.85,
+                severity="medium",
+            )
+            self.env1.step(action)
+            self.env2.step(action)
+            rewards1.append(self.env1.last_reward.value)
+            rewards2.append(self.env2.last_reward.value)
+
+        self.assertEqual(rewards1, rewards2,
+                        "Identical episodes must produce identical rewards")
+
+    def test_deterministic_across_all_difficulties(self):
+        """All 3 difficulty levels produce deterministic results."""
+        for diff in ["easy", "medium", "hard"]:
+            cases = get_cases(diff)
+            
+            self.env1.reset(difficulty=diff)
+            self.env2.reset(difficulty=diff)
+            
+            for case in cases:
+                action = SafetyAction(
+                    classification=case.ground_truth.value,
+                    confidence=0.80,
+                )
+                self.env1.step(action)
+                self.env2.step(action)
+                
+                self.assertEqual(
+                    self.env1.last_reward.value,
+                    self.env2.last_reward.value,
+                    f"Non-deterministic reward for {case.id}",
+                )
+
+    def test_grader_pure_function(self):
+        """Grade function has no side effects — identical calls, identical results."""
+        for _ in range(10):
+            r1 = grade("easy", predicted=SafetyLabel.SAFE, ground_truth=SafetyLabel.SAFE, confidence=0.85)
+            r2 = grade("easy", predicted=SafetyLabel.SAFE, ground_truth=SafetyLabel.SAFE, confidence=0.85)
+            self.assertEqual(r1, r2)
+
+
 if __name__ == "__main__":
     unittest.main()
+

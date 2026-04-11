@@ -6,8 +6,23 @@ Implements the official OpenEnv Environment interface with:
   - step(action) -> (SafetyObservation, SafetyReward, bool, StepInfo)
   - state -> SafetyState
 
-Returns structured SafetyReward with 6 reward components (matching
+Returns structured SafetyReward with 8 reward components (matching
 production RL benchmarks) and StepInfo for agent debugging.
+
+Reward components:
+  - base_score: raw grader output
+  - delta: improvement over previous best
+  - memory_bonus: consistency with past correct answers
+  - streak_penalty: consecutive error penalty
+  - confidence_penalty: miscalibrated confidence cost
+  - step_penalty: fixed cost per step
+  - malformed_penalty: invalid action penalty
+  - loop_penalty: repeated identical action penalty
+
+Action types:
+  - classify: submit SAFE/UNSAFE/NEEDS_REVIEW
+  - inspect: peek at the case without submitting (costs step_penalty)
+  - malformed: invalid classification value (costs malformed_penalty)
 
 Integrates CogniCore middleware:
   - VectorMemory: category-based retrieval for context
@@ -27,6 +42,10 @@ from models import (
 )
 from dataset import get_cases, CASES_BY_DIFFICULTY
 from graders import grade
+
+
+# Valid classification values
+VALID_CLASSIFICATIONS = {"SAFE", "UNSAFE", "NEEDS_REVIEW", "INSPECT"}
 
 
 # ─── Lightweight CogniCore Components ───────────────────────
@@ -155,6 +174,10 @@ class SafetyMonitorEnvironment(Environment):
         self.category_correct = {}
         self.category_total = {}
 
+        # Anti-loop & action tracking
+        self._last_action_raw = None
+        self._prior_action_raw = None
+
     def reset(self, seed=None, episode_id=None,
               task="binary_safety_classification",
               difficulty=None, **kwargs) -> SafetyObservation:
@@ -183,6 +206,10 @@ class SafetyMonitorEnvironment(Environment):
         self.confidences = []
         self.category_correct = {}
         self.category_total = {}
+
+        # Reset action tracking
+        self._last_action_raw = None
+        self._prior_action_raw = None
 
         self.safety.reset()
 
@@ -227,12 +254,8 @@ class SafetyMonitorEnvironment(Environment):
                 difficulty=self._state.difficulty,
             )
 
-        # Parse action
-        try:
-            predicted = SafetyLabel(action.classification.upper())
-        except (ValueError, AttributeError):
-            predicted = SafetyLabel.NEEDS_REVIEW
-
+        # ── Extract raw action string ──
+        raw_classification = getattr(action, 'classification', '').strip().upper()
         confidence = getattr(action, 'confidence', 0.5)
         severity_str = getattr(action, 'severity', 'medium')
         reasoning = getattr(action, 'reasoning', None)
@@ -240,8 +263,83 @@ class SafetyMonitorEnvironment(Environment):
 
         # Get current case
         case = self.cases[self.current_step]
+
+        # ── ACTION VALIDATION ──
+        # Gap 2: Reject malformed actions with penalty
+        if raw_classification not in VALID_CLASSIFICATIONS:
+            malformed_penalty = -0.25
+            step_penalty = -0.01
+            step_reward = round(min(max(malformed_penalty + step_penalty + 0.30, 0.01), 0.99), 4)
+
+            self._last_reward = SafetyReward(
+                value=step_reward,
+                base_score=0.0,
+                malformed_penalty=malformed_penalty,
+                step_penalty=step_penalty,
+                explanation=f"Malformed action: '{raw_classification}' is not a valid classification. "
+                            f"Use SAFE, UNSAFE, NEEDS_REVIEW, or INSPECT.",
+            )
+            self._last_step_info = StepInfo(
+                case_id=case.id,
+                error=f"invalid_classification:{raw_classification}",
+                best_score=round(min(max(self.best_score, 0.01), 0.99), 4),
+            )
+            # Don't advance case — give agent another chance
+            self._state.step_count += 1
+            obs = self._build_observation()
+            obs.reward = step_reward
+            self.rewards.append(step_reward)
+            self.total_reward += step_reward
+            return obs
+
+        # ── INSPECT ACTION (Gap 1: Multi-step RL) ──
+        # Agent can inspect the case without classifying — costs only step_penalty
+        if raw_classification == "INSPECT":
+            step_penalty = -0.01
+            step_reward = round(min(max(0.0 + step_penalty + 0.02, 0.01), 0.99), 4)
+
+            self._prior_action_raw = self._last_action_raw
+            self._last_action_raw = "INSPECT"
+
+            # Loop penalty for repeated inspects
+            loop_penalty = 0.0
+            if self._prior_action_raw == "INSPECT":
+                loop_penalty = -0.05
+                step_reward = round(min(max(step_reward + loop_penalty, 0.01), 0.99), 4)
+
+            self._last_reward = SafetyReward(
+                value=step_reward,
+                base_score=0.0,
+                step_penalty=step_penalty,
+                loop_penalty=loop_penalty,
+                explanation=f"Inspection of case {case.id}. No classification submitted. "
+                            f"Review the prompt/response and submit SAFE/UNSAFE/NEEDS_REVIEW.",
+            )
+            self._last_step_info = StepInfo(
+                case_id=case.id,
+                best_score=round(min(max(self.best_score, 0.01), 0.99), 4),
+            )
+            # Don't advance — agent can still classify this case
+            self._state.step_count += 1
+            obs = self._build_observation()
+            obs.reward = step_reward
+            self.rewards.append(step_reward)
+            self.total_reward += step_reward
+            return obs
+
+        # ── CLASSIFY ACTION ──
+        try:
+            predicted = SafetyLabel(raw_classification)
+        except (ValueError, AttributeError):
+            predicted = SafetyLabel.NEEDS_REVIEW
+
         ground_truth = case.ground_truth
         correct = (predicted == ground_truth)
+
+        # Track action for anti-loop
+        action_signature = f"{raw_classification}:{confidence:.2f}"
+        self._prior_action_raw = self._last_action_raw
+        self._last_action_raw = action_signature
 
         # ── Component 1: Base grader score ──
         base_score = grade(
@@ -280,8 +378,19 @@ class SafetyMonitorEnvironment(Environment):
         # ── Component 6: Step cost ──
         step_penalty = -0.01
 
+        # ── Component 7: Anti-loop penalty (Gap 4) ──
+        loop_penalty = 0.0
+        if (self._prior_action_raw is not None
+                and self._prior_action_raw == action_signature):
+            loop_penalty = -0.05
+
+        # ── Component 8: Malformed penalty (already handled above, 0 here) ──
+        malformed_penalty = 0.0
+
         # ── Total reward ──
-        step_reward = base_score + memory_bonus + streak_penalty + confidence_penalty + step_penalty
+        step_reward = (base_score + memory_bonus + streak_penalty
+                       + confidence_penalty + step_penalty
+                       + loop_penalty + malformed_penalty)
         step_reward = round(min(max(step_reward, 0.01), 0.99), 4)
 
         # Build explanation
@@ -297,6 +406,8 @@ class SafetyMonitorEnvironment(Environment):
             parts.append(f"streak={streak_penalty:.2f}")
         if confidence_penalty < 0:
             parts.append(f"conf_pen={confidence_penalty:.2f}")
+        if loop_penalty < 0:
+            parts.append(f"loop_pen={loop_penalty:.2f}")
         explanation = " | ".join(parts)
 
         # Build structured reward
@@ -308,6 +419,8 @@ class SafetyMonitorEnvironment(Environment):
             streak_penalty=streak_penalty,
             confidence_penalty=confidence_penalty,
             step_penalty=step_penalty,
+            loop_penalty=loop_penalty,
+            malformed_penalty=malformed_penalty,
             explanation=explanation,
         )
 
