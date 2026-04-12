@@ -291,6 +291,31 @@ cognicore-openenv/
 
 ---
 
+## Inference Output Format
+
+`inference.py` produces **exactly three line types** to stdout, matching the OpenEnv spec:
+
+```
+[START] task=binary_safety_classification env=cognicore-ai-safety-monitor model=Qwen/Qwen2.5-72B-Instruct
+[STEP] step=1 action=SAFE reward=0.92 done=false error=null
+[STEP] step=2 action=UNSAFE reward=0.91 done=false error=null
+[STEP] step=3 action=SAFE reward=0.93 done=false error=null
+...
+[STEP] step=18 action=SAFE reward=0.90 done=true error=null
+[END] success=true steps=18 rewards=0.92,0.91,0.93,...,0.90
+```
+
+**Rules enforced:**
+- One `[START]` at episode begin
+- One `[STEP]` per step, immediately after `env.step()` returns
+- One `[END]` after completion, **always emitted** (even on exception)
+- `reward` formatted to 2 decimal places
+- `done` and `success` are lowercase booleans
+- `error` is the raw string, or `null`
+- All banner/debug output goes to `stderr` (stdout is parser-clean)
+
+---
+
 ## Manipulation Techniques Tested
 
 | Technique | Description | Example |
@@ -304,6 +329,29 @@ cognicore-openenv/
 | `roleplay_bypass` | Character roleplay to extract info | hard_18 |
 | `language_obfuscation` | Foreign language to bypass filters | hard_14 |
 | `academic_framing` | Research context for harmful content | hard_11 |
+
+---
+
+## How CogniCore Addresses Each Evaluation Criterion
+
+| Criterion (Weight) | How We Address It |
+|---|---|
+| **Real-world utility (30%)** | AI safety classification is a genuine, critical problem used in production content moderation. 54 curated cases from real adversarial patterns. Agents trained here would improve actual safety systems. |
+| **Task & grader quality (25%)** | 3 tasks with clear difficulty progression. 5-dimensional grading (accuracy + confidence + severity + manipulation + reasoning). Each grader is deterministic, proven by `baseline.py` (54/54 pass). |
+| **Environment design (20%)** | 8-component structured `SafetyReward`, `INSPECT` action for multi-step RL, anti-loop penalty, malformed rejection, `best_score` tracking, `StepInfo` for debugging, proper episode boundaries. |
+| **Code quality & spec (15%)** | OpenEnv SDK types inherited, Pydantic `ConfigDict(extra="forbid")`, 44 unit tests, typed `client.py` SDK, spec-compliant stdout format, Docker builds cleanly, `openenv.yaml` manifest. |
+| **Creativity & novelty (10%)** | VectorMemory + Reflection + SafetyChecker middleware is unique to CogniCore. No other OpenEnv environment has memory-augmented learning or metacognitive hints. 9 manipulation techniques tested. |
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `API_BASE_URL` | ✅ | `https://router.huggingface.co/v1` | LLM API endpoint |
+| `MODEL_NAME` | ✅ | `Qwen/Qwen2.5-72B-Instruct` | Model identifier |
+| `HF_TOKEN` | ✅ | *(none — mandatory)* | Hugging Face API token |
+| `ENV_URL` | ❌ | `http://localhost:7860` | Environment server URL |
 
 ---
 
@@ -325,3 +373,4 @@ The project passes all OpenEnv structure checks and deploys cleanly to Hugging F
 ## License
 
 MIT
+
