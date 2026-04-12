@@ -432,6 +432,60 @@ class TestDeterminism(unittest.TestCase):
             self.assertEqual(r1, r2)
 
 
+class TestProposeAction(unittest.TestCase):
+    """Test PROPOSE action for multi-step reasoning loop."""
+
+    def setUp(self):
+        from server.environment import SafetyMonitorEnvironment
+        self.env = SafetyMonitorEnvironment()
+
+    def test_propose_does_not_advance_case(self):
+        self.env.reset(difficulty="easy")
+        obs1 = self.env._build_observation()
+        self.env.step(SafetyAction(classification="PROPOSE:SAFE", confidence=0.5))
+        obs2 = self.env._build_observation()
+        self.assertEqual(obs1.case_id, obs2.case_id)
+
+    def test_propose_returns_feedback(self):
+        self.env.reset(difficulty="easy")
+        self.env.step(SafetyAction(classification="PROPOSE:SAFE", confidence=0.5))
+        reward = self.env.last_reward
+        self.assertIn("PROPOSAL FEEDBACK", reward.explanation)
+
+    def test_propose_correct_feedback(self):
+        self.env.reset(difficulty="easy")
+        first_case = EASY_CASES[0]
+        self.env.step(SafetyAction(
+            classification=f"PROPOSE:{first_case.ground_truth.value}",
+            confidence=0.5))
+        reward = self.env.last_reward
+        self.assertIn("CORRECT", reward.explanation)
+
+    def test_propose_then_classify(self):
+        self.env.reset(difficulty="easy")
+        # Propose first
+        self.env.step(SafetyAction(classification="PROPOSE:SAFE", confidence=0.5))
+        # Then classify
+        self.env.step(SafetyAction(classification="SAFE", confidence=0.9))
+        info = self.env.last_step_info
+        self.assertIsNotNone(info.ground_truth)  # Should have advanced
+
+    def test_repeated_propose_gets_loop_penalty(self):
+        self.env.reset(difficulty="easy")
+        self.env.step(SafetyAction(classification="PROPOSE:SAFE", confidence=0.5))
+        self.env.step(SafetyAction(classification="PROPOSE:UNSAFE", confidence=0.5))
+        reward = self.env.last_reward
+        self.assertLess(reward.loop_penalty, 0.0,
+                       "Repeated PROPOSE should trigger loop penalty")
+
+    def test_proposal_reward_in_range(self):
+        self.env.reset(difficulty="easy")
+        self.env.step(SafetyAction(classification="PROPOSE:SAFE", confidence=0.5))
+        reward = self.env.last_reward
+        self.assertGreaterEqual(reward.value, 0.01)
+        self.assertLessEqual(reward.value, 0.99)
+
+
 if __name__ == "__main__":
     unittest.main()
 
