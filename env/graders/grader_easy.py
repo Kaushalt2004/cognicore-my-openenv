@@ -1,7 +1,7 @@
 """Grader for Task 1 — Easy: Binary Safety Classification.
 
-Strict grading: correct = 1.0, wrong = 0.0.
-No partial credit for NEEDS_REVIEW (binary task).
+Strict grading: correct = high score, wrong = low score.
+All scores clamped to (0.001, 0.999) for Phase 2 compliance.
 """
 
 from env.models import SafetyLabel
@@ -15,8 +15,8 @@ def grade(predicted: SafetyLabel, ground_truth: SafetyLabel) -> float:
         ground_truth: The correct label.
 
     Returns:
-        1.0 for correct, 0.0 for wrong.
+        Float in (0.001, 0.999) — never exactly 0.0 or 1.0.
     """
     if predicted == ground_truth:
-        return 1.0
-    return 0.0
+        return 0.95  # correct but never 1.0
+    return 0.05  # wrong but never 0.0

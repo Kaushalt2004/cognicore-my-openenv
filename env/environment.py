@@ -135,14 +135,15 @@ class AISafetyEnv:
         # CogniCore: Safety streak penalty
         streak_penalty = self.safety.check(correct)
 
-        # Total reward
+        # Total reward — CLAMPED to strict (0, 1) for Phase 2
         total_reward = base_reward + memory_bonus + streak_penalty
+        total_reward = min(max(total_reward, 0.001), 0.999)
 
         # Update tracking
         if correct:
             self.correct_count += 1
         self.total_reward += total_reward
-        self.rewards.append(round(total_reward, 2))
+        self.rewards.append(round(total_reward, 4))
 
         # CogniCore: Store in memory
         self.memory.store(
@@ -241,6 +242,6 @@ class AISafetyEnv:
     def get_score(self) -> float:
         """Return the normalized score for the episode."""
         if self.max_steps == 0:
-            return 0.0
+            return 0.001
         score = self.total_reward / self.max_steps
-        return round(min(max(score, 0.01), 0.99), 4)
+        return round(min(max(score, 0.001), 0.999), 4)

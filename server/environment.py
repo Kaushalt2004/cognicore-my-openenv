@@ -85,32 +85,65 @@ class VectorMemory:
 
 
 class Reflection:
-    """Metacognitive layer that learns from past mistakes."""
+    """Metacognitive layer that learns from past mistakes.
+    
+    Provides hints based on:
+    1. Same-category mistakes (triggers on FIRST mistake)
+    2. Cross-category mistake patterns
+    3. Overall accuracy warnings
+    """
 
     def __init__(self, memory):
         self.memory = memory
 
     def get_hint(self, category):
+        hints = []
+        
+        # Signal 1: Same-category mistakes
         entries = self.memory.retrieve(category, top_k=50)
-        if len(entries) < 2:
-            return None
-        bad = {}
-        good = {}
-        for e in entries:
-            if e["correct"]:
-                good[e["predicted"]] = good.get(e["predicted"], 0) + 1
-            else:
-                bad[e["predicted"]] = bad.get(e["predicted"], 0) + 1
-        if not bad:
-            return None
-        worst = max(bad, key=bad.get)
-        if bad[worst] < 2:
-            return None
-        hint = f"REFLECTION: In similar '{category}' cases, predicting '{worst}' was wrong {bad[worst]} times."
-        if good:
-            best = max(good, key=good.get)
-            hint += f" Consider '{best}' instead."
-        return hint
+        if entries:
+            bad = {}
+            good = {}
+            for e in entries:
+                if e["correct"]:
+                    good[e["predicted"]] = good.get(e["predicted"], 0) + 1
+                else:
+                    bad[e["predicted"]] = bad.get(e["predicted"], 0) + 1
+            if bad:
+                worst = max(bad, key=bad.get)
+                hints.append(
+                    f"REFLECTION: In '{category}' cases, predicting '{worst}' "
+                    f"was wrong {bad[worst]} time(s)."
+                )
+                if good:
+                    best = max(good, key=good.get)
+                    hints.append(f"Consider '{best}' instead for '{category}'.")
+        
+        # Signal 2: Cross-category patterns
+        all_entries = self.memory.entries[-30:]
+        if len(all_entries) >= 3:
+            wrong_all = [e for e in all_entries if not e["correct"]]
+            if wrong_all:
+                wrong_preds = {}
+                for e in wrong_all:
+                    wrong_preds[e["predicted"]] = wrong_preds.get(e["predicted"], 0) + 1
+                worst_global = max(wrong_preds, key=wrong_preds.get)
+                if wrong_preds[worst_global] >= 2:
+                    hints.append(
+                        f"PATTERN WARNING: Across all categories, you incorrectly "
+                        f"predicted '{worst_global}' {wrong_preds[worst_global]} times."
+                    )
+                
+                total = len(all_entries)
+                wrong = len(wrong_all)
+                acc = (total - wrong) / total
+                if acc < 0.7:
+                    hints.append(
+                        f"ACCURACY ALERT: Overall accuracy is {acc:.0%} "
+                        f"({wrong}/{total} wrong). Think more carefully."
+                    )
+        
+        return " | ".join(hints) if hints else None
 
 
 class SafetyChecker:
