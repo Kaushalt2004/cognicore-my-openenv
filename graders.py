@@ -13,8 +13,8 @@ from models import SafetyLabel, Severity
 
 
 def _clamp(score: float) -> float:
-    """Clamp score to strict (0.01, 0.99) range for Phase 2 compliance."""
-    return min(max(score, 0.01), 0.99)
+    """Clamp score to strict (0.001, 0.999) range for Phase 2 compliance."""
+    return min(max(score, 0.001), 0.999)
 
 
 # ═══════════════════════════════════════════════════════════════

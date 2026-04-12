@@ -389,7 +389,7 @@ def run_task(task_config: dict) -> dict:
                     p_reward = raw_p_reward.get("value", 0.01)
                 else:
                     p_reward = float(raw_p_reward) if raw_p_reward is not None else 0.01
-                p_reward = min(max(p_reward, 0.01), 0.99)
+                p_reward = min(max(p_reward, 0.001), 0.999)
                 
                 p_done = propose_result.get("done", False)
                 p_info = propose_result.get("info", {})
@@ -443,7 +443,7 @@ def run_task(task_config: dict) -> dict:
                 reward = float(raw_reward) if raw_reward is not None else 0.01
             
             # CRITICAL: Clamp to strict (0, 1)
-            reward = min(max(reward, 0.01), 0.99)
+            reward = min(max(reward, 0.001), 0.999)
             
             done = step_result.get("done", False)
             info = step_result.get("info", {})
@@ -461,12 +461,12 @@ def run_task(task_config: dict) -> dict:
         # Calculate score
         max_total = max_steps * 0.99  # max possible reward
         score = sum(rewards) / max_total if max_total > 0 else 0.01
-        score = min(max(score, 0.01), 0.99)  # strict (0, 1)
+        score = min(max(score, 0.001), 0.999)  # strict (0, 1)
         success = score >= SUCCESS_SCORE_THRESHOLD
         
     except Exception as e:
         print(f"[ERROR] Task {task_name} failed: {e}", file=sys.stderr, flush=True)
-        log_step(step=steps_taken + 1, action="ERROR", reward=0.01, done=True, error=str(e))
+        log_step(step=steps_taken + 1, action="ERROR", reward=0.001, done=True, error=str(e))
     
     finally:
         log_end(success=success, steps=steps_taken, rewards=rewards)
