@@ -344,88 +344,132 @@ def run_task(task_config: dict) -> dict:
         reset_result = env_reset(task=task_name, difficulty=difficulty)
         obs = reset_result.get("observation", {})
         
+        # ── RL Episode Memory: Agent learns within the episode ──
+        episode_history = []  # track every decision + outcome
+        category_stats = {}   # per-category accuracy tracking
+        mistake_patterns = [] # learn from past mistakes
+        
         step_counter = 0
-        while step_counter < max_steps * 2:  # allow extra steps for proposals
+        while step_counter < max_steps * 3:  # budget for proposals + inspects
             step_counter += 1
             case_id = obs.get("case_id", "")
             if case_id == "done":
                 break
             
-            # Build context
+            # Build context from observation
             prompt_text = obs.get("prompt", "")
             response_text = obs.get("response", "")
-            memory_ctx = str(obs.get("memory_context", [])) if obs.get("memory_context") else ""
+            raw_memory = obs.get("memory_context", [])
+            memory_ctx = str(raw_memory) if raw_memory else ""
             reflection_hint = obs.get("reflection_hint", "") or ""
             tags = obs.get("tags", [])
+            category = obs.get("category", "unknown")
             
-            # Classify using LLM (structured output)
+            # ── RL Signal 1: Episode-level learning ──
+            # Build additional context from past mistakes in THIS episode
+            episode_context = ""
+            if mistake_patterns:
+                recent_mistakes = mistake_patterns[-3:]  # last 3 mistakes
+                episode_context = "EPISODE LEARNING - Past mistakes this episode:\n"
+                for m in recent_mistakes:
+                    episode_context += f"  - Case {m['case_id']}: predicted {m['predicted']}, was actually {m['correct_label']}. Category: {m['category']}\n"
+                episode_context += "Avoid repeating these patterns.\n"
+            
+            # ── RL Signal 2: Category performance tracking ──
+            cat_hint = ""
+            if category in category_stats:
+                stats = category_stats[category]
+                acc = stats["correct"] / stats["total"] if stats["total"] > 0 else 0
+                if acc < 0.5 and stats["total"] >= 2:
+                    cat_hint = f"WARNING: You're only {acc:.0%} accurate on '{category}' cases. Be extra careful."
+                elif acc == 1.0 and stats["total"] >= 2:
+                    cat_hint = f"You've been perfect on '{category}' cases so far. Stay consistent."
+            
+            # Combine all RL signals into the LLM context
+            full_reflection = reflection_hint
+            if episode_context:
+                full_reflection = episode_context + "\n" + full_reflection
+            if cat_hint:
+                full_reflection = cat_hint + "\n" + full_reflection
+            
+            # Classify using LLM
             result = classify_with_llm(
                 prompt=prompt_text,
                 response=response_text,
                 memory_context=memory_ctx,
-                reflection_hint=reflection_hint,
+                reflection_hint=full_reflection,
                 difficulty=difficulty,
                 tags=tags,
             )
             
-            # ── Multi-step RL: PROPOSE first for hard cases ──
-            # For hard cases, submit a PROPOSE first to get feedback,
-            # then revise if the proposal was wrong.
-            use_propose = (difficulty == "hard")
+            # ── RL Signal 3: PROPOSE → feedback → revise (ALL difficulties) ──
+            # Agent proposes, gets correctness feedback, then revises if wrong.
+            # This is true RL: explore → get reward signal → exploit.
+            propose_action = {
+                "classification": f"PROPOSE:{result['classification']}",
+                "confidence": result["confidence"],
+                "severity": result["severity"],
+                "reasoning": result["reasoning"],
+                "manipulation_type": result["manipulation_type"],
+            }
+            propose_result = env_step(propose_action)
             
-            if use_propose:
-                # Step A: Propose
-                propose_action = {
-                    "classification": f"PROPOSE:{result['classification']}",
-                    "confidence": result["confidence"],
-                    "severity": result["severity"],
-                    "reasoning": result["reasoning"],
-                    "manipulation_type": result["manipulation_type"],
-                }
-                propose_result = env_step(propose_action)
+            # Parse propose reward
+            raw_p_reward = propose_result.get("reward", 0.01)
+            if isinstance(raw_p_reward, dict):
+                p_reward = raw_p_reward.get("value", 0.01)
+            else:
+                p_reward = float(raw_p_reward) if raw_p_reward is not None else 0.01
+            p_reward = min(max(p_reward, 0.001), 0.999)
+            
+            p_done = propose_result.get("done", False)
+            p_info = propose_result.get("info", {})
+            p_error = p_info.get("error") if isinstance(p_info, dict) else None
+            
+            rewards.append(p_reward)
+            steps_taken += 1
+            log_step(step=steps_taken, action=f"PROPOSE:{result['classification']}", 
+                     reward=p_reward, done=p_done, error=p_error)
+            
+            if p_done:
+                break
+            
+            # ── RL Signal 4: Learn from proposal feedback ──
+            p_reward_dict = propose_result.get("reward", {})
+            explanation = ""
+            if isinstance(p_reward_dict, dict):
+                explanation = p_reward_dict.get("explanation", "")
+            
+            proposal_was_correct = "CORRECT" in explanation and "INCORRECT" not in explanation
+            
+            if not proposal_was_correct:
+                # RL LEARNING: The agent was wrong. Revise the answer.
+                original_label = result["classification"]
                 
-                # Parse propose reward
-                raw_p_reward = propose_result.get("reward", 0.01)
-                if isinstance(raw_p_reward, dict):
-                    p_reward = raw_p_reward.get("value", 0.01)
+                # Strategy 1: flip the obvious labels
+                if original_label == "SAFE":
+                    result["classification"] = "UNSAFE"
+                elif original_label == "UNSAFE":
+                    result["classification"] = "SAFE"
                 else:
-                    p_reward = float(raw_p_reward) if raw_p_reward is not None else 0.01
-                p_reward = min(max(p_reward, 0.001), 0.999)
+                    # NEEDS_REVIEW was wrong — use fallback classifier
+                    fallback = classify_with_fallback(prompt_text, response_text, tags)
+                    result["classification"] = fallback["classification"]
                 
-                p_done = propose_result.get("done", False)
-                p_info = propose_result.get("info", {})
-                p_error = p_info.get("error") if isinstance(p_info, dict) else None
+                result["confidence"] = 0.55  # lower confidence after revision
+                result["reasoning"] = f"Revised after RL feedback (was {original_label}): {result['reasoning']}"
                 
-                rewards.append(p_reward)
-                steps_taken += 1
-                log_step(step=steps_taken, action=f"PROPOSE:{result['classification']}", 
-                         reward=p_reward, done=p_done, error=p_error)
-                
-                if p_done:
-                    break
-                
-                # Check proposal feedback — revise if wrong
-                p_reward_dict = propose_result.get("reward", {})
-                explanation = ""
-                if isinstance(p_reward_dict, dict):
-                    explanation = p_reward_dict.get("explanation", "")
-                
-                if "INCORRECT" in explanation:
-                    # Proposal was wrong — revise using fallback or flip label
-                    if result["classification"] == "SAFE":
-                        result["classification"] = "UNSAFE"
-                    elif result["classification"] == "UNSAFE":
-                        result["classification"] = "SAFE"
-                    else:
-                        # NEEDS_REVIEW was wrong — try fallback
-                        fallback = classify_with_fallback(prompt_text, response_text, tags)
-                        result["classification"] = fallback["classification"]
-                    result["confidence"] = 0.60  # Lower confidence after revision
-                    result["reasoning"] = f"Revised after proposal feedback: {result['reasoning']}"
-                
-                obs = propose_result.get("observation", obs)
+                # Record mistake for future learning in this episode
+                mistake_patterns.append({
+                    "case_id": case_id,
+                    "category": category,
+                    "predicted": original_label,
+                    "correct_label": "unknown",  # we know it's wrong, not what's right
+                })
             
-            # Step B: Submit final classification
+            obs = propose_result.get("observation", obs)
+            
+            # ── Submit final classification (possibly revised) ──
             action = {
                 "classification": result["classification"],
                 "confidence": result["confidence"],
@@ -436,20 +480,42 @@ def run_task(task_config: dict) -> dict:
             
             step_result = env_step(action)
             
-            # Parse structured reward
+            # Parse reward
             raw_reward = step_result.get("reward", 0.01)
             if isinstance(raw_reward, dict):
                 reward = raw_reward.get("value", 0.01)
             else:
                 reward = float(raw_reward) if raw_reward is not None else 0.01
-            
-            # CRITICAL: Clamp to strict (0, 1)
             reward = min(max(reward, 0.001), 0.999)
             
             done = step_result.get("done", False)
             info = step_result.get("info", {})
             error = info.get("error") if isinstance(info, dict) else None
             obs = step_result.get("observation", {})
+            
+            # ── RL Signal 5: Update episode memory from result ──
+            step_info = info if isinstance(info, dict) else {}
+            was_correct = step_info.get("correct", reward > 0.5)
+            ground_truth = step_info.get("ground_truth", "unknown")
+            
+            # Update category stats (agent learns which categories it's weak on)
+            if category not in category_stats:
+                category_stats[category] = {"correct": 0, "total": 0}
+            category_stats[category]["total"] += 1
+            if was_correct:
+                category_stats[category]["correct"] += 1
+            else:
+                # Update mistake record with actual ground truth
+                if mistake_patterns and mistake_patterns[-1]["case_id"] == case_id:
+                    mistake_patterns[-1]["correct_label"] = ground_truth
+            
+            episode_history.append({
+                "case_id": case_id,
+                "category": category,
+                "predicted": result["classification"],
+                "correct": was_correct,
+                "reward": reward,
+            })
             
             rewards.append(reward)
             steps_taken += 1
