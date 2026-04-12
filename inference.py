@@ -13,8 +13,8 @@ Outputs structured JSON from the LLM for multi-dimensional grading:
 
 Produces the exact stdout format required:
   [START] task=<name> env=<benchmark> model=<model>
-  [STEP]  step=<n> action=<str> reward=<0.00> done=<true|false> error=<msg|null>
-  [END]   success=<true|false> steps=<n> score=<0.00> rewards=<r1,r2,...>
+  [STEP] step=<n> action=<str> reward=<0.00> done=<true|false> error=<msg|null>
+  [END] success=<true|false> steps=<n> rewards=<r1,r2,...>
 """
 
 import os
@@ -23,8 +23,11 @@ import json
 import time
 import requests
 
-from dotenv import load_dotenv
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not required in Docker
 
 from openai import OpenAI
 
@@ -173,10 +176,10 @@ def classify_with_llm(prompt: str, response: str,
         except Exception as e:
             if attempt < 2:
                 wait = min(60, 2 ** attempt * 5)
-                print(f"[LLM] Retry {attempt+1}/3 after error: {e}", flush=True)
+                print(f"[LLM] Retry {attempt+1}/3 after error: {e}", file=sys.stderr, flush=True)
                 time.sleep(wait)
             else:
-                print(f"[LLM] Failed after 3 retries: {e}", flush=True)
+                print(f"[LLM] Failed after 3 retries: {e}", file=sys.stderr, flush=True)
                 return default_result
 
 
@@ -217,13 +220,13 @@ def log_start(task, env, model):
 def log_step(step, action, reward, done, error=None):
     error_str = "null" if error is None else str(error)
     done_str = "true" if done else "false"
-    print(f"[STEP]  step={step} action={action} reward={reward:.2f} done={done_str} error={error_str}", flush=True)
+    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={done_str} error={error_str}", flush=True)
 
 
-def log_end(success, steps, score, rewards):
+def log_end(success, steps, rewards):
     success_str = "true" if success else "false"
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END]   success={success_str} steps={steps} score={score:.2f} rewards={rewards_str}", flush=True)
+    print(f"[END] success={success_str} steps={steps} rewards={rewards_str}", flush=True)
 
 
 # ─── Main inference loop ────────────────────────────────────
@@ -305,11 +308,11 @@ def run_task(task_config: dict) -> dict:
         success = score >= SUCCESS_SCORE_THRESHOLD
         
     except Exception as e:
-        print(f"[ERROR] Task {task_name} failed: {e}", flush=True)
+        print(f"[ERROR] Task {task_name} failed: {e}", file=sys.stderr, flush=True)
         log_step(step=steps_taken + 1, action="ERROR", reward=0.0, done=True, error=str(e))
     
     finally:
-        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+        log_end(success=success, steps=steps_taken, rewards=rewards)
     
     return {
         "task": task_name,
@@ -322,38 +325,31 @@ def run_task(task_config: dict) -> dict:
 
 def main():
     """Run all three tasks and print results."""
-    print(f"{'='*60}", flush=True)
-    print(f"CogniCore AI Safety Monitor — Inference v2.0", flush=True)
-    print(f"Model:   {MODEL_NAME}", flush=True)
-    print(f"Env URL: {ENV_URL}", flush=True)
-    print(f"{'='*60}", flush=True)
+    # Banner goes to stderr — stdout is reserved for [START]/[STEP]/[END]
+    print(f"CogniCore AI Safety Monitor — Inference v2.2", file=sys.stderr, flush=True)
+    print(f"Model: {MODEL_NAME}", file=sys.stderr, flush=True)
+    print(f"Env:   {ENV_URL}", file=sys.stderr, flush=True)
     
-    # Health check
+    # Health check (stderr only — keep stdout clean for parser)
     if not env_health():
-        print(f"[ERROR] Environment not responding at {ENV_URL}/health", flush=True)
+        print(f"[ERROR] Environment not responding at {ENV_URL}/health", file=sys.stderr, flush=True)
         sys.exit(1)
     
     start_time = time.time()
     results = []
     
     for task_config in TASKS:
-        print(f"\n--- {task_config['display']} ({task_config['difficulty']}) ---\n", flush=True)
         result = run_task(task_config)
         results.append(result)
     
+    # Summary (stderr — keep stdout for parser)
     elapsed = time.time() - start_time
-    
-    # Summary
-    print(f"\n{'='*60}", flush=True)
-    print(f"SUMMARY", flush=True)
-    print(f"{'='*60}", flush=True)
+    print(f"\nSUMMARY: {len(results)} tasks in {elapsed:.1f}s", file=sys.stderr, flush=True)
     for r in results:
         status = "PASS" if r["success"] else "FAIL"
-        print(f"  [{status}] {r['task']}: score={r['score']:.2f}", flush=True)
+        print(f"  [{status}] {r['task']}: score={r['score']:.2f}", file=sys.stderr, flush=True)
     overall = sum(r["score"] for r in results) / len(results) if results else 0
-    print(f"\n  Total time: {elapsed:.1f}s", flush=True)
-    print(f"  Overall score: {overall:.2f}", flush=True)
-    print(f"{'='*60}", flush=True)
+    print(f"  Overall: {overall:.2f}", file=sys.stderr, flush=True)
 
 
 if __name__ == "__main__":
