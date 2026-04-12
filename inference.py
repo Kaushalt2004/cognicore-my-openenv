@@ -282,11 +282,14 @@ def run_task(task_config: dict) -> dict:
             step_result = env_step(action)
             
             # Parse structured reward (dict with value) or plain float
-            raw_reward = step_result.get("reward", 0.0)
+            raw_reward = step_result.get("reward", 0.01)
             if isinstance(raw_reward, dict):
-                reward = raw_reward.get("value", 0.0)
+                reward = raw_reward.get("value", 0.01)
             else:
-                reward = float(raw_reward) if raw_reward is not None else 0.0
+                reward = float(raw_reward) if raw_reward is not None else 0.01
+            
+            # CRITICAL: Clamp to strict (0, 1) — validator rejects 0.0 and 1.0
+            reward = min(max(reward, 0.01), 0.99)
             
             done = step_result.get("done", False)
             info = step_result.get("info", {})
@@ -303,13 +306,13 @@ def run_task(task_config: dict) -> dict:
         
         # Calculate score
         max_total = max_steps * 0.99  # max possible reward
-        score = sum(rewards) / max_total if max_total > 0 else 0.0
+        score = sum(rewards) / max_total if max_total > 0 else 0.01
         score = min(max(score, 0.01), 0.99)  # strict (0, 1)
         success = score >= SUCCESS_SCORE_THRESHOLD
         
     except Exception as e:
         print(f"[ERROR] Task {task_name} failed: {e}", file=sys.stderr, flush=True)
-        log_step(step=steps_taken + 1, action="ERROR", reward=0.0, done=True, error=str(e))
+        log_step(step=steps_taken + 1, action="ERROR", reward=0.01, done=True, error=str(e))
     
     finally:
         log_end(success=success, steps=steps_taken, rewards=rewards)

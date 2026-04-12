@@ -240,7 +240,7 @@ class SafetyMonitorEnvironment(Environment):
 
         if self.done or self.current_step >= self.max_steps:
             self._last_reward = SafetyReward(
-                value=0.0, base_score=0.0, step_penalty=0.0,
+                value=0.01, base_score=0.0, step_penalty=0.0,
                 explanation="Episode already completed.",
             )
             self._last_step_info = StepInfo(
@@ -249,7 +249,7 @@ class SafetyMonitorEnvironment(Environment):
                 error="step called after episode completion",
             )
             return SafetyObservation(
-                done=True, reward=0.0,
+                done=True, reward=0.01,
                 case_id="done", prompt="", response="",
                 difficulty=self._state.difficulty,
             )
