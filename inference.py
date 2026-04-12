@@ -317,10 +317,11 @@ def log_step(step, action, reward, done, error=None):
     print(f"[STEP] step={step} action={action} reward={reward:.2f} done={done_str} error={error_str}", flush=True)
 
 
-def log_end(success, steps, rewards):
+def log_end(success, steps, score, rewards):
     success_str = "true" if success else "false"
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={success_str} steps={steps} rewards={rewards_str}", flush=True)
+    score = min(max(score, 0.001), 0.999)  # ensure strict (0, 1)
+    print(f"[END] success={success_str} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
 
 
 # ─── Main inference loop ────────────────────────────────────
@@ -333,7 +334,7 @@ def run_task(task_config: dict) -> dict:
     
     rewards = []
     steps_taken = 0
-    score = 0.0
+    score = 0.001  # never exactly 0.0 — validator rejects it
     success = False
     
     log_start(task=task_name, env=BENCHMARK_NAME, model=MODEL_NAME)
@@ -469,7 +470,7 @@ def run_task(task_config: dict) -> dict:
         log_step(step=steps_taken + 1, action="ERROR", reward=0.001, done=True, error=str(e))
     
     finally:
-        log_end(success=success, steps=steps_taken, rewards=rewards)
+        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
     
     return {
         "task": task_name,
