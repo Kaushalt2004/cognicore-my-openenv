@@ -1,0 +1,7 @@
+pyproject.toml
+cognicore/
+tests/
+examples/
+api/
+*.py
+*.lock
