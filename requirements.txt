@@ -1,3 +1,2 @@
-fastapi==0.115.0
-uvicorn==0.30.0
-cognicore-env==0.1.0
+fastapi>=0.110
+uvicorn>=0.27
