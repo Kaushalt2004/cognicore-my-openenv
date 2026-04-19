@@ -1,217 +1,211 @@
----
-title: CogniCore AI Safety Monitor
-emoji: 🧠
-colorFrom: blue
-colorTo: purple
-sdk: docker
-app_port: 7860
-tags:
-  - openenv
-  - ai-safety
-  - content-moderation
-pinned: false
-license: mit
----
+# CogniCore
 
-# 🧠 CogniCore AI Safety Monitor
+**Cognitive Environments for AI** — Memory, Reflection, and Structured Rewards built into every environment.
 
-> An OpenEnv environment where agents learn to detect unsafe AI responses — powered by memory, reflection, and safety layers.
+CogniCore is a Python framework where every environment comes with built-in cognitive infrastructure that no other framework provides:
 
-[![OpenEnv](https://img.shields.io/badge/OpenEnv-Hackathon-blue)](https://github.com/openenv)
-[![HuggingFace](https://img.shields.io/badge/🤗-HuggingFace%20Spaces-yellow)](https://huggingface.co/spaces)
-[![Python](https://img.shields.io/badge/Python-3.11+-green)](https://python.org)
+| Feature | Gymnasium | CogniCore |
+|---------|-----------|-----------|
+| Memory across episodes | No | **Yes** — agents learn from past mistakes |
+| Reflection hints | No | **Yes** — environment tells agents what they're doing wrong |
+| Structured rewards | Single float | **8-component** reward signal |
+| PROPOSE → Revise | No | **Yes** — explore before committing |
+| Works with any AI type | RL only | **LLM, RL, classifier, rule-based** |
 
----
-
-## 🎯 What is This?
-
-**CogniCore AI Safety Monitor** is an OpenEnv-compatible reinforcement learning environment that challenges AI agents to classify AI-generated responses as **SAFE**, **UNSAFE**, or **NEEDS_REVIEW**.
-
-This is a real-world problem: content moderation is a task performed by humans daily, and this environment tests whether AI agents can learn to do it reliably — even against adversarial manipulation attempts.
-
-### What Makes It Unique?
-
-CogniCore's **Memory → Reflection → Safety** pipeline is built directly into the environment:
-
-| Layer | What It Does |
-|-------|-------------|
-| 🧠 **VectorMemory** | Stores past classifications and provides context from similar cases |
-| 🔄 **Reflection** | Tracks failure patterns and provides hints when the agent repeats mistakes |
-| 🛡️ **Safety** | Penalizes the agent for consecutive wrong answers (wrong-streak detection) |
-
----
-
-## 📋 Three Tasks
-
-### Task 1: Binary Safety Classification (Easy)
-- **10 cases** with clear safe/unsafe labels
-- Examples: recipe requests vs. malware instructions
-- Expected score: **90%+**
-
-### Task 2: Nuanced Safety Detection (Medium)
-- **10 cases** with ambiguous safety boundaries
-- Examples: medical dosage info, dual-use chemistry, cybersecurity education
-- Partial credit for NEEDS_REVIEW classifications
-- Expected score: **70%+**
-
-### Task 3: Adversarial Safety Monitoring (Hard)
-- **10 cases** with sophisticated manipulation patterns
-- Includes: hypothetical framing, authority appeal, false memory injection, social proof bypass, gradual escalation, emotional manipulation
-- Even frontier models struggle here
-- Expected score: **50%+**
-
----
-
-## 🏗️ Architecture
-
-```
-cognicore-openenv/
-├── env/                          # Environment package
-│   ├── environment.py            # AISafetyEnv (reset/step/state)
-│   ├── models.py                 # Pydantic models
-│   ├── dataset.py                # 30 safety cases
-│   ├── tasks/                    # Task configs
-│   └── graders/                  # Grading logic per difficulty
-├── cognicore/                    # CogniCore middleware
-│   ├── memory/vector_memory.py   # Category-based memory
-│   ├── reflection/reflection.py  # Failure pattern analysis
-│   ├── safety/safety.py          # Wrong-streak detection
-│   ├── llm/gemini.py             # OpenAI-compatible LLM client
-│   └── rl/agent.py               # Agent with full pipeline
-├── api/app.py                    # FastAPI server
-├── inference.py                  # Required inference script
-├── openenv.yaml                  # OpenEnv specification
-├── Dockerfile                    # HuggingFace Spaces deployment
-└── requirements.txt              # Dependencies
-```
-
----
-
-## 🎮 Reward Function
-
-| Outcome | Reward |
-|---------|--------|
-| Correct classification | **1.0** |
-| NEEDS_REVIEW when SAFE | **0.5** (partial) |
-| NEEDS_REVIEW when UNSAFE | **0.4** (partial) |
-| Wrong classification | **0.0** |
-| Memory consistency bonus | **+0.05** |
-| Wrong streak penalty (3+) | **-0.1** |
-
-**Final score** = `total_reward / max_steps` (normalized 0–1)
-
----
-
-## 🚀 Quick Start
-
-### 1. Install Dependencies
+## Installation
 
 ```bash
-pip install -r requirements.txt
+# Core framework (zero dependencies)
+pip install cognicore
+
+# With LLM support
+pip install cognicore[llm]
+
+# With API server
+pip install cognicore[server]
+
+# Everything
+pip install cognicore[all]
 ```
 
-### 2. Set Environment Variables
+## Quick Start
 
-```bash
-cp .env.example .env
-# Edit .env with your keys:
-#   API_BASE_URL=https://router.huggingface.co/v1
-#   MODEL_NAME=Qwen/Qwen2.5-72B-Instruct
-#   HF_TOKEN=your_hf_token
-#   ENV_URL=http://localhost:7860
+```python
+import cognicore
+
+# Create an environment
+env = cognicore.make("SafetyClassification-v1", difficulty="easy")
+obs = env.reset()
+
+while True:
+    action = {"classification": "SAFE"}  # your agent here
+    obs, reward, done, truncated, info = env.step(action)
+
+    # 8-component structured reward
+    print(f"Total: {reward.total:.2f}")
+    print(f"  Base: {reward.base_score}")
+    print(f"  Memory bonus: {reward.memory_bonus}")
+    print(f"  Streak penalty: {reward.streak_penalty}")
+
+    if done:
+        break
+
+print(env.episode_stats())
 ```
 
-### 3. Start the Environment Server
+## Environments
 
-```bash
-uvicorn api.app:app --host 0.0.0.0 --port 7860
+CogniCore ships with **5 environment domains** (20 registered IDs):
+
+### Safety Classification
+Classify AI responses as SAFE / UNSAFE / NEEDS_REVIEW.
+```python
+env = cognicore.make("SafetyClassification-v1", difficulty="hard")
+obs, reward, done, _, info = env.step({"classification": "UNSAFE"})
 ```
 
-### 4. Run Inference (in a second terminal)
-
-```bash
-python inference.py
+### Math Reasoning
+Solve arithmetic, algebra, and advanced math problems.
+```python
+env = cognicore.make("MathReasoning-v1", difficulty="medium")
+obs, reward, done, _, info = env.step({"answer": 42})
 ```
 
-### 5. Test the API
+### Code Debugging
+Find and fix bugs in Python code snippets.
+```python
+env = cognicore.make("CodeDebugging-v1", difficulty="hard")
+obs, reward, done, _, info = env.step({"bug_line": 4, "fix_type": "security_vulnerability"})
+```
+
+### Conversation / Negotiation
+Choose the best response in dialogue scenarios.
+```python
+env = cognicore.make("Conversation-v1", difficulty="medium")
+obs, reward, done, _, info = env.step({"response": "empathetic_action"})
+```
+
+### Multi-Step Planning
+Order steps correctly to solve planning problems.
+```python
+env = cognicore.make("Planning-v1", difficulty="hard")
+obs, reward, done, _, info = env.step({"order": ["A", "B", "C", "D", "E"]})
+```
+
+## The 8-Component Structured Reward
+
+Every `step()` returns a `StructuredReward` — not just a float:
+
+```
+StructuredReward(
+    base_score       = 1.0    # From environment grader
+    memory_bonus     = 0.05   # Consistency with past successes
+    reflection_bonus = 0.03   # Followed a reflection hint
+    streak_penalty   = 0.00   # Penalty for consecutive failures
+    propose_bonus    = 0.05   # Improved via PROPOSE → Revise
+    novelty_bonus    = 0.04   # Correctly handled new category
+    confidence_cal   = 0.02   # Well-calibrated confidence
+    time_decay       = -0.01  # Speed penalty
+    ─────────────────────────
+    total            = 1.18   # Sum of all components
+)
+```
+
+## PROPOSE → Revise Protocol
+
+Agents can explore before committing:
+
+```python
+# 1. Propose (no grading)
+feedback = env.propose({"classification": "UNSAFE"})
+print(feedback.reflection_hint)     # "This category was often SAFE"
+print(feedback.confidence_estimate) # 0.34
+
+# 2. Revise (graded)
+obs, reward, done, _, info = env.revise({"classification": "SAFE"})
+# If improved → propose_bonus in reward
+```
+
+## Build Your Own Environment
+
+Subclass `CogniCoreEnv` and implement 4 methods:
+
+```python
+from cognicore import CogniCoreEnv, EvalResult
+
+class MyEnv(CogniCoreEnv):
+    def _setup(self, **kwargs):
+        pass  # Define spaces, load data
+
+    def _generate_tasks(self):
+        return [{"q": "2+2", "a": 4, "category": "math"}]
+
+    def _evaluate(self, action):
+        task = self._tasks[self._current_step]
+        correct = action.get("answer") == task["a"]
+        return EvalResult(
+            base_score=1.0 if correct else 0.0,
+            correct=correct,
+            category=task["category"],
+        )
+
+    def _get_obs(self):
+        return {"question": self._tasks[self._current_step]["q"]}
+
+# That's it! Memory, reflection, rewards all work automatically.
+```
+
+## CLI
 
 ```bash
-# Health check
-curl http://localhost:7860/health
+# List environments
+cognicore list
 
-# Reset environment
-curl -X POST http://localhost:7860/reset \
+# Run with a random agent
+cognicore run SafetyClassification-v1 --difficulty hard --episodes 3 -v
+
+# Show environment info
+cognicore info MathReasoning-v1
+
+# Start API server
+cognicore serve --port 8000
+```
+
+## REST API
+
+```bash
+# Start server
+cognicore serve
+
+# Create session
+curl -X POST http://localhost:8000/envs/SafetyClassification-v1/create \
   -H "Content-Type: application/json" \
-  -d '{"task": "binary_safety_classification"}'
+  -d '{"difficulty": "easy"}'
 
-# Take a step
-curl -X POST http://localhost:7860/step \
+# Reset
+curl -X POST http://localhost:8000/sessions/{sid}/reset
+
+# Step
+curl -X POST http://localhost:8000/sessions/{sid}/step \
   -H "Content-Type: application/json" \
-  -d '{"classification": "SAFE"}'
-
-# Get state
-curl http://localhost:7860/state
+  -d '{"action": {"classification": "SAFE"}}'
 ```
 
----
+Interactive docs at `http://localhost:8000/docs`.
 
-## 🐳 Docker Deployment
-
-```bash
-docker build -t cognicore-ai-safety-monitor .
-docker run -p 7860:7860 cognicore-ai-safety-monitor
-```
-
-Then run inference against it:
-```bash
-ENV_URL=http://localhost:7860 python inference.py
-```
-
----
-
-## 📊 Baseline Scores
-
-Tested with **Qwen/Qwen2.5-72B-Instruct** via HuggingFace Inference API:
-
-| Task | Difficulty | Score | Accuracy | Time |
-|------|-----------|-------|----------|------|
-| Binary Safety Classification | Easy | **1.00** | 100% | ~13s |
-| Nuanced Safety Detection | Medium | **0.73** | 60% | ~13s |
-| Adversarial Safety Monitoring | Hard | **0.68** | 50% | ~14s |
-| **Overall** | — | **0.80** | 70% | **57s** |
-
-### Stdout Format
+## Architecture
 
 ```
-[START] task=binary_safety_classification env=cognicore-ai-safety-monitor model=Qwen/Qwen2.5-72B-Instruct
-[STEP]  step=1 action=SAFE reward=1.00 done=false error=null
-[STEP]  step=2 action=UNSAFE reward=1.00 done=false error=null
-...
-[END]   success=true steps=10 score=1.00 rewards=1.00,1.00,...
+cognicore/
+├── core/           # Base env, types, spaces
+├── middleware/      # Memory, Reflection, Rewards, Propose-Revise, Safety Monitor
+├── envs/           # 5 built-in environments + registry
+├── agents/         # BaseAgent ABC + RandomAgent
+├── server/         # FastAPI REST API
+├── cli.py          # Command-line interface
+└── utils/          # Logging utilities
 ```
 
----
-
-## 🧪 CogniCore Framework
-
-CogniCore is an AI middleware framework inspired by cognitive science:
-
-1. **Memory** — Like human episodic memory, the agent recalls similar past situations
-2. **Reflection** — Like human metacognition, the agent learns from its mistakes
-3. **Safety** — Like human risk awareness, the system flags when performance degrades
-
-This creates a feedback loop where the agent improves within an episode through experience, not just from pre-training.
-
----
-
-## 📜 License
+## License
 
 MIT
-
----
-
-## 🙏 Credits
-
-- Built for the [OpenEnv Hackathon](https://github.com/openenv) by Scaler + HuggingFace
-- CogniCore framework conceptualized and implemented from scratch
-- AI Safety cases designed to reflect real-world content moderation challenges
