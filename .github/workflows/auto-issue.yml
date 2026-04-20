@@ -5,6 +5,7 @@ on:
     branches: [main]
   schedule:
     - cron: '0 6 * * 1'  # Every Monday 6 AM UTC
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -21,164 +22,281 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install
-        run: pip install -e ".[dev]"
+      - name: Install package + analysis tools
+        run: |
+          pip install -e ".[dev]"
+          pip install ruff bandit
 
-      - name: Run full diagnostics
-        id: diagnostics
+      # ─────────────────────────────────────────────
+      # 1. TEST FAILURES
+      # ─────────────────────────────────────────────
+      - name: Run tests
+        id: tests
         continue-on-error: true
         run: |
-          echo "## Diagnostics Report" > report.txt
-          echo "" >> report.txt
-
-          # 1. Test failures
-          echo "### Tests" >> report.txt
           python -m pytest tests/ -v --tb=short -q 2>&1 | tee test_output.txt
-          TEST_EXIT=$?
-          if [ $TEST_EXIT -ne 0 ]; then
+          echo "TEST_EXIT=$?" >> $GITHUB_ENV
+          if grep -q "FAILED" test_output.txt; then
             echo "TEST_FAILED=true" >> $GITHUB_ENV
             FAILURES=$(grep -c "FAILED" test_output.txt || echo "0")
             echo "TEST_FAILURES=$FAILURES" >> $GITHUB_ENV
-            echo "❌ $FAILURES test(s) failed" >> report.txt
-            grep "FAILED" test_output.txt >> report.txt
-          else
-            PASSED=$(grep -oP '\d+ passed' test_output.txt || echo "all")
-            echo "✅ All tests passed ($PASSED)" >> report.txt
           fi
-          echo "" >> report.txt
 
-          # 2. Import health
-          echo "### Import Health" >> report.txt
+      # ─────────────────────────────────────────────
+      # 2. CODE QUALITY (Ruff — linting + style)
+      # ─────────────────────────────────────────────
+      - name: Lint with Ruff
+        id: lint
+        continue-on-error: true
+        run: |
+          ruff check cognicore/ --output-format=text 2>&1 | tee lint_output.txt
+          LINT_COUNT=$(wc -l < lint_output.txt)
+          echo "LINT_COUNT=$LINT_COUNT" >> $GITHUB_ENV
+          if [ "$LINT_COUNT" -gt 20 ]; then
+            echo "LINT_ISSUES=true" >> $GITHUB_ENV
+          fi
+
+      # ─────────────────────────────────────────────
+      # 3. SECURITY SCAN (Bandit)
+      # ─────────────────────────────────────────────
+      - name: Security scan
+        id: security
+        continue-on-error: true
+        run: |
+          bandit -r cognicore/ -ll -q 2>&1 | tee security_output.txt
+          if grep -qE "Severity: (Medium|High)" security_output.txt; then
+            echo "SECURITY_ISSUES=true" >> $GITHUB_ENV
+            HIGH=$(grep -c "Severity: High" security_output.txt || echo "0")
+            MED=$(grep -c "Severity: Medium" security_output.txt || echo "0")
+            echo "SEC_HIGH=$HIGH" >> $GITHUB_ENV
+            echo "SEC_MED=$MED" >> $GITHUB_ENV
+          fi
+
+      # ─────────────────────────────────────────────
+      # 4. DEAD CODE / UNUSED IMPORTS
+      # ─────────────────────────────────────────────
+      - name: Check unused imports
+        id: unused
+        continue-on-error: true
+        run: |
+          ruff check cognicore/ --select F401 --output-format=text 2>&1 | tee unused_output.txt
+          UNUSED_COUNT=$(wc -l < unused_output.txt)
+          echo "UNUSED_COUNT=$UNUSED_COUNT" >> $GITHUB_ENV
+          if [ "$UNUSED_COUNT" -gt 5 ]; then
+            echo "UNUSED_ISSUES=true" >> $GITHUB_ENV
+          fi
+
+      # ─────────────────────────────────────────────
+      # 5. TYPE ERRORS / RUNTIME ISSUES
+      # ─────────────────────────────────────────────
+      - name: Check for common bugs
+        id: bugs
+        continue-on-error: true
+        run: |
+          # Check undefined variables, syntax issues, f-string problems
+          ruff check cognicore/ --select E,F,W --output-format=text 2>&1 | tee bugs_output.txt
+          # Check all imports work
           python -c "
+          import traceback
+          import importlib
+          import pkgutil
           import cognicore
-          exports = len(cognicore.__all__)
-          envs = len(cognicore.list_envs())
-          print(f'Exports: {exports}')
-          print(f'Environments: {envs}')
-          if exports < 70:
-              print(f'WARNING: Only {exports} exports, expected 71+')
-          if envs < 24:
-              print(f'WARNING: Only {envs} environments, expected 24+')
+          
+          errors = []
+          for importer, modname, ispkg in pkgutil.walk_packages(cognicore.__path__, 'cognicore.'):
+              try:
+                  importlib.import_module(modname)
+              except Exception as e:
+                  errors.append(f'{modname}: {e}')
+          
+          if errors:
+              print('IMPORT ERRORS:')
+              for e in errors:
+                  print(f'  ❌ {e}')
+          else:
+              print(f'✅ All {len(list(pkgutil.walk_packages(cognicore.__path__, \"cognicore.\")))} modules import clean')
           " 2>&1 | tee import_output.txt
-          if grep -q "WARNING" import_output.txt; then
-            echo "IMPORT_WARNING=true" >> $GITHUB_ENV
-          fi
-          cat import_output.txt >> report.txt
-          echo "" >> report.txt
 
-          # 3. Doctor check
-          echo "### Doctor" >> report.txt
+          if grep -q "IMPORT ERRORS" import_output.txt; then
+            echo "IMPORT_BROKEN=true" >> $GITHUB_ENV
+          fi
+
+      # ─────────────────────────────────────────────
+      # 6. DOCTOR + TODO CHECK
+      # ─────────────────────────────────────────────
+      - name: Doctor check
+        id: doctor
+        continue-on-error: true
+        run: |
           python -m cognicore.cli doctor 2>&1 | tee doctor_output.txt
-          DOCTOR_EXIT=$?
-          if [ $DOCTOR_EXIT -ne 0 ]; then
+          if [ $? -ne 0 ]; then
             echo "DOCTOR_FAILED=true" >> $GITHUB_ENV
           fi
-          cat doctor_output.txt >> report.txt
-          echo "" >> report.txt
 
-          # 4. Check for TODO/FIXME/HACK
-          echo "### Code Warnings" >> report.txt
-          TODOS=$(grep -rn "TODO\|FIXME\|HACK\|XXX" cognicore/ --include="*.py" | wc -l)
-          echo "Found $TODOS TODO/FIXME/HACK comments" >> report.txt
+      - name: Count TODOs
+        run: |
+          TODOS=$(grep -rn "TODO\|FIXME\|HACK\|XXX" cognicore/ --include="*.py" 2>/dev/null | wc -l)
+          echo "TODO_COUNT=$TODOS" >> $GITHUB_ENV
           if [ "$TODOS" -gt 10 ]; then
             echo "CODE_WARNINGS=true" >> $GITHUB_ENV
-            echo "TODO_COUNT=$TODOS" >> $GITHUB_ENV
           fi
 
-          cat report.txt
+      # ═══════════════════════════════════════════════
+      # AUTO-CREATE ISSUES
+      # ═══════════════════════════════════════════════
 
-      - name: Create issue for test failures
+      - name: 🚨 Issue — Test failures
         if: env.TEST_FAILED == 'true'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const testOutput = fs.readFileSync('test_output.txt', 'utf8');
-            const failures = testOutput.split('\n').filter(l => l.includes('FAILED')).join('\n');
+            const output = fs.readFileSync('test_output.txt', 'utf8');
+            const failures = output.split('\n').filter(l => l.includes('FAILED')).join('\n');
 
-            // Check if similar issue already exists
             const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: '🤖 auto-detected,🐛 bug',
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: '🤖 auto-detected,🐛 bug',
             });
-            const existing = issues.find(i => i.title.includes('Test Failures Detected'));
+            const existing = issues.find(i => i.title.includes('Test Failures'));
             if (existing) {
               await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+                owner: context.repo.owner, repo: context.repo.repo,
                 issue_number: existing.number,
-                body: `🔄 **Update** (${new Date().toISOString().split('T')[0]}):\n\n\`\`\`\n${failures}\n\`\`\`\n\nTriggered by commit: ${context.sha.substring(0,7)}`,
+                body: `🔄 **Still failing** (${new Date().toISOString().split('T')[0]}):\n\`\`\`\n${failures}\n\`\`\`\nCommit: \`${context.sha.substring(0,7)}\``,
               });
               return;
             }
 
-            // Create labels
-            for (const label of ['🤖 auto-detected', '🐛 bug', '🚨 urgent']) {
-              try { await github.rest.issues.getLabel({ owner: context.repo.owner, repo: context.repo.repo, name: label }); }
-              catch { await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name: label, color: label.includes('urgent') ? 'b60205' : label.includes('bug') ? 'd73a4a' : '6f42c1' }); }
+            for (const l of ['🤖 auto-detected','🐛 bug','🚨 urgent']) {
+              try { await github.rest.issues.getLabel({owner:context.repo.owner,repo:context.repo.repo,name:l}); }
+              catch { await github.rest.issues.createLabel({owner:context.repo.owner,repo:context.repo.repo,name:l,color:l.includes('urgent')?'b60205':l.includes('bug')?'d73a4a':'6f42c1'}); }
             }
-
             await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `🚨 Test Failures Detected — ${process.env.TEST_FAILURES} test(s) failing`,
-              body: `## 🤖 Auto-Detected Issue\n\nThe CI bot found **${process.env.TEST_FAILURES} failing test(s)** on \`main\`.\n\n### Failed Tests\n\`\`\`\n${failures}\n\`\`\`\n\n### Commit\n${context.sha}\n\n### How to reproduce\n\`\`\`bash\npip install -e ".[dev]"\npytest tests/ -v\n\`\`\`\n\n---\n*This issue was auto-created by the CogniCore Health Bot.*`,
-              labels: ['🤖 auto-detected', '🐛 bug', '🚨 urgent'],
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `🚨 Test Failures — ${process.env.TEST_FAILURES} test(s) broken`,
+              body: `## 🤖 Auto-Detected\n\n**${process.env.TEST_FAILURES} tests failing** on \`main\`.\n\n\`\`\`\n${failures}\n\`\`\`\n\nCommit: ${context.sha}\n\n\`\`\`bash\npytest tests/ -v --tb=short\n\`\`\`\n\n---\n*Auto-created by CogniCore Bot*`,
+              labels: ['🤖 auto-detected','🐛 bug','🚨 urgent'],
             });
 
-      - name: Create issue for doctor failures
-        if: env.DOCTOR_FAILED == 'true'
+      - name: 🔐 Issue — Security vulnerabilities
+        if: env.SECURITY_ISSUES == 'true'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const doctorOutput = fs.readFileSync('doctor_output.txt', 'utf8');
+            const output = fs.readFileSync('security_output.txt', 'utf8').substring(0, 3000);
 
             const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: '🤖 auto-detected',
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: '🤖 auto-detected,🔐 security',
             });
-            if (issues.find(i => i.title.includes('Doctor Check Failed'))) return;
+            if (issues.length > 0) return;
 
-            for (const label of ['🤖 auto-detected', '⚠️ health']) {
-              try { await github.rest.issues.getLabel({ owner: context.repo.owner, repo: context.repo.repo, name: label }); }
-              catch { await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name: label, color: label.includes('health') ? 'fbca04' : '6f42c1' }); }
+            for (const l of ['🤖 auto-detected','🔐 security','🚨 urgent']) {
+              try { await github.rest.issues.getLabel({owner:context.repo.owner,repo:context.repo.repo,name:l}); }
+              catch { await github.rest.issues.createLabel({owner:context.repo.owner,repo:context.repo.repo,name:l,color:l.includes('security')?'e11d48':l.includes('urgent')?'b60205':'6f42c1'}); }
             }
-
             await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: '⚠️ Doctor Check Failed — Module Health Issue',
-              body: `## 🤖 Auto-Detected Issue\n\nThe doctor check found issues:\n\n\`\`\`\n${doctorOutput}\n\`\`\`\n\n### Commit\n${context.sha}\n\n---\n*Auto-created by CogniCore Health Bot.*`,
-              labels: ['🤖 auto-detected', '⚠️ health'],
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `🔐 Security Issues Found — ${process.env.SEC_HIGH} High, ${process.env.SEC_MED} Medium`,
+              body: `## 🤖 Auto-Detected Security Issues\n\nBandit found potential vulnerabilities:\n\n\`\`\`\n${output}\n\`\`\`\n\n### Priority\n- 🔴 High severity: ${process.env.SEC_HIGH}\n- 🟡 Medium severity: ${process.env.SEC_MED}\n\n---\n*Auto-created by CogniCore Bot*`,
+              labels: ['🤖 auto-detected','🔐 security','🚨 urgent'],
             });
 
-      - name: Create issue for high TODO count
+      - name: ⚠️ Issue — Code quality
+        if: env.LINT_ISSUES == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('lint_output.txt', 'utf8').substring(0, 3000);
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: '🤖 auto-detected,⚠️ code-quality',
+            });
+            if (issues.length > 0) return;
+
+            for (const l of ['🤖 auto-detected','⚠️ code-quality']) {
+              try { await github.rest.issues.getLabel({owner:context.repo.owner,repo:context.repo.repo,name:l}); }
+              catch { await github.rest.issues.createLabel({owner:context.repo.owner,repo:context.repo.repo,name:l,color:l.includes('quality')?'fbca04':'6f42c1'}); }
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `⚠️ Code Quality — ${process.env.LINT_COUNT} lint issues found`,
+              body: `## 🤖 Auto-Detected Code Issues\n\nRuff found **${process.env.LINT_COUNT} issues**:\n\n\`\`\`\n${output}\n\`\`\`\n\nFix with:\n\`\`\`bash\npip install ruff\nruff check cognicore/ --fix\n\`\`\`\n\n---\n*Auto-created by CogniCore Bot*`,
+              labels: ['🤖 auto-detected','⚠️ code-quality'],
+            });
+
+      - name: 💀 Issue — Broken imports
+        if: env.IMPORT_BROKEN == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('import_output.txt', 'utf8');
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: '🤖 auto-detected',
+            });
+            if (issues.find(i => i.title.includes('Broken Import'))) return;
+
+            for (const l of ['🤖 auto-detected','💀 broken','🚨 urgent']) {
+              try { await github.rest.issues.getLabel({owner:context.repo.owner,repo:context.repo.repo,name:l}); }
+              catch { await github.rest.issues.createLabel({owner:context.repo.owner,repo:context.repo.repo,name:l,color:l.includes('broken')?'b60205':l.includes('urgent')?'b60205':'6f42c1'}); }
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `💀 Broken Imports Detected — Module(s) can't load`,
+              body: `## 🤖 Auto-Detected\n\nSome modules fail to import:\n\n\`\`\`\n${output}\n\`\`\`\n\n---\n*Auto-created by CogniCore Bot*`,
+              labels: ['🤖 auto-detected','💀 broken','🚨 urgent'],
+            });
+
+      - name: 🧹 Issue — Too many TODOs
         if: env.CODE_WARNINGS == 'true'
         uses: actions/github-script@v7
         with:
           script: |
             const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: '🤖 auto-detected',
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: '🤖 auto-detected,🧹 cleanup',
             });
-            if (issues.find(i => i.title.includes('TODO'))) return;
+            if (issues.length > 0) return;
 
-            for (const label of ['🤖 auto-detected', '🧹 cleanup']) {
-              try { await github.rest.issues.getLabel({ owner: context.repo.owner, repo: context.repo.repo, name: label }); }
-              catch { await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo, name: label, color: label.includes('cleanup') ? 'c5def5' : '6f42c1' }); }
+            for (const l of ['🤖 auto-detected','🧹 cleanup']) {
+              try { await github.rest.issues.getLabel({owner:context.repo.owner,repo:context.repo.repo,name:l}); }
+              catch { await github.rest.issues.createLabel({owner:context.repo.owner,repo:context.repo.repo,name:l,color:l.includes('cleanup')?'c5def5':'6f42c1'}); }
             }
-
             await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `🧹 ${process.env.TODO_COUNT} TODO/FIXME comments need attention`,
-              body: `## 🤖 Auto-Detected\n\nFound **${process.env.TODO_COUNT}** TODO/FIXME/HACK comments in the codebase.\n\nRun this to see them all:\n\`\`\`bash\ngrep -rn "TODO\\|FIXME\\|HACK" cognicore/ --include="*.py"\n\`\`\`\n\n---\n*Auto-created by CogniCore Health Bot.*`,
-              labels: ['🤖 auto-detected', '🧹 cleanup'],
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `🧹 ${process.env.TODO_COUNT} TODO/FIXME comments need cleanup`,
+              body: `## 🤖 Auto-Detected\n\nFound **${process.env.TODO_COUNT}** TODO/FIXME/HACK comments.\n\n\`\`\`bash\ngrep -rn "TODO\\|FIXME\\|HACK" cognicore/ --include="*.py"\n\`\`\`\n\n---\n*Auto-created by CogniCore Bot*`,
+              labels: ['🤖 auto-detected','🧹 cleanup'],
+            });
+
+      - name: ⚕️ Issue — Doctor failed
+        if: env.DOCTOR_FAILED == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('doctor_output.txt', 'utf8');
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: '🤖 auto-detected',
+            });
+            if (issues.find(i => i.title.includes('Doctor'))) return;
+
+            for (const l of ['🤖 auto-detected','⚕️ health']) {
+              try { await github.rest.issues.getLabel({owner:context.repo.owner,repo:context.repo.repo,name:l}); }
+              catch { await github.rest.issues.createLabel({owner:context.repo.owner,repo:context.repo.repo,name:l,color:l.includes('health')?'fbca04':'6f42c1'}); }
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: '⚕️ Doctor Check Failed — Module Health Issue',
+              body: `## 🤖 Auto-Detected\n\n\`\`\`\n${output}\n\`\`\`\n\n---\n*Auto-created by CogniCore Bot*`,
+              labels: ['🤖 auto-detected','⚕️ health'],
             });
