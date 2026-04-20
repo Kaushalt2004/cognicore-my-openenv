@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '0 6 * * 1'  # Every Monday 6 AM UTC
+    - cron: '0 * * * *'  # Every hour
   workflow_dispatch:
 
 permissions:
