@@ -1,0 +1,32 @@
+name: 🧹 Stale Issues
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Every Sunday midnight
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          stale-issue-message: |
+            👋 This issue has been inactive for 30 days. It will be closed in 7 days if there's no further activity.
+
+            If this is still relevant, please comment to keep it open.
+          close-issue-message: |
+            🔒 Closed due to inactivity. Feel free to reopen if this is still needed.
+          stale-pr-message: |
+            👋 This PR has been inactive for 14 days. Please update or it will be closed in 7 days.
+          days-before-stale: 30
+          days-before-close: 7
+          days-before-pr-stale: 14
+          days-before-pr-close: 7
+          stale-issue-label: '⏰ stale'
+          stale-pr-label: '⏰ stale'
+          exempt-issue-labels: '📌 pinned,🚀 in-progress'
+          exempt-pr-labels: '📌 pinned,🚀 in-progress'

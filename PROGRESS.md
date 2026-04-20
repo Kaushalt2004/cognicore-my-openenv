@@ -1042,7 +1042,7 @@ trace.print_trace()  # step-by-step + decision tree
 ### Evolutionary Training
 ```python
 engine = cognicore.EvolutionEngine("SafetyClassification-v1", population_size=20)
-best = engine.evolve(generations=10)
+best = engine.evolve(generations=10)    
 print(best.genome)  # evolved optimal parameters
 ```
 

@@ -1,0 +1,71 @@
+name: 🚀 Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: commits } = await github.rest.repos.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 50,
+            });
+
+            const categories = {
+              feat: [],
+              fix: [],
+              docs: [],
+              other: [],
+            };
+
+            for (const commit of commits.slice(0, 30)) {
+              const msg = commit.commit.message.split('\n')[0];
+              if (msg.startsWith('feat') || msg.includes('add') || msg.includes('new'))
+                categories.feat.push(`- ${msg}`);
+              else if (msg.startsWith('fix') || msg.includes('fix'))
+                categories.fix.push(`- ${msg}`);
+              else if (msg.startsWith('doc') || msg.includes('README'))
+                categories.docs.push(`- ${msg}`);
+              else
+                categories.other.push(`- ${msg}`);
+            }
+
+            let body = `## What's Changed\n\n`;
+            if (categories.feat.length) body += `### ✨ New Features\n${categories.feat.join('\n')}\n\n`;
+            if (categories.fix.length) body += `### 🐛 Bug Fixes\n${categories.fix.join('\n')}\n\n`;
+            if (categories.docs.length) body += `### 📝 Documentation\n${categories.docs.join('\n')}\n\n`;
+            if (categories.other.length) body += `### 🔧 Other\n${categories.other.join('\n')}\n\n`;
+
+            body += `---\n\`\`\`\npip install cognicore-env==${context.ref.replace('refs/tags/v', '')}\n\`\`\``;
+            core.setOutput('body', body);
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: context.ref.replace('refs/tags/', ''),
+              name: `CogniCore ${context.ref.replace('refs/tags/', '')}`,
+              body: `${{ steps.changelog.outputs.body }}`,
+              draft: false,
+              prerelease: false,
+            });

@@ -1,6 +1,6 @@
 [project]
 name = "cognicore-env"
-version = "0.1.0"
+version = "0.2.0"
 description = "Cognitive environments for AI — Memory, Reflection, and Structured Rewards built into every environment."
 readme = "README.md"
 license = {text = "MIT"}

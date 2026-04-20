@@ -1,0 +1,61 @@
+name: CI — Tests & Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    name: 🧪 Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: pip install -e ".[dev]"
+
+      - name: Run tests
+        run: python -m pytest tests/ -v --tb=short -q
+
+      - name: Check import health
+        run: python -c "import cognicore; print(f'✅ {len(cognicore.__all__)} exports | v{cognicore.__version__}')"
+
+  lint:
+    name: 🔍 Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check syntax
+        run: python -m py_compile cognicore/__init__.py
+
+      - name: Verify all environments load
+        run: |
+          pip install -e .
+          python -c "
+          import cognicore
+          envs = cognicore.list_envs()
+          print(f'✅ {len(envs)} environments registered')
+          assert len(envs) >= 24, f'Expected 24+ envs, got {len(envs)}'
+          "
+
+      - name: Doctor check
+        run: python -m cognicore.cli doctor

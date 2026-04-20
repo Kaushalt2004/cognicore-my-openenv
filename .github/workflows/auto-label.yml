@@ -1,0 +1,96 @@
+name: 🏷️ Auto Label
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { issue, pull_request } = context.payload;
+            const item = issue || pull_request;
+            const title = (item.title || '').toLowerCase();
+            const body = (item.body || '').toLowerCase();
+            const text = title + ' ' + body;
+            const labels = [];
+
+            // Issue labels
+            if (text.includes('bug') || text.includes('error') || text.includes('crash') || text.includes('fix'))
+              labels.push('🐛 bug');
+            if (text.includes('feature') || text.includes('add') || text.includes('new') || text.includes('request'))
+              labels.push('✨ feature');
+            if (text.includes('doc') || text.includes('readme') || text.includes('typo'))
+              labels.push('📝 docs');
+            if (text.includes('test') || text.includes('pytest'))
+              labels.push('🧪 testing');
+            if (text.includes('memory') || text.includes('reflection') || text.includes('reward'))
+              labels.push('🧠 cognitive');
+            if (text.includes('security') || text.includes('safety') || text.includes('unsafe'))
+              labels.push('🛡️ safety');
+            if (text.includes('performance') || text.includes('slow') || text.includes('speed'))
+              labels.push('⚡ performance');
+            if (text.includes('help') || text.includes('question') || text.includes('how'))
+              labels.push('❓ question');
+
+            // PR-specific labels
+            if (pull_request) {
+              const files = await github.rest.pulls.listFiles({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pull_request.number,
+              });
+              const filenames = files.data.map(f => f.filename).join(' ');
+
+              if (filenames.includes('test'))
+                labels.push('🧪 testing');
+              if (filenames.includes('docs/') || filenames.includes('README'))
+                labels.push('📝 docs');
+              if (filenames.includes('middleware/'))
+                labels.push('🧠 cognitive');
+            }
+
+            if (labels.length === 0) labels.push('📋 triage');
+
+            // Create labels if they don't exist, then apply
+            for (const label of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label,
+                });
+              } catch {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label,
+                  color: label.includes('bug') ? 'd73a4a' :
+                         label.includes('feature') ? 'a2eeef' :
+                         label.includes('docs') ? '0075ca' :
+                         label.includes('testing') ? 'e4e669' :
+                         label.includes('cognitive') ? 'b60205' :
+                         label.includes('safety') ? 'fbca04' :
+                         label.includes('performance') ? '5319e7' :
+                         label.includes('question') ? 'd876e3' : 'ededed',
+                });
+              }
+            }
+
+            const number = (issue || pull_request).number;
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: number,
+              labels: labels,
+            });
+            console.log(`Applied labels: ${labels.join(', ')}`);
