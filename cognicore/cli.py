@@ -778,13 +778,13 @@ examples:
     sub_run.set_defaults(func=cmd_run)
 
     sub_serve = subparsers.add_parser("serve", help="Start the API server")
-    sub_serve.add_argument("--host", default="0.0.0.0")
+    sub_serve.add_argument("--host", default="127.0.0.1")
     sub_serve.add_argument("--port", type=int, default=8000)
     sub_serve.add_argument("-v", "--verbose", action="store_true")
     sub_serve.set_defaults(func=cmd_serve)
 
     sub_dash = subparsers.add_parser("dashboard", help="Start the web dashboard")
-    sub_dash.add_argument("--host", default="0.0.0.0")
+    sub_dash.add_argument("--host", default="127.0.0.1")
     sub_dash.add_argument("--port", type=int, default=8050)
     sub_dash.set_defaults(func=cmd_dashboard)
 
