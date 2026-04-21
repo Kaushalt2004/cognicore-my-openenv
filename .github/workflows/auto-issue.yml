@@ -24,7 +24,7 @@ jobs:
 
       - name: Install package + analysis tools
         run: |
-          pip install -e ".[dev]"
+          pip install -e ".[dev,server]"
           pip install ruff bandit
 
       # ─────────────────────────────────────────────
