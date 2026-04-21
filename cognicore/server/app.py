@@ -33,11 +33,26 @@ try:
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel, Field
+    _FASTAPI_AVAILABLE = True
 except ImportError:
-    raise ImportError(
-        "CogniCore server requires FastAPI and Pydantic. "
-        "Install with: pip install cognicore[server]"
-    )
+    _FASTAPI_AVAILABLE = False
+
+    # Minimal stubs so this module can be imported without FastAPI/Pydantic.
+    # Actual usage (e.g. calling create_app()) will raise a clear error.
+    class BaseModel:  # type: ignore[no-redef]
+        pass
+
+    def Field(*args: object, **kwargs: object) -> object:  # type: ignore[misc]
+        return None
+
+    class FastAPI:  # type: ignore[no-redef]
+        pass
+
+    class HTTPException(Exception):  # type: ignore[no-redef]
+        pass
+
+    class CORSMiddleware:  # type: ignore[no-redef]
+        pass
 
 import cognicore
 from cognicore.core.base_env import CogniCoreEnv
@@ -87,8 +102,14 @@ def _get_session(sid: str) -> Dict[str, Any]:
 # App factory
 # ---------------------------------------------------------------------------
 
-def create_app() -> FastAPI:
+def create_app() -> "FastAPI":
     """Create the CogniCore FastAPI application."""
+
+    if not _FASTAPI_AVAILABLE:
+        raise ImportError(
+            "CogniCore server requires FastAPI and Pydantic. "
+            "Install with: pip install cognicore[server]"
+        )
 
     app = FastAPI(
         title="CogniCore API",
