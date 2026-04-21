@@ -7,13 +7,31 @@ Supports any OpenAI-compatible endpoint via API_BASE_URL.
 
 import os
 import time
-from typing import Optional
-from openai import OpenAI
+from typing import TYPE_CHECKING, Optional
+
+try:
+    from openai import OpenAI as _OpenAI
+    _openai_available = True
+except ImportError:
+    _openai_available = False
+    _OpenAI = None
+
+if TYPE_CHECKING:
+    from openai import OpenAI
 
 
-def get_client() -> OpenAI:
+def _require_openai():
+    if not _openai_available:
+        raise ImportError(
+            "CogniCore LLM requires the openai package. "
+            "Install with: pip install cognicore[llm]"
+        )
+
+
+def get_client() -> "OpenAI":
     """Create an OpenAI client from environment variables."""
-    return OpenAI(
+    _require_openai()
+    return _OpenAI(
         base_url=os.getenv("API_BASE_URL", "https://api.openai.com/v1"),
         api_key=os.getenv("HF_TOKEN", "no-key"),
     )
