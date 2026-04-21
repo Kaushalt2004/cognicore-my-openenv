@@ -45,7 +45,7 @@ class ResponseCache:
 
     def _key(self, prompt: str) -> str:
         """Generate cache key from prompt."""
-        return hashlib.md5(prompt.encode("utf-8")).hexdigest()
+        return hashlib.md5(prompt.encode("utf-8"), usedforsecurity=False).hexdigest()
 
     def get(self, prompt: str) -> Optional[Any]:
         """Get cached response for a prompt."""

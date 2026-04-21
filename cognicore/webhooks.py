@@ -166,13 +166,17 @@ class AlertSystem:
                 httpx.post(url, json=alert, timeout=5)
             except ImportError:
                 try:
+                    import urllib.parse
                     import urllib.request
+                    parsed = urllib.parse.urlparse(url)
+                    if parsed.scheme not in ("http", "https"):
+                        raise ValueError("Webhook URL must use http or https protocol")
                     data = json.dumps(alert, default=str).encode()
                     req = urllib.request.Request(
                         url, data=data,
                         headers={"Content-Type": "application/json"},
                     )
-                    urllib.request.urlopen(req, timeout=5)
+                    urllib.request.urlopen(req, timeout=5)  # nosec B310
                 except Exception:
                     pass
         self.handlers.append(webhook_handler)

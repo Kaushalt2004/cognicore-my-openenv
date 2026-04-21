@@ -832,7 +832,7 @@ def create_dashboard_app():
     return app
 
 
-def serve_dashboard(host: str = "0.0.0.0", port: int = 8050) -> None:
+def serve_dashboard(host: str = "127.0.0.1", port: int = 8050) -> None:
     """Start the dashboard server."""
     try:
         import uvicorn
