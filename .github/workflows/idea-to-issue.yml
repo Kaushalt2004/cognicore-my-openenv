@@ -1,0 +1,77 @@
+name: 💡 Idea to Issue
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  idea-to-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse IDEAs and Create Issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+
+            // Find all instances of "IDEA:" or "FEATURE:"
+            let grepOutput = '';
+            try {
+              grepOutput = execSync('grep -rnw "cognicore/" -e "IDEA:" -e "FEATURE:" --include="*.py" || true').toString();
+            } catch (err) {
+              console.log('Error running grep:', err);
+            }
+
+            if (!grepOutput) {
+              console.log('No IDEA or FEATURE tags found.');
+              return;
+            }
+
+            const lines = grepOutput.split('\n').filter(l => l.trim() !== '');
+            const repoUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${context.sha}`;
+
+            // Fetch existing issues
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+            });
+
+            for (const line of lines) {
+              const match = line.match(/(.+?):(\d+):.*(?:IDEA|FEATURE):\s*(.+)/i);
+              if (!match) continue;
+
+              const file = match[1];
+              const lineNum = match[2];
+              const ideaText = match[3].trim();
+
+              const title = `💡 Idea: ${ideaText.substring(0, 50)}${ideaText.length > 50 ? '...' : ''}`;
+              
+              // Check if issue already exists
+              const exists = issues.some(i => i.title.includes(ideaText.substring(0, 30)));
+              if (exists) {
+                console.log(`Issue already exists for: ${ideaText}`);
+                continue;
+              }
+
+              const body = `## 💡 Auto-Generated Idea\n\nFound a new idea in the codebase!\n\n**Idea:** ${ideaText}\n\n**Location:** [${file}#L${lineNum}](${repoUrl}/${file}#L${lineNum})\n\n---\n*Auto-created by CogniCore Idea Bot*`;
+
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['✨ feature', '🤖 auto-detected'],
+              });
+
+              console.log(`Created issue: ${title}`);
+            }

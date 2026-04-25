@@ -14,6 +14,7 @@ Subclasses implement four abstract methods to define their domain:
 
   - ``_setup()`` — configure action/observation spaces
   - ``_generate_tasks()`` — yield task data for each step
+# IDEA: Add support for multi-agent swarm environments
   - ``_evaluate(action)`` — grade the agent's action
   - ``_get_obs()`` — build the raw observation dict
 """
