@@ -177,3 +177,145 @@ class TestSwarm:
         result = swarm.solve("SafetyClassification-v1", episodes=1, verbose=False)
         mem = result.shared.stats()
         assert mem["total_contributions"] > 0
+
+
+# ---------------------------------------------------------------------------
+# Helpers for SwarmEnv tests
+# ---------------------------------------------------------------------------
+
+from cognicore.swarm import SwarmEnv
+from cognicore.core.types import EvalResult
+
+
+class _SimpleSwarmEnv(SwarmEnv):
+    """Minimal concrete SwarmEnv for testing."""
+
+    TASKS = [
+        {"question": "1+1", "answer": 2, "category": "arithmetic"},
+        {"question": "2+2", "answer": 4, "category": "arithmetic"},
+        {"question": "3*3", "answer": 9, "category": "multiplication"},
+    ]
+
+    def _setup(self, **kwargs):
+        pass
+
+    def _generate_tasks(self):
+        return list(self.TASKS)
+
+    def _evaluate_multi(self, actions):
+        task = self._tasks[self._current_step]
+        results = {}
+        for aid in self.agent_ids:
+            action = actions.get(aid, {})
+            predicted = action.get("answer", 0)
+            correct = predicted == task["answer"]
+            results[aid] = {
+                "eval_result": EvalResult(
+                    base_score=1.0 if correct else 0.0,
+                    correct=correct,
+                    category=task["category"],
+                    predicted=str(predicted),
+                    ground_truth=str(task["answer"]),
+                ),
+                "message": "ok",
+            }
+        return results
+
+    def _get_obs_for_agent(self, agent_id):
+        if self._current_step >= len(self._tasks):
+            return {}
+        task = self._tasks[self._current_step]
+        return {"question": task["question"], "category": task["category"]}
+
+
+class TestSwarmEnv:
+    def test_create_swarm_env(self):
+        env = _SimpleSwarmEnv(num_agents=2)
+        assert env.num_agents == 2
+        assert hasattr(env, "shared_memory")
+        assert len(env.agent_ids) == 2
+
+    def test_reset_contains_swarm_stats(self):
+        env = _SimpleSwarmEnv(num_agents=2)
+        obs = env.reset()
+        for aid in env.agent_ids:
+            assert aid in obs
+            assert "swarm_stats" in obs[aid]
+
+    def test_step_updates_shared_memory(self):
+        env = _SimpleSwarmEnv(num_agents=2)
+        env.reset()
+        # Submit actions from both agents
+        env.step_agent(env.agent_ids[0], {"answer": 2})
+        env.step_agent(env.agent_ids[1], {"answer": 2})
+        stats = env.shared_memory.stats()
+        assert stats["total_contributions"] > 0
+
+    def test_get_swarm_obs_includes_suggestion(self):
+        env = _SimpleSwarmEnv(num_agents=2)
+        env.reset()
+        # Seed shared memory with a correct action
+        env.shared_memory.contribute("agent_0", "arithmetic", "2", True)
+        obs = env.get_swarm_obs(env.agent_ids[0])
+        assert "swarm_suggestion" in obs
+        assert obs["swarm_suggestion"] == "2"
+
+    def test_get_swarm_obs_no_suggestion_when_memory_empty(self):
+        env = _SimpleSwarmEnv(num_agents=2)
+        env.reset()
+        obs = env.get_swarm_obs(env.agent_ids[0])
+        assert "swarm_suggestion" not in obs
+
+    def test_swarm_stats_method(self):
+        env = _SimpleSwarmEnv(num_agents=2)
+        env.reset()
+        stats = env.swarm_stats()
+        assert "categories" in stats
+        assert "total_contributions" in stats
+        assert "top_contributors" in stats
+
+    def test_full_episode(self):
+        env = _SimpleSwarmEnv(num_agents=2)
+        env.reset()
+        done = False
+        steps = 0
+        while not done:
+            results = None
+            for aid in env.agent_ids:
+                r = env.step_agent(aid, {"answer": 99})
+                if "_done" in r:
+                    results = r
+            assert results is not None
+            done = results["_done"]
+            steps += 1
+        assert steps == len(_SimpleSwarmEnv.TASKS)
+        # Shared memory must have been populated
+        assert env.swarm_stats()["total_contributions"] > 0
+
+    def test_swarm_solve_parallel(self):
+        """Swarm.solve_parallel runs all agents simultaneously."""
+        env = _SimpleSwarmEnv(num_agents=2)
+        swarm = Swarm(size=2, diversity=False)
+        result = swarm.solve_parallel(env, episodes=1, verbose=False)
+        assert result.avg_accuracy >= 0
+        assert result.best_agent is not None
+        # Shared memory must have been merged into Swarm's pool
+        assert swarm.shared.stats()["total_contributions"] > 0
+
+    def test_solve_parallel_wrong_type_raises(self):
+        import pytest
+        swarm = Swarm(size=2)
+        with pytest.raises(TypeError):
+            swarm.solve_parallel("not_a_swarm_env")
+
+    def test_solve_parallel_size_mismatch_raises(self):
+        import pytest
+        env = _SimpleSwarmEnv(num_agents=3)
+        swarm = Swarm(size=2)
+        with pytest.raises(ValueError):
+            swarm.solve_parallel(env)
+
+    def test_swarm_env_exported_from_cognicore(self):
+        import cognicore
+        assert hasattr(cognicore, "SwarmEnv")
+        assert cognicore.SwarmEnv is SwarmEnv

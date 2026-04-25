@@ -6,10 +6,22 @@ tasks better than any individual agent.
 
 Usage::
 
-    from cognicore.swarm import Swarm
+    from cognicore.swarm import Swarm, SwarmEnv
 
+    # Sequential swarm (one agent at a time)
     swarm = Swarm(size=5)
     result = swarm.solve("SafetyClassification-v1", episodes=3)
+    result.print_report()
+
+    # Parallel swarm (all agents act simultaneously in a shared environment)
+    class MySwarmEnv(SwarmEnv):
+        def _setup(self, **kw): ...
+        def _generate_tasks(self): ...
+        def _evaluate_multi(self, actions): ...
+        def _get_obs_for_agent(self, agent_id): ...
+
+    swarm = Swarm(size=3)
+    result = swarm.solve_parallel(MySwarmEnv(num_agents=3), episodes=2)
     result.print_report()
 """
 
@@ -20,6 +32,8 @@ from typing import Any, Dict, List, Optional
 
 import cognicore
 from cognicore.smart_agents import AutoLearner, SafeAgent, AdaptiveAgent
+from cognicore.multi_agent import MultiAgentEnv
+from cognicore.core.types import CogniCoreConfig
 
 
 class SharedMemory:
@@ -137,6 +151,134 @@ class SwarmResult:
         print(f"{'=' * 60}\n")
 
 
+class SwarmEnv(MultiAgentEnv):
+    """Multi-agent environment enhanced with swarm intelligence.
+
+    Extends :class:`~cognicore.multi_agent.MultiAgentEnv` so all agents
+    share a global :class:`SharedMemory` pool.  After every resolved step
+    each agent's result is automatically contributed to that pool, and the
+    swarm's collective best-known action for the current task category is
+    injected into every agent's observation as a ``swarm_suggestion`` key.
+
+    Subclasses must implement the same four abstract methods as
+    :class:`~cognicore.multi_agent.MultiAgentEnv`:
+
+    - ``_setup(**kwargs)``
+    - ``_generate_tasks()``
+    - ``_evaluate_multi(actions)``
+    - ``_get_obs_for_agent(agent_id)``
+
+    Parameters
+    ----------
+    num_agents : int
+        Number of agents that will act in the environment.
+    agent_ids : list of str, optional
+        Custom agent identifiers.  Defaults to ``["agent_0", "agent_1", …]``.
+    config : CogniCoreConfig, optional
+        Middleware configuration passed to the base environment.
+    **kwargs
+        Forwarded to ``_setup()``.
+
+    Example
+    -------
+    ::
+
+        from cognicore.swarm import Swarm, SwarmEnv
+
+        class MyEnv(SwarmEnv):
+            def _setup(self, **kw): ...
+            def _generate_tasks(self): return [...]
+            def _evaluate_multi(self, actions): ...
+            def _get_obs_for_agent(self, agent_id): ...
+
+        swarm = Swarm(size=3)
+        result = swarm.solve_parallel(MyEnv(num_agents=3), episodes=2)
+        result.print_report()
+    """
+
+    def __init__(
+        self,
+        num_agents: int = 3,
+        agent_ids: Optional[List[str]] = None,
+        config: Optional[CogniCoreConfig] = None,
+        **kwargs: Any,
+    ) -> None:
+        self.shared_memory = SharedMemory()
+        super().__init__(num_agents=num_agents, agent_ids=agent_ids, config=config, **kwargs)
+
+    # ------------------------------------------------------------------
+    # Overrides
+    # ------------------------------------------------------------------
+
+    def reset(self, **kwargs: Any) -> Dict[str, Any]:
+        """Reset environment and inject swarm context into initial observations."""
+        multi_obs = super().reset(**kwargs)
+        for aid in self.agent_ids:
+            if aid in multi_obs:
+                multi_obs[aid]["swarm_stats"] = self.shared_memory.stats()
+        return multi_obs
+
+    def _resolve_step(self) -> Dict[str, Any]:
+        """Evaluate all agents, update shared memory, and return results."""
+        results = super()._resolve_step()
+
+        # Contribute each agent's outcome to the shared memory pool
+        for aid in self.agent_ids:
+            if aid not in results:
+                continue
+            er = results[aid].get("eval_result", {})
+            category = er.get("category", "")
+            predicted = str(er.get("predicted", ""))
+            correct = er.get("correct", False)
+            if category:
+                self.shared_memory.contribute(aid, category, predicted, correct)
+
+        return results
+
+    # ------------------------------------------------------------------
+    # New public helpers
+    # ------------------------------------------------------------------
+
+    def get_swarm_obs(self, agent_id: str) -> Dict[str, Any]:
+        """Return per-agent observation enriched with swarm knowledge.
+
+        Calls :meth:`_get_obs_for_agent` and then appends:
+
+        - ``swarm_suggestion`` — the action the swarm collectively found
+          most successful for the current task category (if any).
+        - ``swarm_stats`` — a snapshot of shared-memory statistics.
+
+        Parameters
+        ----------
+        agent_id : str
+            The ID of the agent requesting the observation.
+
+        Returns
+        -------
+        dict
+            Enriched observation dictionary.
+        """
+        obs = self._get_obs_for_agent(agent_id)
+        category = obs.get("category", "")
+        if category:
+            suggestion = self.shared_memory.consult(category)
+            if suggestion is not None:
+                obs["swarm_suggestion"] = suggestion
+        obs["swarm_stats"] = self.shared_memory.stats()
+        return obs
+
+    def swarm_stats(self) -> Dict[str, Any]:
+        """Return swarm-level statistics from the shared memory pool.
+
+        Returns
+        -------
+        dict
+            Dictionary with ``categories``, ``total_contributions``, and
+            ``top_contributors``.
+        """
+        return self.shared_memory.stats()
+
+
 class Swarm:
     """Multi-agent swarm with shared global memory.
 
@@ -198,5 +340,114 @@ class Swarm:
                 if verbose:
                     stats = env.episode_stats()
                     print(f"  {agent.name} ep{ep+1}: accuracy={stats.accuracy:.0%}")
+
+        return SwarmResult(self.agents, self.shared)
+
+    def solve_parallel(
+        self,
+        swarm_env: SwarmEnv,
+        episodes: int = 1,
+        verbose: bool = True,
+    ) -> SwarmResult:
+        """Run the swarm in a :class:`SwarmEnv` (parallel mode).
+
+        All agents act *simultaneously* each step — one agent per slot in
+        the environment — sharing knowledge through the environment's
+        :class:`SharedMemory` pool.  After every episode the pool is merged
+        into this :class:`Swarm`'s own :attr:`shared` memory so results
+        remain available via :class:`SwarmResult`.
+
+        Parameters
+        ----------
+        swarm_env : SwarmEnv
+            A :class:`SwarmEnv` instance whose ``num_agents`` matches
+            ``self.size``.
+        episodes : int
+            Number of episodes to run.
+        verbose : bool
+            Print per-episode progress.
+
+        Returns
+        -------
+        SwarmResult
+            Aggregated results across all agents and episodes.
+
+        Raises
+        ------
+        TypeError
+            If *swarm_env* is not a :class:`SwarmEnv` instance.
+        ValueError
+            If the number of agent slots in *swarm_env* does not match
+            ``self.size``.
+        """
+        if not isinstance(swarm_env, SwarmEnv):
+            raise TypeError(
+                f"swarm_env must be a SwarmEnv instance, got {type(swarm_env).__name__}"
+            )
+        if len(swarm_env.agent_ids) != self.size:
+            raise ValueError(
+                f"SwarmEnv has {len(swarm_env.agent_ids)} agent slots but "
+                f"Swarm has {self.size} agents"
+            )
+
+        if verbose:
+            print(f"\n  Swarm (parallel): {self.size} agents")
+            print(f"  Environment: {type(swarm_env).__name__}")
+            print(f"  Episodes: {episodes}")
+            print(f"  {'─' * 50}")
+
+        for ep in range(episodes):
+            obs_map = swarm_env.reset()
+            done = False
+
+            while not done:
+                last_results: Optional[Dict[str, Any]] = None
+
+                # All agents submit their actions in turn; evaluation happens
+                # once the last agent has acted (inside step_agent).
+                for agent, aid in zip(self.agents, swarm_env.agent_ids):
+                    obs = obs_map.get(aid, {})
+                    # Enrich obs with swarm suggestion before acting
+                    category = obs.get("category", "")
+                    if category:
+                        suggestion = swarm_env.shared_memory.consult(category)
+                        if suggestion is not None:
+                            obs["swarm_suggestion"] = suggestion
+
+                    action = agent.act(obs)
+                    result = swarm_env.step_agent(aid, action)
+
+                    # step_agent returns the full results dict once the last
+                    # agent has acted (contains "_step" and "_done").
+                    if "_step" in result:
+                        last_results = result
+
+                if last_results is None:
+                    # Should not happen if env is consistent, but guard anyway
+                    break
+
+                done = last_results.get("_done", False)
+
+                # Credit agents and build the next observation map
+                obs_map = {}
+                for agent, aid in zip(self.agents, swarm_env.agent_ids):
+                    agent_result = last_results.get(aid, {})
+                    er = agent_result.get("eval_result", {})
+                    if er.get("correct", False):
+                        agent.correct += 1
+                    agent.total += 1
+                    if not done:
+                        obs_map[aid] = swarm_env.get_swarm_obs(aid)
+
+            if verbose:
+                stats = swarm_env.episode_stats()
+                print(f"  ep{ep + 1}: accuracy={stats.accuracy:.0%}")
+
+        # Merge the environment's shared memory into the Swarm's own pool
+        for cat, actions in swarm_env.shared_memory.knowledge.items():
+            for action, score in actions.items():
+                self.shared.knowledge[cat][action] += score
+        for agent_name, count in swarm_env.shared_memory.contributions.items():
+            self.shared.contributions[agent_name] += count
 
         return SwarmResult(self.agents, self.shared)
