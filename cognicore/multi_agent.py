@@ -115,6 +115,8 @@ class MultiAgentEnv(CogniCoreEnv):
                     "base_score": eval_result.base_score,
                     "correct": eval_result.correct,
                     "category": eval_result.category,
+                    "predicted": str(getattr(eval_result, "predicted", "")),
+                    "ground_truth": str(getattr(eval_result, "ground_truth", "")),
                 },
                 "reward": eval_result.base_score,
                 "message": agent_result.get("message", ""),

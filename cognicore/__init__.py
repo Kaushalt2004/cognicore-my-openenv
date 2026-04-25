@@ -105,7 +105,7 @@ from cognicore.causal import CausalEngine
 from cognicore.agent_builder import build_agent, describe_agent
 from cognicore.strategy import StrategySwitcher
 from cognicore.lifelong import LifelongAgent
-from cognicore.swarm import Swarm
+from cognicore.swarm import Swarm, SwarmEnv
 
 __all__ = [
     # Version
@@ -194,4 +194,5 @@ __all__ = [
     "StrategySwitcher",
     "LifelongAgent",
     "Swarm",
+    "SwarmEnv",
 ]
