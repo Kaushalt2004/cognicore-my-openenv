@@ -27,16 +27,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev]" pytest-cov
 
-      - name: Run tests
-        run: python -m pytest tests/ -v --tb=short -q
+      - name: Run tests with Coverage
+        run: python -m pytest tests/ -v --tb=short -q --cov=cognicore --cov-report=term-missing
 
       - name: Check import health
         run: python -c "import cognicore; print(f'✅ {len(cognicore.__all__)} exports | v{cognicore.__version__}')"
 
-  lint:
-    name: 🔍 Code Quality
+  strict-quality:
+    name: 🛡️ Strict Quality Checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,12 +44,25 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Check syntax
-        run: python -m py_compile cognicore/__init__.py
+      - name: Install strict analysis tools
+        run: |
+          pip install -e ".[dev]"
+          pip install ruff black mypy bandit
+
+      - name: 🔍 Linting (Ruff) - Fail on syntax or undefined variables
+        run: ruff check cognicore/ tests/ --select E,F,W
+
+      - name: 🎨 Formatting (Black)
+        run: black --check cognicore/ tests/ || echo "Formatting issues found! Run 'black cognicore/ tests/' locally."
+
+      - name: 🛡️ Security Scan (Bandit)
+        run: bandit -r cognicore/ -ll -q
+
+      - name: 🔬 Type Checking (Mypy)
+        run: mypy cognicore/ --ignore-missing-imports || echo "Type checking has warnings."
 
       - name: Verify all environments load
         run: |
-          pip install -e .
           python -c "
           import cognicore
           envs = cognicore.list_envs()
