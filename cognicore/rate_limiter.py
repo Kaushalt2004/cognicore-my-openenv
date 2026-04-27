@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import time
 from collections import deque
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 
 class RateLimiter:
@@ -118,7 +118,7 @@ class RateLimiter:
     def print_usage(self):
         """Print usage stats."""
         u = self.usage()
-        print(f"\n  Rate Limiter Status:")
+        print("\n  Rate Limiter Status:")
         for period in ("minute", "hour", "day"):
             data = u[period]
             pct = data["used"] / data["limit"] if data["limit"] else 0

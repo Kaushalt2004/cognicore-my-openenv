@@ -241,7 +241,7 @@ class SafetyLayer:
         """Print formatted compliance report."""
         r = self.compliance_report()
         print(f"\n{'=' * 50}")
-        print(f"  Safety Compliance Report")
+        print("  Safety Compliance Report")
         print(f"{'=' * 50}")
         print(f"  Total checks:    {r['total_checks']}")
         print(f"  Violations:      {r['total_violations']}")

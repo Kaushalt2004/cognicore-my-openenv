@@ -25,7 +25,7 @@ import json
 import os
 import time
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import cognicore
 from cognicore.smart_agents import AutoLearner
@@ -226,7 +226,7 @@ class LifelongAgent:
         print(f"  Categories known: {bio['knowledge_categories']}")
 
         if bio["env_performance"]:
-            print(f"\n  Performance by environment:")
+            print("\n  Performance by environment:")
             for env_id, perf in bio["env_performance"].items():
                 bar_len = int(perf.get("best_accuracy", 0) * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)

@@ -17,7 +17,7 @@ Usage::
 from __future__ import annotations
 
 import random
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 
 class AttackerAgent:
@@ -229,7 +229,7 @@ class BattleResult:
     def print_battle_report(self):
         """Print formatted battle report."""
         print(f"\n{'=' * 65}")
-        print(f"  Red vs Blue Battle Report")
+        print("  Red vs Blue Battle Report")
         print(f"{'=' * 65}")
         print(f"  Rounds: {self.total_rounds}")
         print(f"  Attacker ({self.attacker_name}): {self.attacker_wins} wins ({self.attacker_win_rate:.0%})")
@@ -240,7 +240,7 @@ class BattleResult:
         # Strategy effectiveness
         strats = self.strategy_effectiveness()
         if strats:
-            print(f"\n  Attack Strategy Effectiveness:")
+            print("\n  Attack Strategy Effectiveness:")
             for name, s in list(strats.items())[:5]:
                 bar_len = int(s["effectiveness"] * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)
@@ -249,7 +249,7 @@ class BattleResult:
         # Adaptation curve
         curve = self.adaptation_curve()
         if len(curve) > 1:
-            print(f"\n  Defender Adaptation:")
+            print("\n  Defender Adaptation:")
             for c in curve:
                 bar_len = int(c["defender_accuracy"] * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)

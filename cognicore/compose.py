@@ -30,7 +30,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import cognicore
 from cognicore.core.base_env import CogniCoreEnv
-from cognicore.core.types import StructuredReward
 
 
 class Pipeline:

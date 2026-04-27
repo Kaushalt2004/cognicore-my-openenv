@@ -9,7 +9,7 @@ which is ideal for the 30-case dataset and HuggingFace Spaces deployment.
 """
 
 import time
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 
 class VectorMemory:

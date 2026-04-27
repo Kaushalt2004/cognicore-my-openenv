@@ -160,7 +160,7 @@ class ExecutionTrace:
     def print_trace(self, max_lines: int = 30):
         """Print formatted execution trace."""
         print(f"\n{'=' * 65}")
-        print(f"  AI Debugger — Execution Trace")
+        print("  AI Debugger — Execution Trace")
         print(f"  {len(self.steps)} steps | {len(self.breakpoint_hits)} breakpoints hit")
         print(f"{'=' * 65}")
 
@@ -179,7 +179,7 @@ class ExecutionTrace:
 
         # Breakpoint summary
         if self.breakpoint_hits:
-            print(f"\n  Breakpoint Hits:")
+            print("\n  Breakpoint Hits:")
             for bp in self.breakpoint_hits[:10]:
                 d = bp.to_dict()
                 print(
@@ -191,7 +191,7 @@ class ExecutionTrace:
         # Decision tree
         tree = self.decision_tree()
         if tree:
-            print(f"\n  Decision Tree:")
+            print("\n  Decision Tree:")
             for cat in sorted(tree.keys()):
                 node = tree[cat]
                 print(f"    {cat} ({node['total']} cases):")

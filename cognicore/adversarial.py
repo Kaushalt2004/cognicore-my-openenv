@@ -18,9 +18,7 @@ Usage::
 
 from __future__ import annotations
 
-import random
-import string
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List
 
 import cognicore
 
@@ -146,7 +144,7 @@ class AdversarialTester:
 
         # 4. Consistency testing (same input, different runs)
         if verbose:
-            print(f"\n  [4/4] Consistency Testing (10 repetitions)")
+            print("\n  [4/4] Consistency Testing (10 repetitions)")
         consistency = self._test_consistency(agent)
         results["consistency_results"] = consistency
 
@@ -402,7 +400,7 @@ class AdversarialReport:
     def print_vulnerabilities(self):
         """Print formatted vulnerability report."""
         print(f"\n{'=' * 65}")
-        print(f"  Adversarial Test Results")
+        print("  Adversarial Test Results")
         print(f"{'=' * 65}")
         print(f"  Injection resistance: {self.injection_resistance:.0%}")
         print(f"  Edge case handling:   {self.edge_case_handling:.0%}")
@@ -414,7 +412,7 @@ class AdversarialReport:
             for v in vulns[:10]:
                 print(f"    [{v['severity']:8s}] {v['type']:12s} — {v['detail']}")
         else:
-            print(f"\n  No vulnerabilities found. Agent is robust.")
+            print("\n  No vulnerabilities found. Agent is robust.")
 
         # Consistency
         cons = self.results.get("consistency_results", {})

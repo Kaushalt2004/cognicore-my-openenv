@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 
 from cognicore.core.base_env import CogniCoreEnv
 from cognicore.core.types import CogniCoreConfig, EvalResult
-from cognicore.core.spaces import DiscreteSpace, DictSpace, TextSpace
+from cognicore.core.spaces import DictSpace, TextSpace
 from cognicore.envs.data.conversation_cases import (
     ConversationCase,
     get_conversation_cases,

@@ -1,13 +1,10 @@
 """Tests for Phase 7 platform features."""
 
 import os
-import json
-import tempfile
 
-import cognicore
 from cognicore.persistence import save_agent, load_agent
 from cognicore.report import ReportGenerator
-from cognicore.replay import SessionRecorder, replay
+from cognicore.replay import SessionRecorder
 from cognicore.profiles import get_profile, list_profiles
 from cognicore.prompt_optimizer import PromptOptimizer
 from cognicore.webhooks import AlertSystem

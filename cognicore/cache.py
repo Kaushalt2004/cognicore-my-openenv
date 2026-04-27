@@ -115,7 +115,7 @@ class ResponseCache:
     def print_stats(self):
         """Print cache statistics."""
         s = self.stats()
-        print(f"\n  Response Cache:")
+        print("\n  Response Cache:")
         print(f"    Size: {s['size']}/{s['max_size']}")
         print(f"    Hits: {s['hits']} | Misses: {s['misses']}")
         print(f"    Hit rate: {s['hit_rate']:.0%}")

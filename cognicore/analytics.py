@@ -16,7 +16,7 @@ Usage::
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from collections import defaultdict
 
 
@@ -178,7 +178,7 @@ class AnalyticsReport:
     def print_insights(self):
         """Print a human-readable insights report."""
         print(f"\n{'=' * 60}")
-        print(f"  CogniCore Performance Insights")
+        print("  CogniCore Performance Insights")
         print(f"{'=' * 60}")
 
         # Learning curve
@@ -193,27 +193,27 @@ class AnalyticsReport:
         # Weak categories
         weak = self.weak_categories(3)
         if weak:
-            print(f"\n  Weakest categories:")
+            print("\n  Weakest categories:")
             for w in weak:
                 print(f"    {w['category']:25s} accuracy={w['accuracy']:.0%} ({w['correct']}/{w['total']})")
 
         # Memory impact
         mem = self.memory_impact()
-        print(f"\n  Memory impact:")
+        print("\n  Memory impact:")
         print(f"    Total memory bonus: {mem['memory_total']:+.2f} ({mem['memory_pct_of_reward']:.1f}% of reward)")
         print(f"    Steps where memory helped: {mem['memory_helped_steps']}")
         print(f"    Steps with streak penalty: {mem['streak_hit_steps']}")
 
         # Streak analysis
         streaks = self.streak_analysis()
-        print(f"\n  Streaks:")
+        print("\n  Streaks:")
         print(f"    Longest failure streak: {streaks['max_streak']}")
         print(f"    Average streak length: {streaks['avg_streak']:.1f}")
 
         # Confusion pairs
         confused = self.confusion_pairs(3)
         if confused:
-            print(f"\n  Most common mistakes:")
+            print("\n  Most common mistakes:")
             for c in confused:
                 print(f"    Predicted '{c['predicted']}' but truth was '{c['truth']}' ({c['count']}x)")
 

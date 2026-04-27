@@ -5,7 +5,7 @@ import pytest
 import cognicore
 from cognicore.core.base_env import CogniCoreEnv
 from cognicore.core.types import EvalResult
-from cognicore.envs.registry import register, make, list_envs, _REGISTRY
+from cognicore.envs.registry import _REGISTRY
 
 
 class TestRegistry:

@@ -15,10 +15,10 @@ Usage::
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from cognicore.core.base_env import CogniCoreEnv
-from cognicore.core.types import CogniCoreConfig, EvalResult, StructuredReward
+from cognicore.core.types import CogniCoreConfig, EvalResult
 
 
 class MultiAgentEnv(CogniCoreEnv):

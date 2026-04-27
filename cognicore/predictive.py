@@ -273,7 +273,7 @@ class FailurePredictor:
         """Print formatted risk report."""
         r = self.risk_report()
         print(f"\n{'=' * 55}")
-        print(f"  Predictive Failure Report")
+        print("  Predictive Failure Report")
         print(f"{'=' * 55}")
         print(f"  Observations: {r['total_observations']}")
         print(f"  Accuracy: {r['overall_accuracy']:.0%}")
@@ -282,7 +282,7 @@ class FailurePredictor:
         print(f"  Alerts: {r['alerts_triggered']}")
 
         if r["highest_risk_categories"]:
-            print(f"\n  Riskiest categories:")
+            print("\n  Riskiest categories:")
             for c in r["highest_risk_categories"][:5]:
                 bar_len = int(c["failure_rate"] * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)

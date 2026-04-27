@@ -18,7 +18,7 @@ Usage::
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict
 
 import cognicore
 from cognicore.analytics import PerformanceAnalyzer
@@ -67,7 +67,7 @@ def auto_improve(
 
     if verbose:
         print(f"\n{'=' * 60}")
-        print(f"  Auto-Improvement Loop")
+        print("  Auto-Improvement Loop")
         print(f"  Env: {env_id} ({difficulty})")
         print(f"  Target: {target_accuracy:.0%} accuracy")
         print(f"  Max cycles: {max_cycles}")
@@ -177,11 +177,11 @@ def auto_improve(
     }
 
     if verbose:
-        print(f"\n  Summary:")
+        print("\n  Summary:")
         print(f"    {result['initial_accuracy']:.0%} -> {result['final_accuracy']:.0%} "
               f"(improvement: {result['improvement']:+.0%})")
         if result["weak_categories"]:
-            print(f"    Still weak on:")
+            print("    Still weak on:")
             for w in result["weak_categories"][:3]:
                 print(f"      - {w['category']}: {w['accuracy']:.0%}")
         print(f"{'=' * 60}\n")

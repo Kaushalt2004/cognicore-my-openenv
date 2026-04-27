@@ -9,7 +9,7 @@ Hard (10):   Long, nuanced texts with multiple viewpoints
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import List
 
 
 @dataclass

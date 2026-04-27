@@ -22,7 +22,7 @@ import math
 import time
 import re
 from collections import Counter, defaultdict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 
 class SemanticMemory:

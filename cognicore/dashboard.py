@@ -14,9 +14,6 @@ Usage::
 """
 
 from __future__ import annotations
-import json
-import os
-from typing import Any
 
 DASHBOARD_HTML = r"""<!DOCTYPE html>
 <html lang="en">

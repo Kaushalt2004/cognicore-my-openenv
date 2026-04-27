@@ -2,7 +2,6 @@
 
 import cognicore
 from cognicore.envs.code_debugging import CodeDebuggingEnv
-from cognicore.core.types import StructuredReward
 
 
 class TestCodeEnvBasics:

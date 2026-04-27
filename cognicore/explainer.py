@@ -24,7 +24,7 @@ Usage::
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 class Explainer:
@@ -304,7 +304,7 @@ class ExplanationReport:
     def print_report(self):
         """Print a formatted XAI report."""
         print(f"\n{'=' * 65}")
-        print(f"  Explainable AI Report")
+        print("  Explainable AI Report")
         print(f"  {self.total_steps} steps | accuracy: {self.accuracy:.0%}")
         print(f"{'=' * 65}")
 
@@ -318,7 +318,7 @@ class ExplanationReport:
 
         # Improvement plan
         plan = self.improvement_plan()
-        print(f"\n  Improvement Plan:")
+        print("\n  Improvement Plan:")
         for item in plan:
             print(f"    {item}")
 

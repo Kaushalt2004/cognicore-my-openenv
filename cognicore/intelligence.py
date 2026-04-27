@@ -22,7 +22,7 @@ Usage::
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Dict, List
+from typing import Dict, List
 
 
 class IntelligenceScore:
@@ -35,7 +35,7 @@ class IntelligenceScore:
     def print_card(self):
         """Print formatted intelligence card."""
         print(f"\n{'=' * 50}")
-        print(f"  Intelligence Score Card")
+        print("  Intelligence Score Card")
         print(f"  Overall: {self.overall:.0f} / 100")
         print(f"{'=' * 50}")
         for dim, score in sorted(self.dimensions.items(), key=lambda x: -x[1]):

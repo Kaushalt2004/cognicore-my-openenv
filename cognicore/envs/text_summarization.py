@@ -9,13 +9,12 @@ Usage::
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional
 
 from cognicore.core.base_env import CogniCoreEnv
-from cognicore.core.types import CogniCoreConfig, EvalResult
+from cognicore.core.types import EvalResult
 from cognicore.core.spaces import DictSpace, TextSpace
 from cognicore.envs.data.summarization_cases import (
-    SummarizationCase, get_summarization_cases, grade_summary,
+    get_summarization_cases, grade_summary,
 )
 
 

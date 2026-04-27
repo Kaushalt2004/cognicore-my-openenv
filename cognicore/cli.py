@@ -98,7 +98,7 @@ def cmd_run(args):
 
     print(f"\nCogniCore v{cognicore.__version__}")
     print(f"Environment: {args.env_id} (difficulty={args.difficulty})")
-    print(f"Agent: RandomAgent")
+    print("Agent: RandomAgent")
     print(f"Episodes: {args.episodes}")
     print("=" * 60)
 
@@ -208,7 +208,7 @@ def cmd_benchmark(args):
     """Benchmark an agent across environments."""
     from cognicore.benchmark import benchmark_agent
 
-    print(f"\nCogniCore Benchmark")
+    print("\nCogniCore Benchmark")
     print(f"  Environments: {args.envs}")
     print(f"  Difficulties: {args.difficulties}")
     print(f"  Episodes: {args.episodes}")
@@ -227,7 +227,7 @@ def cmd_curriculum(args):
     """Run curriculum learning (auto-difficulty progression)."""
     from cognicore.curriculum import CurriculumRunner
 
-    print(f"\nCogniCore Curriculum Learning")
+    print("\nCogniCore Curriculum Learning")
     print(f"  Env: {args.env_id}")
     print(f"  Promotion: {args.threshold}")
     print(f"  Max episodes: {args.episodes}")
@@ -445,7 +445,7 @@ def cmd_cost(args):
 
     # Scale projection
     total_per_ep = tracker.total_cost
-    print(f"  Projected costs:")
+    print("  Projected costs:")
     print(f"    10 episodes:    ${total_per_ep * 10:.4f}")
     print(f"    100 episodes:   ${total_per_ep * 100:.4f}")
     print(f"    1000 episodes:  ${total_per_ep * 1000:.4f}")
@@ -457,7 +457,7 @@ def cmd_transfer(args):
     from cognicore.smart_agents import AutoLearner
     from cognicore.knowledge_transfer import transfer_knowledge
 
-    print(f"\nKnowledge Transfer Demo")
+    print("\nKnowledge Transfer Demo")
     print("=" * 55)
 
     # Train expert
@@ -484,7 +484,7 @@ def cmd_transfer(args):
     print(f"    Skipped: {result['skipped']}")
 
     # Test student
-    print(f"\n  Phase 3: Testing student agent...")
+    print("\n  Phase 3: Testing student agent...")
     env = cognicore.make(args.env_id, difficulty="easy")
     obs = env.reset()
     while True:
@@ -496,7 +496,7 @@ def cmd_transfer(args):
 
     stats = env.episode_stats()
     print(f"    Student accuracy (first try): {stats.accuracy:.0%}")
-    print(f"\n  Knowledge transfer complete!")
+    print("\n  Knowledge transfer complete!")
     print("=" * 55)
     print()
 
@@ -536,7 +536,7 @@ def cmd_build(args):
     agent = build_agent(goal=args.goal, risk_tolerance=args.risk)
     info = describe_agent(agent)
 
-    print(f"\n  Agent Builder")
+    print("\n  Agent Builder")
     print(f"  Goal: {args.goal}")
     print(f"  Risk: {args.risk}")
     print("=" * 55)
@@ -591,7 +591,7 @@ def cmd_report(args):
     path = report.export(args.output)
     print(f"\n  Report exported: {path}")
     print(f"  Episodes: {args.episodes}")
-    print(f"  Open in browser to view.\n")
+    print("  Open in browser to view.\n")
 
 
 def cmd_doctor(args):
@@ -693,9 +693,9 @@ def cmd_doctor(args):
     print(f"\n{'=' * 55}")
     print(f"  {passed}/{checks} checks passed, {failed} failed")
     if failed == 0:
-        print(f"  CogniCore is healthy!")
+        print("  CogniCore is healthy!")
     else:
-        print(f"  Some checks failed. Run 'pip install cognicore-env[all]' for full features.")
+        print("  Some checks failed. Run 'pip install cognicore-env[all]' for full features.")
     print(f"  Exports: {len(cognicore.__all__)}")
     print(f"  Environments: {len(envs)}")
     print(f"{'=' * 55}\n")

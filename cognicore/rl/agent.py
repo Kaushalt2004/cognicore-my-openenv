@@ -5,7 +5,7 @@ In the Colab notebook, the Agent wraps a PPO model for FrozenLake.
 Here, it wraps the LLM client to classify AI responses for safety.
 """
 
-from typing import Tuple, Optional
+from typing import Tuple
 from cognicore.llm.gemini import classify_safety
 from cognicore.memory.vector_memory import VectorMemory
 from cognicore.reflection.reflection import Reflection

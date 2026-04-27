@@ -198,7 +198,7 @@ class CostTracker:
         # Model comparison
         comp = self.compare_models()
         if comp and self.total_tokens > 0:
-            print(f"\n  Same usage across models:")
+            print("\n  Same usage across models:")
             for model, cost in sorted(comp.items(), key=lambda x: x[1]):
                 marker = " <-- current" if model == self.model_name else ""
                 print(f"    {model:20s} ${cost:.4f}{marker}")

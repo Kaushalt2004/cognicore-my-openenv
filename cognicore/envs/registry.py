@@ -17,7 +17,7 @@ Usage::
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 from cognicore.core.base_env import CogniCoreEnv
 

@@ -16,9 +16,7 @@ Usage::
 from __future__ import annotations
 
 import copy
-import random
-from collections import defaultdict
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 
 class MetaRewardOptimizer:

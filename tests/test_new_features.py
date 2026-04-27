@@ -3,13 +3,12 @@
 import os
 import json
 import shutil
-import tempfile
 
 import cognicore
 from cognicore.memory_manager import MemoryManager
 from cognicore.leaderboard import Leaderboard
 from cognicore.finetuning import EpisodeRecorder, export_jsonl, export_reward_dataset
-from cognicore.multi_agent import MultiAgentEnv, DebateEnv
+from cognicore.multi_agent import DebateEnv
 
 
 # Use a temp directory inside the project for all tests

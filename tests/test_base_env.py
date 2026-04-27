@@ -3,7 +3,7 @@
 import pytest
 
 from cognicore.core.base_env import CogniCoreEnv
-from cognicore.core.types import CogniCoreConfig, EvalResult, StructuredReward
+from cognicore.core.types import CogniCoreConfig, EvalResult
 from cognicore.core.spaces import DiscreteSpace
 
 

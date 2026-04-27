@@ -121,7 +121,7 @@ class SwarmResult:
 
     def print_report(self):
         print(f"\n{'=' * 60}")
-        print(f"  Swarm Intelligence Report")
+        print("  Swarm Intelligence Report")
         print(f"  {len(self.agents)} agents | avg accuracy: {self.avg_accuracy:.0%}")
         print(f"{'=' * 60}")
 

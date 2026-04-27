@@ -2,7 +2,6 @@
 
 import cognicore
 from cognicore.envs.math_reasoning import MathReasoningEnv
-from cognicore.core.types import StructuredReward
 
 
 class TestMathEnvBasics:

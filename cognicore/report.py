@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import time
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import cognicore
 from cognicore.agents.base_agent import RandomAgent

@@ -16,7 +16,7 @@ Usage::
 from __future__ import annotations
 
 import random
-from typing import Any, Dict, List
+from typing import Dict, List
 
 
 class DataAugmenter:

@@ -323,7 +323,7 @@ class CognitiveMemory:
     def print_state(self):
         """Print current memory state across all tiers."""
         s = self.stats()
-        print(f"\n  Cognitive Memory State:")
+        print("\n  Cognitive Memory State:")
         print(f"    Working Memory:   {s['working_memory']} items (capacity: {self.working.capacity})")
         print(f"    Episodic Memory:  {s['episodic_memories']} experiences")
         print(f"    Semantic Memory:  {s['semantic_categories']} categories known")
@@ -331,6 +331,6 @@ class CognitiveMemory:
 
         rules = self.procedural.list_rules()
         if rules:
-            print(f"\n    Learned rules:")
+            print("\n    Learned rules:")
             for r in rules[:5]:
                 print(f"      {r['rule']} ({r['confidence']:.0%}, n={r['observations']})")

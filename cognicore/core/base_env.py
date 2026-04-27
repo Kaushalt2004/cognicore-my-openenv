@@ -30,7 +30,6 @@ from cognicore.core.types import (
     EpisodeStats,
     EvalResult,
     ProposalFeedback,
-    StepResult,
     StructuredReward,
 )
 from cognicore.middleware.memory import Memory

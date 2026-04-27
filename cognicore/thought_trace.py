@@ -202,18 +202,18 @@ class ThoughtTracer:
     def print_analysis(self):
         """Print full reasoning analysis."""
         print(f"\n{'=' * 60}")
-        print(f"  Thought Trace Analysis")
+        print("  Thought Trace Analysis")
         print(f"  {len(self.chains)} decisions traced")
         print(f"{'=' * 60}")
 
         # Calibration
         cal = self.confidence_calibration()
-        print(f"\n  Confidence Calibration:")
+        print("\n  Confidence Calibration:")
         print(f"    Avg confidence: {cal['avg_confidence']:.0%}")
         print(f"    Actual accuracy: {cal['accuracy']:.0%}")
         print(f"    Calibration error: {cal['calibration_error']:.0%}")
         if cal.get("overconfident"):
-            print(f"    WARNING: Agent is overconfident")
+            print("    WARNING: Agent is overconfident")
 
         # Errors
         errors = self.reasoning_errors()

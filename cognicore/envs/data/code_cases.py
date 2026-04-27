@@ -8,8 +8,7 @@ Hard (10):   Subtle bugs — race conditions, floating point, security flaws
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
 
 
 @dataclass

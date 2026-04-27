@@ -11,7 +11,6 @@ Usage::
 
 from __future__ import annotations
 
-import time
 from typing import Any, Dict, List, Optional
 
 import cognicore

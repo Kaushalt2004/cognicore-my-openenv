@@ -1,6 +1,5 @@
 """Tests for Curriculum, Benchmark, and Pipeline (Phase 3/4 features)."""
 
-import cognicore
 from cognicore.curriculum import CurriculumRunner
 from cognicore.benchmark import benchmark_agent, BenchmarkResult
 from cognicore.compose import Pipeline

@@ -188,7 +188,7 @@ class EvolutionEngine:
         """
         if verbose:
             print(f"\n{'=' * 60}")
-            print(f"  Evolutionary Training")
+            print("  Evolutionary Training")
             print(f"  Env: {self.env_id} ({self.difficulty})")
             print(f"  Population: {self.population_size} | Generations: {generations}")
             print(f"{'=' * 60}")
@@ -246,7 +246,7 @@ class EvolutionEngine:
 
         best = self.population[0]
         if verbose:
-            print(f"\n  Best agent genome:")
+            print("\n  Best agent genome:")
             for k, v in best.genome.items():
                 print(f"    {k:25s} = {v}")
             print(f"  Fitness: {best.fitness:.1f}")

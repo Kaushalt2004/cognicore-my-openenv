@@ -6,7 +6,7 @@ In the AI Safety Monitor, the safety layer tracks wrong-streak penalties
 and flags when the agent is consistently misclassifying cases.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 
 class Safety:

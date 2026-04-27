@@ -1,6 +1,5 @@
 """Tests for CogniCore Memory middleware."""
 
-import json
 import os
 import tempfile
 

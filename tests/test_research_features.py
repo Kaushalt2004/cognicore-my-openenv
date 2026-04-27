@@ -1,6 +1,5 @@
 """Tests for Phase 6 research-grade features."""
 
-import cognicore
 from cognicore.predictive import FailurePredictor
 from cognicore.multi_memory import CognitiveMemory
 from cognicore.red_blue import RedVsBlue

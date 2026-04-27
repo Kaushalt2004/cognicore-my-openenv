@@ -8,7 +8,7 @@ middleware state, then assembles the final ``StructuredReward``.
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from cognicore.core.types import CogniCoreConfig, EvalResult, StructuredReward
 from cognicore.middleware.memory import Memory

@@ -1,7 +1,5 @@
 """Tests for Phase 8 — Roadmap features."""
 
-import os
-import cognicore
 from cognicore.meta_rewards import MetaRewardOptimizer
 from cognicore.causal import CausalEngine
 from cognicore.agent_builder import build_agent, describe_agent
