@@ -102,7 +102,9 @@ class DebugSnapshot:
             "category": self.obs.get("category", "?"),
             "action": self.action,
             "correct": self.info.get("eval_result", {}).get("correct", None),
-            "reward": self.reward.total if hasattr(self.reward, "total") else self.reward,
+            "reward": self.reward.total
+            if hasattr(self.reward, "total")
+            else self.reward,
             "breakpoint": self.breakpoint_name,
             "memory_entries": self.memory_state.get("total_entries", 0),
         }
@@ -161,11 +163,15 @@ class ExecutionTrace:
         """Print formatted execution trace."""
         print(f"\n{'=' * 65}")
         print("  AI Debugger — Execution Trace")
-        print(f"  {len(self.steps)} steps | {len(self.breakpoint_hits)} breakpoints hit")
+        print(
+            f"  {len(self.steps)} steps | {len(self.breakpoint_hits)} breakpoints hit"
+        )
         print(f"{'=' * 65}")
 
         for s in self.steps[:max_lines]:
-            icon = " OK" if s.get("correct") else "BRK" if s.get("breakpoint") else "ERR"
+            icon = (
+                " OK" if s.get("correct") else "BRK" if s.get("breakpoint") else "ERR"
+            )
             bp = f" [BP: {s['breakpoint']}]" if s.get("breakpoint") else ""
             reward = s.get("reward", 0)
             print(
@@ -288,6 +294,7 @@ class AIDebugger:
 
         if agent is None:
             from cognicore.agents.base_agent import RandomAgent
+
             agent = RandomAgent(env.action_space)
 
         trace = ExecutionTrace()
@@ -342,7 +349,9 @@ class AIDebugger:
                     reward=reward,
                     info=info,
                     breakpoint_name=triggered_bp.name,
-                    memory_state={"total_entries": env.memory.stats().get("total_entries", 0)},
+                    memory_state={
+                        "total_entries": env.memory.stats().get("total_entries", 0)
+                    },
                 )
                 trace.add_snapshot(snapshot)
 
@@ -361,7 +370,7 @@ class AIDebugger:
                     pass
 
             # Agent learns (if it can)
-            if hasattr(agent, 'learn'):
+            if hasattr(agent, "learn"):
                 agent.learn(reward, info)
 
             if verbose and not triggered_bp:
@@ -375,6 +384,8 @@ class AIDebugger:
                 break
 
         if verbose:
-            print(f"\n  Done: {step} steps, {len(trace.breakpoint_hits)} breakpoints hit")
+            print(
+                f"\n  Done: {step} steps, {len(trace.breakpoint_hits)} breakpoints hit"
+            )
 
         return trace

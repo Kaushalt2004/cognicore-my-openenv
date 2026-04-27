@@ -123,10 +123,7 @@ class Leaderboard:
 
     def get_agent_history(self, agent_id: str) -> List[Dict[str, Any]]:
         """Get all submissions for a specific agent."""
-        return [
-            e for e in self._data["entries"]
-            if e["agent_id"] == agent_id
-        ]
+        return [e for e in self._data["entries"] if e["agent_id"] == agent_id]
 
     def get_stats(self) -> Dict[str, Any]:
         """Get overall leaderboard statistics."""

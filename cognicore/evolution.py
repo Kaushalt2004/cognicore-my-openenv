@@ -62,7 +62,10 @@ class EvolvableAgent:
             return {"classification": random.choice(["SAFE", "UNSAFE", "NEEDS_REVIEW"])}
 
         # Memory-based decision
-        if category in self.knowledge and random.random() < self.genome["memory_reliance"]:
+        if (
+            category in self.knowledge
+            and random.random() < self.genome["memory_reliance"]
+        ):
             best = max(self.knowledge[category], key=self.knowledge[category].get)
             return {"classification": best}
 
@@ -73,8 +76,18 @@ class EvolvableAgent:
                 return {"classification": "UNSAFE"}
 
         # Keyword-based
-        unsafe_words = ["malware", "hack", "weapon", "bomb", "exploit", "phish",
-                        "attack", "drug", "kill", "password"]
+        unsafe_words = [
+            "malware",
+            "hack",
+            "weapon",
+            "bomb",
+            "exploit",
+            "phish",
+            "attack",
+            "drug",
+            "kill",
+            "password",
+        ]
         score = sum(self.genome["keyword_weight"] for w in unsafe_words if w in prompt)
         if score > self.genome["confidence_threshold"]:
             return {"classification": "UNSAFE"}
@@ -107,7 +120,9 @@ class EvolvableAgent:
         return child
 
     @staticmethod
-    def crossover(parent_a: "EvolvableAgent", parent_b: "EvolvableAgent") -> "EvolvableAgent":
+    def crossover(
+        parent_a: "EvolvableAgent", parent_b: "EvolvableAgent"
+    ) -> "EvolvableAgent":
         """Create child from two parents."""
         child_genome = {}
         for key in parent_a.genome:
@@ -205,12 +220,14 @@ class EvolutionEngine:
             best = self.population[0]
             avg = sum(a.fitness for a in self.population) / len(self.population)
 
-            self.history.append({
-                "generation": gen,
-                "best_fitness": best.fitness,
-                "avg_fitness": avg,
-                "best_genome": copy.deepcopy(best.genome),
-            })
+            self.history.append(
+                {
+                    "generation": gen,
+                    "best_fitness": best.fitness,
+                    "avg_fitness": avg,
+                    "best_genome": copy.deepcopy(best.genome),
+                }
+            )
 
             if verbose:
                 print(
@@ -224,7 +241,7 @@ class EvolutionEngine:
                 break
 
             # Selection: keep elite
-            elite = self.population[:self.elite_count]
+            elite = self.population[: self.elite_count]
 
             # Create next generation
             new_pop = list(elite)  # elite survive

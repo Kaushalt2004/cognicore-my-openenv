@@ -12,11 +12,14 @@ class MathEnv(CogniCoreEnv):
 
     def _setup(self, **kwargs):
         self.action_space = DiscreteSpace(10)
-        self.problems = kwargs.get("problems", [
-            {"q": "2+2", "a": 4, "category": "addition"},
-            {"q": "3*3", "a": 9, "category": "multiplication"},
-            {"q": "10-7", "a": 3, "category": "subtraction"},
-        ])
+        self.problems = kwargs.get(
+            "problems",
+            [
+                {"q": "2+2", "a": 4, "category": "addition"},
+                {"q": "3*3", "a": 9, "category": "multiplication"},
+                {"q": "10-7", "a": 3, "category": "subtraction"},
+            ],
+        )
 
     def _generate_tasks(self):
         return self.problems
@@ -110,7 +113,7 @@ class TestBaseEnvMiddleware:
         env = MathEnv()
         env.reset()
         env.step({"answer": 99})  # wrong
-        env.step({"answer": 9})   # correct (3*3=9)
+        env.step({"answer": 9})  # correct (3*3=9)
 
         assert env.safety_monitor.get_wrong_streak() == 0
 

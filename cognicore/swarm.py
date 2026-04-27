@@ -77,6 +77,7 @@ class SwarmAgent:
         if swarm_suggestion and hasattr(self.inner, "epsilon"):
             # Trust swarm with some probability
             import random
+
             if random.random() > self.inner.epsilon:
                 return {"classification": swarm_suggestion}
 
@@ -117,7 +118,11 @@ class SwarmResult:
 
     @property
     def avg_accuracy(self) -> float:
-        return sum(a.accuracy for a in self.agents) / len(self.agents) if self.agents else 0
+        return (
+            sum(a.accuracy for a in self.agents) / len(self.agents)
+            if self.agents
+            else 0
+        )
 
     def print_report(self):
         print(f"\n{'=' * 60}")
@@ -131,9 +136,13 @@ class SwarmResult:
             print(f"  {a.name:15s} [{bar}] {a.accuracy:.0%} ({a.correct}/{a.total})")
 
         mem = self.shared.stats()
-        print(f"\n  Shared Memory: {mem['categories']} categories, {mem['total_contributions']} contributions")
+        print(
+            f"\n  Shared Memory: {mem['categories']} categories, {mem['total_contributions']} contributions"
+        )
         if mem["top_contributors"]:
-            print(f"  Top contributors: {', '.join(f'{k}({v})' for k, v in mem['top_contributors'].items())}")
+            print(
+                f"  Top contributors: {', '.join(f'{k}({v})' for k, v in mem['top_contributors'].items())}"
+            )
         print(f"{'=' * 60}\n")
 
 
@@ -163,7 +172,7 @@ class Swarm:
                 cls = AutoLearner
 
             inner = cls()
-            name = f"agent_{i+1}"
+            name = f"agent_{i + 1}"
             self.agents.append(SwarmAgent(name, inner, self.shared))
 
     def solve(
@@ -197,6 +206,6 @@ class Swarm:
 
                 if verbose:
                     stats = env.episode_stats()
-                    print(f"  {agent.name} ep{ep+1}: accuracy={stats.accuracy:.0%}")
+                    print(f"  {agent.name} ep{ep + 1}: accuracy={stats.accuracy:.0%}")
 
         return SwarmResult(self.agents, self.shared)

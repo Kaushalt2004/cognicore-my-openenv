@@ -82,9 +82,7 @@ class TestMemoryPersistence:
         mem.store({"category": "saved", "correct": False, "data": "world"})
 
         # Save to temp file
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             path = f.name
 
         try:

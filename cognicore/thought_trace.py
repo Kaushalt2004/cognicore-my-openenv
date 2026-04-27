@@ -129,14 +129,16 @@ class ThoughtTracer:
         for chain in self.chains:
             error = chain.reasoning_error()
             if error:
-                errors.append({
-                    "step": chain.step,
-                    "context": chain.context[:60],
-                    "concluded": chain.conclusion,
-                    "truth": chain.truth,
-                    "error": error,
-                    "evidence_count": len(chain.nodes),
-                })
+                errors.append(
+                    {
+                        "step": chain.step,
+                        "context": chain.context[:60],
+                        "concluded": chain.conclusion,
+                        "truth": chain.truth,
+                        "error": error,
+                        "evidence_count": len(chain.nodes),
+                    }
+                )
         return errors
 
     def evidence_accuracy(self) -> Dict[str, Dict[str, float]]:
@@ -150,7 +152,11 @@ class ThoughtTracer:
                 evidence_stats[key]["total"] += 1
 
                 if chain.correct is not None:
-                    if (node.direction == chain.truth) if chain.truth else chain.correct:
+                    if (
+                        (node.direction == chain.truth)
+                        if chain.truth
+                        else chain.correct
+                    ):
                         evidence_stats[key]["helpful"] += 1
                     else:
                         evidence_stats[key]["misleading"] += 1
@@ -187,11 +193,15 @@ class ThoughtTracer:
 
         for i, node in enumerate(chain.nodes):
             arrow = "→" if node.direction else "?"
-            print(f"    {i+1}. {node.evidence} (weight={node.weight:.1f}) {arrow} {node.direction}")
+            print(
+                f"    {i + 1}. {node.evidence} (weight={node.weight:.1f}) {arrow} {node.direction}"
+            )
 
         if chain.conclusion:
             icon = "✓" if chain.correct else "✗" if chain.correct is False else "?"
-            print(f"  Conclusion: {chain.conclusion} (confidence={chain.confidence:.0%}) [{icon}]")
+            print(
+                f"  Conclusion: {chain.conclusion} (confidence={chain.confidence:.0%}) [{icon}]"
+            )
 
         if chain.truth and not chain.correct:
             error = chain.reasoning_error()

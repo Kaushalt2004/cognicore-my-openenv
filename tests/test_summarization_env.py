@@ -25,9 +25,11 @@ class TestSummarizationEnv:
         env = cognicore.make("Summarization-v1", difficulty="easy")
         env.reset()
         # Summarize first case with key points
-        obs, reward, done, _, info = env.step({
-            "summary": "MIT scientists created a solar panel 30% more efficient using perovskite material, halving solar energy costs within two years."
-        })
+        obs, reward, done, _, info = env.step(
+            {
+                "summary": "MIT scientists created a solar panel 30% more efficient using perovskite material, halving solar energy costs within two years."
+            }
+        )
         assert reward.base_score > 0.5
 
     def test_empty_summary(self):
@@ -47,6 +49,7 @@ class TestSummarizationEnv:
 class TestSummarizationGrading:
     def test_grade_with_all_key_points(self):
         from cognicore.envs.data.summarization_cases import grade_summary
+
         score = grade_summary(
             "MIT created 30% more efficient solar panel using perovskite material within two years at half cost",
             "reference",
@@ -56,5 +59,8 @@ class TestSummarizationGrading:
 
     def test_grade_with_no_key_points(self):
         from cognicore.envs.data.summarization_cases import grade_summary
-        score = grade_summary("Hello world", "reference", ["MIT", "perovskite", "solar"])
+
+        score = grade_summary(
+            "Hello world", "reference", ["MIT", "perovskite", "solar"]
+        )
         assert score < 0.3

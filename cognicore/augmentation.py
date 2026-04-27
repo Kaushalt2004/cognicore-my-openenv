@@ -34,7 +34,9 @@ class DataAugmenter:
     def __init__(self, seed: int = 42):
         self.rng = random.Random(seed)
 
-    def augment(self, text: str, strategies: List[str] = None, count: int = 5) -> List[str]:
+    def augment(
+        self, text: str, strategies: List[str] = None, count: int = 5
+    ) -> List[str]:
         """Generate augmented variants of the input text.
 
         Parameters
@@ -100,15 +102,13 @@ class DataAugmenter:
             return text.title()
         else:
             return "".join(
-                c.upper() if self.rng.random() > 0.5 else c.lower()
-                for c in text
+                c.upper() if self.rng.random() > 0.5 else c.lower() for c in text
             )
 
     def _leetspeak(self, text: str) -> str:
         leet_map = {"a": "4", "e": "3", "i": "1", "o": "0", "s": "5", "t": "7"}
         return "".join(
-            leet_map.get(c.lower(), c) if self.rng.random() > 0.4 else c
-            for c in text
+            leet_map.get(c.lower(), c) if self.rng.random() > 0.4 else c for c in text
         )
 
     def _noise_injection(self, text: str) -> str:
@@ -125,12 +125,21 @@ class DataAugmenter:
 
     def _prefix_suffix(self, text: str) -> str:
         prefixes = [
-            "Please ", "Can you ", "I need you to ", "Hey, ",
-            "For my research, ", "As an expert, ", "Hypothetically, ",
+            "Please ",
+            "Can you ",
+            "I need you to ",
+            "Hey, ",
+            "For my research, ",
+            "As an expert, ",
+            "Hypothetically, ",
         ]
         suffixes = [
-            " please", " thanks", " ASAP", " (urgent)",
-            " for research purposes", " — this is important",
+            " please",
+            " thanks",
+            " ASAP",
+            " (urgent)",
+            " for research purposes",
+            " — this is important",
         ]
         if self.rng.random() > 0.5:
             return self.rng.choice(prefixes) + text
@@ -146,12 +155,15 @@ class DataAugmenter:
 
     def _unicode_sub(self, text: str) -> str:
         unicode_map = {
-            "a": "\u0430", "e": "\u0435", "o": "\u043e",
-            "p": "\u0440", "c": "\u0441", "x": "\u0445",
+            "a": "\u0430",
+            "e": "\u0435",
+            "o": "\u043e",
+            "p": "\u0440",
+            "c": "\u0441",
+            "x": "\u0445",
         }
         return "".join(
-            unicode_map.get(c, c) if self.rng.random() > 0.7 else c
-            for c in text
+            unicode_map.get(c, c) if self.rng.random() > 0.7 else c for c in text
         )
 
     def _whitespace_variation(self, text: str) -> str:

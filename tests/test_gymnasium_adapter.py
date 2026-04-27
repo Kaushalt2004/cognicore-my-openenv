@@ -69,9 +69,7 @@ class TestGymnasiumAdapter:
         feedback = gym_env.propose({"classification": "UNSAFE"})
         assert hasattr(feedback, "confidence_estimate")
 
-        obs, reward, done, truncated, info = gym_env.revise(
-            {"classification": "SAFE"}
-        )
+        obs, reward, done, truncated, info = gym_env.revise({"classification": "SAFE"})
         assert isinstance(reward, float)
 
     def test_state_proxy(self):

@@ -805,11 +805,12 @@ init();
 def create_dashboard_app():
     """Create a FastAPI app that serves the dashboard + API."""
     try:
-        from fastapi import FastAPI
         from fastapi.responses import HTMLResponse
         from cognicore.server.app import create_app as create_api_app
     except ImportError:
-        raise ImportError("Dashboard requires FastAPI. Install with: pip install cognicore[server]")
+        raise ImportError(
+            "Dashboard requires FastAPI. Install with: pip install cognicore[server]"
+        )
 
     app = create_api_app()
 
@@ -820,6 +821,7 @@ def create_dashboard_app():
     @app.get("/leaderboard")
     def get_leaderboard():
         from cognicore.leaderboard import Leaderboard
+
         lb = Leaderboard()
         return {
             "rankings": lb.get_rankings(top_k=50),
@@ -834,9 +836,12 @@ def serve_dashboard(host: str = "127.0.0.1", port: int = 8050) -> None:
     try:
         import uvicorn
     except ImportError:
-        raise ImportError("Dashboard requires uvicorn. Install with: pip install cognicore[server]")
+        raise ImportError(
+            "Dashboard requires uvicorn. Install with: pip install cognicore[server]"
+        )
 
     import cognicore
+
     print(f"\nCogniCore Dashboard v{cognicore.__version__}")
     print(f"  Dashboard: http://localhost:{port}/dashboard")
     print(f"  API Docs:  http://localhost:{port}/docs")

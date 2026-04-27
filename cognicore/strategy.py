@@ -44,10 +44,21 @@ class StrategySwitcher:
         self._rules: List[Dict] = []
 
         # Add default modes
-        self.add_mode("safe", epsilon=0.05, threshold=0.8, description="Conservative, low-risk")
-        self.add_mode("explore", epsilon=0.4, threshold=0.3, description="High exploration")
-        self.add_mode("balanced", epsilon=0.15, threshold=0.5, description="Default balanced")
-        self.add_mode("aggressive", epsilon=0.3, threshold=0.2, description="High-risk, high-reward")
+        self.add_mode(
+            "safe", epsilon=0.05, threshold=0.8, description="Conservative, low-risk"
+        )
+        self.add_mode(
+            "explore", epsilon=0.4, threshold=0.3, description="High exploration"
+        )
+        self.add_mode(
+            "balanced", epsilon=0.15, threshold=0.5, description="Default balanced"
+        )
+        self.add_mode(
+            "aggressive",
+            epsilon=0.3,
+            threshold=0.2,
+            description="High-risk, high-reward",
+        )
 
         self.current_mode = "balanced"
 
@@ -71,12 +82,14 @@ class StrategySwitcher:
         - 'streak_below': switch when streak < threshold
         - 'risk_above': switch when risk > threshold
         """
-        self._rules.append({
-            "from": from_mode,
-            "to": to_mode,
-            "condition": condition,
-            "threshold": threshold,
-        })
+        self._rules.append(
+            {
+                "from": from_mode,
+                "to": to_mode,
+                "condition": condition,
+                "threshold": threshold,
+            }
+        )
         return self
 
     def decide(
@@ -117,10 +130,14 @@ class StrategySwitcher:
             return self._switch("safe", step, reason="high accuracy → playing safe")
 
         if streak <= -3 and self.current_mode != "explore":
-            return self._switch("explore", step, reason="failure streak → trying new things")
+            return self._switch(
+                "explore", step, reason="failure streak → trying new things"
+            )
 
         if risk > 0.7 and self.current_mode != "safe":
-            return self._switch("safe", step, reason="high risk detected → switching to safe")
+            return self._switch(
+                "safe", step, reason="high risk detected → switching to safe"
+            )
 
         return self.current_mode
 
@@ -131,12 +148,14 @@ class StrategySwitcher:
 
         old = self.current_mode
         self.current_mode = new_mode
-        self.switch_history.append({
-            "from": old,
-            "to": new_mode,
-            "step": step,
-            "reason": reason,
-        })
+        self.switch_history.append(
+            {
+                "from": old,
+                "to": new_mode,
+                "step": step,
+                "reason": reason,
+            }
+        )
         return new_mode
 
     def get_params(self, mode: str = None) -> Dict:

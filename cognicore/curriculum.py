@@ -92,6 +92,7 @@ class CurriculumRunner:
 
             if agent is None:
                 from cognicore.agents.base_agent import RandomAgent
+
                 _agent = RandomAgent(env.action_space)
             else:
                 _agent = agent
@@ -124,13 +125,18 @@ class CurriculumRunner:
                 )
 
             # Check promotion / demotion
-            recent = self.history[-self.window:]
-            recent_acc = [r["accuracy"] for r in recent if r["level"] == self.current_level]
+            recent = self.history[-self.window :]
+            recent_acc = [
+                r["accuracy"] for r in recent if r["level"] == self.current_level
+            ]
 
             if len(recent_acc) >= self.window:
                 avg = sum(recent_acc) / len(recent_acc)
 
-                if avg >= self.promotion_threshold and self.current_level < len(self.LEVELS) - 1:
+                if (
+                    avg >= self.promotion_threshold
+                    and self.current_level < len(self.LEVELS) - 1
+                ):
                     old = self.difficulty
                     self.current_level += 1
                     if verbose:
@@ -151,6 +157,7 @@ class CurriculumRunner:
             "final_difficulty": self.difficulty,
             "final_level": self.current_level,
             "history": self.history,
-            "avg_accuracy": sum(h["accuracy"] for h in self.history) / len(self.history),
+            "avg_accuracy": sum(h["accuracy"] for h in self.history)
+            / len(self.history),
             "avg_score": sum(h["score"] for h in self.history) / len(self.history),
         }

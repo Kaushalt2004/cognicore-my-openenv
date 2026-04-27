@@ -38,7 +38,10 @@ EASY_CASES = [
     PlanningCase(
         id="plan_easy_01",
         scenario="Make a cup of tea.",
-        constraints=["Water must be boiled before pouring", "Teabag goes in cup before water"],
+        constraints=[
+            "Water must be boiled before pouring",
+            "Teabag goes in cup before water",
+        ],
         correct_order=["A", "B", "C", "D", "E"],
         steps={
             "A": "Fill kettle with water",
@@ -54,7 +57,11 @@ EASY_CASES = [
     PlanningCase(
         id="plan_easy_02",
         scenario="Get ready for work in the morning.",
-        constraints=["Must shower before getting dressed", "Must eat before leaving", "Must be dressed before leaving"],
+        constraints=[
+            "Must shower before getting dressed",
+            "Must eat before leaving",
+            "Must be dressed before leaving",
+        ],
         correct_order=["A", "B", "C", "D", "E"],
         steps={
             "A": "Wake up and turn off alarm",
@@ -70,7 +77,10 @@ EASY_CASES = [
     PlanningCase(
         id="plan_easy_03",
         scenario="Send a professional email.",
-        constraints=["Must write subject before sending", "Must proofread before sending"],
+        constraints=[
+            "Must write subject before sending",
+            "Must proofread before sending",
+        ],
         correct_order=["A", "B", "C", "D", "E"],
         steps={
             "A": "Open email client",
@@ -117,7 +127,10 @@ EASY_CASES = [
     PlanningCase(
         id="plan_easy_06",
         scenario="Change a flat tire.",
-        constraints=["Must loosen lug nuts before jacking up", "Must jack up before removing tire"],
+        constraints=[
+            "Must loosen lug nuts before jacking up",
+            "Must jack up before removing tire",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Pull over safely and turn on hazards",
@@ -165,7 +178,10 @@ EASY_CASES = [
     PlanningCase(
         id="plan_easy_09",
         scenario="File your tax return.",
-        constraints=["Must gather documents before filling forms", "Must review before submitting"],
+        constraints=[
+            "Must gather documents before filling forms",
+            "Must review before submitting",
+        ],
         correct_order=["A", "B", "C", "D"],
         steps={
             "A": "Gather W-2s, 1099s, and receipts",
@@ -204,7 +220,11 @@ MEDIUM_CASES = [
     PlanningCase(
         id="plan_med_01",
         scenario="Cook Thanksgiving dinner (turkey, mashed potatoes, gravy, pie). Turkey takes 4 hours, pie takes 1 hour, potatoes take 30 min, gravy needs turkey drippings.",
-        constraints=["Turkey must finish before gravy starts", "Pie can bake while turkey cooks", "Everything should be ready at the same time"],
+        constraints=[
+            "Turkey must finish before gravy starts",
+            "Pie can bake while turkey cooks",
+            "Everything should be ready at the same time",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Start turkey in oven (4 hours)",
@@ -221,7 +241,12 @@ MEDIUM_CASES = [
     PlanningCase(
         id="plan_med_02",
         scenario="Build a website. Frontend needs design first. Backend needs database first. Integration needs both.",
-        constraints=["Design before frontend", "Database before backend", "Frontend AND backend before integration", "Testing after integration"],
+        constraints=[
+            "Design before frontend",
+            "Database before backend",
+            "Frontend AND backend before integration",
+            "Testing after integration",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Create UI/UX design mockups",
@@ -238,7 +263,12 @@ MEDIUM_CASES = [
     PlanningCase(
         id="plan_med_03",
         scenario="Move to a new apartment. Must give 30-day notice, pack, hire movers, transfer utilities.",
-        constraints=["Sign new lease before giving notice", "Give notice 30 days before moving", "Pack before movers arrive", "Transfer utilities for move-in day"],
+        constraints=[
+            "Sign new lease before giving notice",
+            "Give notice 30 days before moving",
+            "Pack before movers arrive",
+            "Transfer utilities for move-in day",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Find new apartment and sign lease",
@@ -255,7 +285,12 @@ MEDIUM_CASES = [
     PlanningCase(
         id="plan_med_04",
         scenario="Deploy a software update to production. Requires code review, staging test, backup, deploy, monitor.",
-        constraints=["Code review before staging", "Staging must pass before production", "Backup before deploying", "Deploy during low-traffic window"],
+        constraints=[
+            "Code review before staging",
+            "Staging must pass before production",
+            "Backup before deploying",
+            "Deploy during low-traffic window",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Complete code review and get approval",
@@ -272,7 +307,12 @@ MEDIUM_CASES = [
     PlanningCase(
         id="plan_med_05",
         scenario="Plan a wedding. Venue needed first, then caterer and decorations. Invitations need venue and date confirmed.",
-        constraints=["Book venue before invitations", "Caterer needs guest count from RSVPs", "Decorations match venue", "Rehearsal before ceremony"],
+        constraints=[
+            "Book venue before invitations",
+            "Caterer needs guest count from RSVPs",
+            "Decorations match venue",
+            "Rehearsal before ceremony",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Book venue and set date",
@@ -289,7 +329,12 @@ MEDIUM_CASES = [
     PlanningCase(
         id="plan_med_06",
         scenario="Conduct a scientific experiment. Need hypothesis, setup, data collection, analysis, paper.",
-        constraints=["Hypothesis before experiment design", "IRB approval before data collection (human subjects)", "Analysis after all data collected", "Peer review before publication"],
+        constraints=[
+            "Hypothesis before experiment design",
+            "IRB approval before data collection (human subjects)",
+            "Analysis after all data collected",
+            "Peer review before publication",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Literature review and form hypothesis",
@@ -306,7 +351,13 @@ MEDIUM_CASES = [
     PlanningCase(
         id="plan_med_07",
         scenario="Renovate a bathroom. Plumbing must be done before tiling. Electrical before fixtures.",
-        constraints=["Demolition first", "Plumbing before tiling", "Electrical before light fixtures", "Tiling before fixtures and vanity", "Inspection before final finishes"],
+        constraints=[
+            "Demolition first",
+            "Plumbing before tiling",
+            "Electrical before light fixtures",
+            "Tiling before fixtures and vanity",
+            "Inspection before final finishes",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Demolish old bathroom",
@@ -323,7 +374,12 @@ MEDIUM_CASES = [
     PlanningCase(
         id="plan_med_08",
         scenario="Launch a product. Need MVP, beta testing, marketing, and launch event.",
-        constraints=["MVP before beta", "Beta feedback incorporated before launch", "Marketing campaign starts 2 weeks before launch", "Press release on launch day"],
+        constraints=[
+            "MVP before beta",
+            "Beta feedback incorporated before launch",
+            "Marketing campaign starts 2 weeks before launch",
+            "Press release on launch day",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Build minimum viable product",
@@ -340,7 +396,12 @@ MEDIUM_CASES = [
     PlanningCase(
         id="plan_med_09",
         scenario="Emergency disaster response. Earthquake has hit. Need to triage, rescue, shelter, supply.",
-        constraints=["Assess damage first", "Rescue trapped people before supply distribution", "Set up shelter before weather turns", "Coordinate with federal aid"],
+        constraints=[
+            "Assess damage first",
+            "Rescue trapped people before supply distribution",
+            "Set up shelter before weather turns",
+            "Coordinate with federal aid",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Assess damage and deploy first responders",
@@ -357,7 +418,12 @@ MEDIUM_CASES = [
     PlanningCase(
         id="plan_med_10",
         scenario="Onboard a new employee. Need IT setup, training, team intro, first project.",
-        constraints=["IT setup before first day", "Orientation before training", "Mentor assigned before first project", "Check-in after 30 days"],
+        constraints=[
+            "IT setup before first day",
+            "Orientation before training",
+            "Mentor assigned before first project",
+            "Check-in after 30 days",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "IT setup: laptop, email, access credentials",
@@ -382,8 +448,13 @@ HARD_CASES = [
     PlanningCase(
         id="plan_hard_01",
         scenario="Schedule 5 tasks on 2 machines. Tasks have dependencies and different processing times. Minimize total completion time.",
-        constraints=["Task B depends on A", "Task D depends on B and C", "Task E depends on D",
-                      "Machine 1 is faster for compute tasks", "Machine 2 is faster for I/O tasks"],
+        constraints=[
+            "Task B depends on A",
+            "Task D depends on B and C",
+            "Task E depends on D",
+            "Machine 1 is faster for compute tasks",
+            "Machine 2 is faster for I/O tasks",
+        ],
         correct_order=["A", "C", "B", "D", "E"],
         steps={
             "A": "Data preprocessing (compute, 2h)",
@@ -399,8 +470,13 @@ HARD_CASES = [
     PlanningCase(
         id="plan_hard_02",
         scenario="Allocate a $100K budget across 5 departments. Each has minimum requirements and ROI projections.",
-        constraints=["Engineering needs min $30K", "Marketing needs min $15K", "Operations needs min $10K",
-                      "Total cannot exceed $100K", "Maximize ROI: Engineering 3x, Marketing 2.5x, Sales 2x, Operations 1.5x, HR 1x"],
+        constraints=[
+            "Engineering needs min $30K",
+            "Marketing needs min $15K",
+            "Operations needs min $10K",
+            "Total cannot exceed $100K",
+            "Maximize ROI: Engineering 3x, Marketing 2.5x, Sales 2x, Operations 1.5x, HR 1x",
+        ],
         correct_order=["A", "B", "C", "D", "E"],
         steps={
             "A": "Allocate $40K to Engineering (highest ROI: 3x = $120K return)",
@@ -416,9 +492,12 @@ HARD_CASES = [
     PlanningCase(
         id="plan_hard_03",
         scenario="Evacuate a building with 3 floors during a fire. Stairs can handle 20 people/min. 50 people per floor.",
-        constraints=["Top floor (3rd) evacuates first to avoid being trapped", "Stairs capacity: 20/min",
-                      "Disabled persons need elevator (1 elevator, 4 people/trip, 2 min/trip)",
-                      "Must account for 6 disabled persons across all floors"],
+        constraints=[
+            "Top floor (3rd) evacuates first to avoid being trapped",
+            "Stairs capacity: 20/min",
+            "Disabled persons need elevator (1 elevator, 4 people/trip, 2 min/trip)",
+            "Must account for 6 disabled persons across all floors",
+        ],
         correct_order=["A", "B", "C", "D", "E"],
         steps={
             "A": "Sound alarm and start elevator for disabled persons on 3rd floor",
@@ -434,9 +513,14 @@ HARD_CASES = [
     PlanningCase(
         id="plan_hard_04",
         scenario="Plan a multi-city business trip: NYC -> London -> Tokyo -> Sydney, with meetings that have fixed dates.",
-        constraints=["NYC meeting: Monday", "London meeting: Wednesday", "Tokyo meeting: Friday",
-                      "Sydney meeting: next Monday", "Must allow travel time between cities",
-                      "Budget constraint: prefer direct flights"],
+        constraints=[
+            "NYC meeting: Monday",
+            "London meeting: Wednesday",
+            "Tokyo meeting: Friday",
+            "Sydney meeting: next Monday",
+            "Must allow travel time between cities",
+            "Budget constraint: prefer direct flights",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "NYC meeting on Monday, evening flight to London",
@@ -453,10 +537,13 @@ HARD_CASES = [
     PlanningCase(
         id="plan_hard_05",
         scenario="Design a microservices architecture migration. Monolith has 5 tightly coupled modules.",
-        constraints=["Must maintain zero downtime", "Extract lowest-coupling module first",
-                      "Each service needs its own database (data migration required)",
-                      "Must run old and new in parallel during transition",
-                      "Highest-traffic service last (most risk)"],
+        constraints=[
+            "Must maintain zero downtime",
+            "Extract lowest-coupling module first",
+            "Each service needs its own database (data migration required)",
+            "Must run old and new in parallel during transition",
+            "Highest-traffic service last (most risk)",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Identify module boundaries and coupling analysis",
@@ -473,9 +560,13 @@ HARD_CASES = [
     PlanningCase(
         id="plan_hard_06",
         scenario="Clinical trial for a new drug. Must satisfy FDA regulations and ethical requirements.",
-        constraints=["Preclinical before human trials", "Phase I before Phase II before Phase III",
-                      "IRB approval at each phase", "Adverse event = pause and review",
-                      "Data monitoring board reviews after each phase"],
+        constraints=[
+            "Preclinical before human trials",
+            "Phase I before Phase II before Phase III",
+            "IRB approval at each phase",
+            "Adverse event = pause and review",
+            "Data monitoring board reviews after each phase",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Preclinical studies (lab and animal testing)",
@@ -492,8 +583,12 @@ HARD_CASES = [
     PlanningCase(
         id="plan_hard_07",
         scenario="Coordinate a Mars rover landing. Multiple systems must work in precise sequence during the '7 minutes of terror'.",
-        constraints=["Communication delay: 14 min (must be autonomous)", "Heat shield before parachute",
-                      "Parachute before sky crane", "Everything automated — no human intervention possible"],
+        constraints=[
+            "Communication delay: 14 min (must be autonomous)",
+            "Heat shield before parachute",
+            "Parachute before sky crane",
+            "Everything automated — no human intervention possible",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Atmospheric entry: deploy heat shield (19,000 mph)",
@@ -510,9 +605,13 @@ HARD_CASES = [
     PlanningCase(
         id="plan_hard_08",
         scenario="Negotiate a peace treaty between two warring nations with 3 disputed issues: territory, refugees, and reparations.",
-        constraints=["Build trust with small agreements first", "Territory is most contentious — save for last",
-                      "Refugee crisis is humanitarian — address early",
-                      "Both sides must feel they 'won' something", "International observers required"],
+        constraints=[
+            "Build trust with small agreements first",
+            "Territory is most contentious — save for last",
+            "Refugee crisis is humanitarian — address early",
+            "Both sides must feel they 'won' something",
+            "International observers required",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Ceasefire agreement and international observer deployment",
@@ -529,9 +628,13 @@ HARD_CASES = [
     PlanningCase(
         id="plan_hard_09",
         scenario="Plan a company's AI ethics framework implementation across 5 departments.",
-        constraints=["Executive buy-in before any department rollout", "Legal review of AI policies required",
-                      "Training must happen before auditing", "Engineering implements tooling",
-                      "Stagger rollout: one department at a time to learn"],
+        constraints=[
+            "Executive buy-in before any department rollout",
+            "Legal review of AI policies required",
+            "Training must happen before auditing",
+            "Engineering implements tooling",
+            "Stagger rollout: one department at a time to learn",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Executive briefing and board approval of AI ethics policy",
@@ -548,10 +651,13 @@ HARD_CASES = [
     PlanningCase(
         id="plan_hard_10",
         scenario="Respond to a zero-day cybersecurity breach. Attacker has been in the network for an unknown period.",
-        constraints=["Do NOT alert attacker you've detected them (yet)", "Preserve forensic evidence",
-                      "Identify all compromised systems before containment",
-                      "Legal and PR must be notified before public disclosure",
-                      "Regulatory notification within 72 hours"],
+        constraints=[
+            "Do NOT alert attacker you've detected them (yet)",
+            "Preserve forensic evidence",
+            "Identify all compromised systems before containment",
+            "Legal and PR must be notified before public disclosure",
+            "Regulatory notification within 72 hours",
+        ],
         correct_order=["A", "B", "C", "D", "E", "F"],
         steps={
             "A": "Quietly begin forensic investigation — identify scope of breach",

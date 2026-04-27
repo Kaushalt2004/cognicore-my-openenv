@@ -31,7 +31,9 @@ class PromptOptimizer:
         Environment difficulty.
     """
 
-    def __init__(self, env_id: str = "SafetyClassification-v1", difficulty: str = "easy"):
+    def __init__(
+        self, env_id: str = "SafetyClassification-v1", difficulty: str = "easy"
+    ):
         self.env_id = env_id
         self.difficulty = difficulty
         self.templates: Dict[str, str] = {}
@@ -82,6 +84,7 @@ class PromptOptimizer:
                     agent = agent_factory()
                 else:
                     from cognicore.smart_agents import AutoLearner
+
                     agent = AutoLearner()
 
                 obs = env.reset()
@@ -92,7 +95,7 @@ class PromptOptimizer:
                     action = agent.act(obs)
                     obs, reward, done, _, info = env.step(action)
                     ep_rewards.append(reward.total)
-                    if hasattr(agent, 'learn'):
+                    if hasattr(agent, "learn"):
                         agent.learn(reward, info)
                     if done:
                         break
@@ -116,7 +119,9 @@ class PromptOptimizer:
             }
 
             if verbose:
-                print(f"  {name:20s} accuracy={avg_acc:.0%} score={avg_score:.4f} reward={avg_reward:+.2f}")
+                print(
+                    f"  {name:20s} accuracy={avg_acc:.0%} score={avg_score:.4f} reward={avg_reward:+.2f}"
+                )
 
         # Find best
         best_name = max(self.results, key=lambda k: self.results[k]["avg_accuracy"])

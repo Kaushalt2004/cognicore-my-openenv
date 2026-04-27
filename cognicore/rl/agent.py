@@ -50,7 +50,11 @@ class Agent:
             Tuple of (classification, metadata_dict).
         """
         self._total_actions += 1
-        metadata = {"source": "model_action", "memory_context": "", "reflection_hint": ""}
+        metadata = {
+            "source": "model_action",
+            "memory_context": "",
+            "reflection_hint": "",
+        }
 
         # Step 1: Memory context
         memory_context = ""

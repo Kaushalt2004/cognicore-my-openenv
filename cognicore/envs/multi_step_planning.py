@@ -86,7 +86,9 @@ class MultiStepPlanningEnv(CogniCoreEnv):
             base_score=base_score,
             correct=correct,
             ground_truth=",".join(case.correct_order),
-            predicted=",".join(predicted_order) if isinstance(predicted_order, list) else str(predicted_order),
+            predicted=",".join(predicted_order)
+            if isinstance(predicted_order, list)
+            else str(predicted_order),
             category=case.category,
             metadata={
                 "case_id": case.id,

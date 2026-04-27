@@ -55,7 +55,11 @@ def transfer_knowledge(
                 break
 
     if not expert_knowledge:
-        return {"transferred": 0, "skipped": 0, "error": "Expert has no knowledge to transfer"}
+        return {
+            "transferred": 0,
+            "skipped": 0,
+            "error": "Expert has no knowledge to transfer",
+        }
 
     # Ensure student has knowledge attribute
     if not hasattr(student, "knowledge"):
@@ -129,11 +133,13 @@ class MentorStudent:
                 "source": "student",
             }
         else:
-            self.corrections.append({
-                "student_said": student_action,
-                "mentor_said": mentor_action,
-                "category": obs.get("category", "?"),
-            })
+            self.corrections.append(
+                {
+                    "student_said": student_action,
+                    "mentor_said": mentor_action,
+                    "category": obs.get("category", "?"),
+                }
+            )
             return {
                 "action": mentor_action,
                 "corrected": True,
@@ -151,7 +157,5 @@ class MentorStudent:
     def stats(self) -> Dict[str, Any]:
         return {
             "total_corrections": len(self.corrections),
-            "categories_corrected": list(set(
-                c["category"] for c in self.corrections
-            )),
+            "categories_corrected": list(set(c["category"] for c in self.corrections)),
         }

@@ -13,8 +13,12 @@ from cognicore.cost_tracker import CostTracker
 class TestSemanticMemory:
     def test_store_and_recall(self):
         mem = SemanticMemory()
-        mem.store({"text": "phishing email scam", "correct": False, "category": "security"})
-        mem.store({"text": "cooking recipe pasta", "correct": True, "category": "cooking"})
+        mem.store(
+            {"text": "phishing email scam", "correct": False, "category": "security"}
+        )
+        mem.store(
+            {"text": "cooking recipe pasta", "correct": True, "category": "cooking"}
+        )
         results = mem.recall("email fraud phishing", top_k=2)
         assert len(results) >= 1
 
@@ -113,13 +117,23 @@ class TestAdversarial:
 class TestSmartAgents:
     def test_auto_learner(self):
         agent = AutoLearner()
-        obs = {"category": "test", "prompt": "malware attack", "memory_context": [], "reflection_hints": ""}
+        obs = {
+            "category": "test",
+            "prompt": "malware attack",
+            "memory_context": [],
+            "reflection_hints": "",
+        }
         action = agent.act(obs)
         assert "classification" in action
 
     def test_safe_agent(self):
         agent = SafeAgent()
-        obs = {"category": "unknown", "prompt": "some text", "memory_context": [], "reflection_hints": ""}
+        obs = {
+            "category": "unknown",
+            "prompt": "some text",
+            "memory_context": [],
+            "reflection_hints": "",
+        }
         action = agent.act(obs)
         # SafeAgent should default to NEEDS_REVIEW when uncertain
         assert action["classification"] in ("NEEDS_REVIEW", "SAFE", "UNSAFE")
@@ -127,7 +141,12 @@ class TestSmartAgents:
     def test_adaptive_agent(self):
         agent = AdaptiveAgent()
         assert agent.strategy == "exploring"
-        obs = {"category": "test", "prompt": "hello", "memory_context": [], "reflection_hints": ""}
+        obs = {
+            "category": "test",
+            "prompt": "hello",
+            "memory_context": [],
+            "reflection_hints": "",
+        }
         action = agent.act(obs)
         assert "classification" in action
 
@@ -139,7 +158,8 @@ class TestSmartAgents:
             action = agent.act(obs)
             obs, reward, done, _, info = env.step(action)
             agent.learn(reward, info)
-            if done: break
+            if done:
+                break
         assert len(agent.history) > 0
 
 
@@ -177,11 +197,13 @@ class TestSafetyLayer:
 
     def test_custom_policy(self):
         safety = SafetyLayer()
-        safety.add_policy(Policy(
-            "block_safe",
-            lambda a, c: a.get("classification") != "SAFE",
-            severity="CRITICAL",
-        ))
+        safety.add_policy(
+            Policy(
+                "block_safe",
+                lambda a, c: a.get("classification") != "SAFE",
+                severity="CRITICAL",
+            )
+        )
         result = safety.check({"classification": "SAFE"})
         assert "block_safe" in result["violations"]
 

@@ -66,6 +66,7 @@ class TestMathEnvBasics:
 class TestMathGrading:
     def test_partial_credit_close_answer(self):
         from cognicore.envs.data.math_cases import grade_math
+
         # Within 5% of correct answer
         assert grade_math(630, 636) == 0.5  # ~1% off
         assert grade_math(100, 636) == 0.0  # way off
@@ -73,5 +74,6 @@ class TestMathGrading:
 
     def test_string_answers(self):
         from cognicore.envs.data.math_cases import grade_math
+
         assert grade_math("636", 636) == 1.0
         assert grade_math("abc", 636) == 0.0

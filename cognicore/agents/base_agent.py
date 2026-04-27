@@ -115,5 +115,6 @@ class RandomAgent(BaseAgent):
             return {"action": sample}
         # Default: random safety label
         import random
+
         label = random.choice(["SAFE", "UNSAFE", "NEEDS_REVIEW"])
         return {"classification": label}

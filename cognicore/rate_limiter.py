@@ -57,9 +57,9 @@ class RateLimiter:
         day_count = len(self._timestamps)
 
         return (
-            minute_count < self.limits["minute"] and
-            hour_count < self.limits["hour"] and
-            day_count < self.limits["day"]
+            minute_count < self.limits["minute"]
+            and hour_count < self.limits["hour"]
+            and day_count < self.limits["day"]
         )
 
     def record(self) -> None:
@@ -104,12 +104,21 @@ class RateLimiter:
         day_count = len(self._timestamps)
 
         return {
-            "minute": {"used": minute_count, "limit": self.limits["minute"],
-                       "remaining": self.limits["minute"] - minute_count},
-            "hour": {"used": hour_count, "limit": self.limits["hour"],
-                     "remaining": self.limits["hour"] - hour_count},
-            "day": {"used": day_count, "limit": self.limits["day"],
-                    "remaining": self.limits["day"] - day_count},
+            "minute": {
+                "used": minute_count,
+                "limit": self.limits["minute"],
+                "remaining": self.limits["minute"] - minute_count,
+            },
+            "hour": {
+                "used": hour_count,
+                "limit": self.limits["hour"],
+                "remaining": self.limits["hour"] - hour_count,
+            },
+            "day": {
+                "used": day_count,
+                "limit": self.limits["day"],
+                "remaining": self.limits["day"] - day_count,
+            },
             "total_calls": self._total_calls,
             "total_waited_seconds": round(self._total_waited, 2),
             "rejected": self._rejected,
@@ -124,7 +133,9 @@ class RateLimiter:
             pct = data["used"] / data["limit"] if data["limit"] else 0
             bar_len = int(pct * 20)
             bar = "█" * bar_len + "░" * (20 - bar_len)
-            print(f"    {period:8s} [{bar}] {data['used']}/{data['limit']} ({data['remaining']} remaining)")
+            print(
+                f"    {period:8s} [{bar}] {data['used']}/{data['limit']} ({data['remaining']} remaining)"
+            )
         print(f"    Total calls: {u['total_calls']}")
         if u["total_waited_seconds"] > 0:
             print(f"    Time waited: {u['total_waited_seconds']}s")

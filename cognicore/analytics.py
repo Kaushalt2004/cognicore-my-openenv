@@ -49,25 +49,34 @@ class PerformanceAnalyzer:
         ground_truth: str = "",
     ):
         """Record a single step for analysis."""
-        self._step_data.append({
-            "step": step, "episode": episode, "category": category,
-            "correct": correct, "reward": reward_total,
-            "memory_bonus": memory_bonus, "streak_penalty": streak_penalty,
-            "novelty_bonus": novelty_bonus,
-            "predicted": predicted, "ground_truth": ground_truth,
-        })
+        self._step_data.append(
+            {
+                "step": step,
+                "episode": episode,
+                "category": category,
+                "correct": correct,
+                "reward": reward_total,
+                "memory_bonus": memory_bonus,
+                "streak_penalty": streak_penalty,
+                "novelty_bonus": novelty_bonus,
+                "predicted": predicted,
+                "ground_truth": ground_truth,
+            }
+        )
 
     def record_episode(self, env, episode_num: int = 0):
         """Record data from a completed environment episode."""
         stats = env.episode_stats()
-        self.episodes.append({
-            "episode": episode_num or len(self.episodes) + 1,
-            "score": env.get_score(),
-            "accuracy": stats.accuracy,
-            "correct": stats.correct_count,
-            "total": stats.steps,
-            "memory_entries": stats.memory_entries_created,
-        })
+        self.episodes.append(
+            {
+                "episode": episode_num or len(self.episodes) + 1,
+                "score": env.get_score(),
+                "accuracy": stats.accuracy,
+                "correct": stats.correct_count,
+                "total": stats.steps,
+                "memory_entries": stats.memory_entries_created,
+            }
+        )
 
     def analyze(self) -> "AnalyticsReport":
         """Generate a comprehensive analytics report."""
@@ -93,8 +102,10 @@ class AnalyticsReport:
         if len(self.episodes) < 3:
             return False
         scores = [e["score"] for e in self.episodes]
-        first_half = sum(scores[:len(scores)//2]) / max(len(scores)//2, 1)
-        second_half = sum(scores[len(scores)//2:]) / max(len(scores) - len(scores)//2, 1)
+        first_half = sum(scores[: len(scores) // 2]) / max(len(scores) // 2, 1)
+        second_half = sum(scores[len(scores) // 2 :]) / max(
+            len(scores) - len(scores) // 2, 1
+        )
         return second_half > first_half
 
     def weak_categories(self, top_k: int = 5) -> List[Dict[str, Any]]:
@@ -108,13 +119,15 @@ class AnalyticsReport:
         for cat, counts in cat_stats.items():
             total = counts["correct"] + counts["wrong"]
             acc = counts["correct"] / total if total else 0
-            results.append({
-                "category": cat,
-                "accuracy": acc,
-                "correct": counts["correct"],
-                "wrong": counts["wrong"],
-                "total": total,
-            })
+            results.append(
+                {
+                    "category": cat,
+                    "accuracy": acc,
+                    "correct": counts["correct"],
+                    "wrong": counts["wrong"],
+                    "total": total,
+                }
+            )
 
         return sorted(results, key=lambda x: x["accuracy"])[:top_k]
 
@@ -187,20 +200,28 @@ class AnalyticsReport:
             last = self.episodes[-1]
             trend = "IMPROVING" if self.is_improving() else "FLAT/DECLINING"
             print(f"\n  Learning: {trend}")
-            print(f"    First episode: accuracy={first['accuracy']:.0%} score={first['score']:.4f}")
-            print(f"    Last episode:  accuracy={last['accuracy']:.0%} score={last['score']:.4f}")
+            print(
+                f"    First episode: accuracy={first['accuracy']:.0%} score={first['score']:.4f}"
+            )
+            print(
+                f"    Last episode:  accuracy={last['accuracy']:.0%} score={last['score']:.4f}"
+            )
 
         # Weak categories
         weak = self.weak_categories(3)
         if weak:
             print("\n  Weakest categories:")
             for w in weak:
-                print(f"    {w['category']:25s} accuracy={w['accuracy']:.0%} ({w['correct']}/{w['total']})")
+                print(
+                    f"    {w['category']:25s} accuracy={w['accuracy']:.0%} ({w['correct']}/{w['total']})"
+                )
 
         # Memory impact
         mem = self.memory_impact()
         print("\n  Memory impact:")
-        print(f"    Total memory bonus: {mem['memory_total']:+.2f} ({mem['memory_pct_of_reward']:.1f}% of reward)")
+        print(
+            f"    Total memory bonus: {mem['memory_total']:+.2f} ({mem['memory_pct_of_reward']:.1f}% of reward)"
+        )
         print(f"    Steps where memory helped: {mem['memory_helped_steps']}")
         print(f"    Steps with streak penalty: {mem['streak_hit_steps']}")
 
@@ -215,6 +236,8 @@ class AnalyticsReport:
         if confused:
             print("\n  Most common mistakes:")
             for c in confused:
-                print(f"    Predicted '{c['predicted']}' but truth was '{c['truth']}' ({c['count']}x)")
+                print(
+                    f"    Predicted '{c['predicted']}' but truth was '{c['truth']}' ({c['count']}x)"
+                )
 
         print(f"{'=' * 60}\n")

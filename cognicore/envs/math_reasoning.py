@@ -61,9 +61,7 @@ class MathReasoningEnv(CogniCoreEnv):
                 "answer_type": TextSpace(),
             }
         )
-        self.action_space = DictSpace(
-            fields={"answer": TextSpace()}
-        )
+        self.action_space = DictSpace(fields={"answer": TextSpace()})
 
     def _generate_tasks(self) -> List[MathCase]:
         return get_math_cases(self.difficulty)

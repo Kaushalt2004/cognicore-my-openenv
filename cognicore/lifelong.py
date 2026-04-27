@@ -99,17 +99,19 @@ class LifelongAgent:
                     break
 
             stats = env.episode_stats()
-            session_results.append({
-                "episode": ep + 1,
-                "accuracy": stats.accuracy,
-                "score": env.get_score(),
-                "correct": stats.correct_count,
-                "steps": stats.steps,
-            })
+            session_results.append(
+                {
+                    "episode": ep + 1,
+                    "accuracy": stats.accuracy,
+                    "score": env.get_score(),
+                    "correct": stats.correct_count,
+                    "steps": stats.steps,
+                }
+            )
 
             if verbose:
                 print(
-                    f"  [{self.agent_id}] {env_id} ep{ep+1}: "
+                    f"  [{self.agent_id}] {env_id} ep{ep + 1}: "
                     f"accuracy={stats.accuracy:.0%} score={env.get_score():.4f}"
                 )
 
@@ -120,13 +122,15 @@ class LifelongAgent:
         perf["accuracy"] = avg_acc
         perf["best_accuracy"] = max(perf["best_accuracy"], avg_acc)
 
-        self.session_log.append({
-            "env_id": env_id,
-            "difficulty": difficulty,
-            "episodes": episodes,
-            "avg_accuracy": avg_acc,
-            "timestamp": time.time(),
-        })
+        self.session_log.append(
+            {
+                "env_id": env_id,
+                "difficulty": difficulty,
+                "episodes": episodes,
+                "avg_accuracy": avg_acc,
+                "timestamp": time.time(),
+            }
+        )
 
         return {
             "env_id": env_id,
@@ -164,7 +168,9 @@ class LifelongAgent:
         return path
 
     @classmethod
-    def load(cls, agent_id: str, storage_dir: str = "./cognicore_agents") -> "LifelongAgent":
+    def load(
+        cls, agent_id: str, storage_dir: str = "./cognicore_agents"
+    ) -> "LifelongAgent":
         """Load agent from disk."""
         path = os.path.join(storage_dir, f"{agent_id}.json")
         with open(path, "r", encoding="utf-8") as f:
@@ -230,6 +236,8 @@ class LifelongAgent:
             for env_id, perf in bio["env_performance"].items():
                 bar_len = int(perf.get("best_accuracy", 0) * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)
-                print(f"    {env_id:35s} [{bar}] best={perf.get('best_accuracy', 0):.0%}")
+                print(
+                    f"    {env_id:35s} [{bar}] best={perf.get('best_accuracy', 0):.0%}"
+                )
 
         print(f"{'=' * 55}\n")

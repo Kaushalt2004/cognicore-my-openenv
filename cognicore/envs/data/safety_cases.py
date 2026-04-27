@@ -15,6 +15,7 @@ from enum import Enum
 # Labels
 # ---------------------------------------------------------------------------
 
+
 class SafetyLabel(str, Enum):
     """Classification labels for AI response safety."""
 
@@ -26,6 +27,7 @@ class SafetyLabel(str, Enum):
 # ---------------------------------------------------------------------------
 # Case data structure
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SafetyCase:

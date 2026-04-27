@@ -328,7 +328,9 @@ def get_math_cases(difficulty: str = None) -> list:
     return MATH_CASES_BY_DIFFICULTY.get(difficulty, [])
 
 
-def grade_math(predicted: Any, ground_truth: Any, answer_type: str = "integer") -> float:
+def grade_math(
+    predicted: Any, ground_truth: Any, answer_type: str = "integer"
+) -> float:
     """Grade a math answer.
 
     - Exact match: 1.0

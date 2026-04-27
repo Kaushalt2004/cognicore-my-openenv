@@ -12,9 +12,7 @@ from cognicore.multi_agent import DebateEnv
 
 
 # Use a temp directory inside the project for all tests
-TEST_DIR = os.path.join(
-    os.path.dirname(__file__), "..", "_test_data"
-)
+TEST_DIR = os.path.join(os.path.dirname(__file__), "..", "_test_data")
 
 
 def setup_module():
@@ -27,6 +25,7 @@ def teardown_module():
 
 
 # ---- MemoryManager ----
+
 
 class TestMemoryManager:
     def test_save_and_load(self):
@@ -88,6 +87,7 @@ class TestMemoryManager:
 
 # ---- Leaderboard ----
 
+
 class TestLeaderboard:
     def test_submit_and_rank(self):
         lb = Leaderboard(storage_dir=os.path.join(TEST_DIR, "lb1"))
@@ -138,6 +138,7 @@ class TestLeaderboard:
 
 
 # ---- EpisodeRecorder & Fine-tuning ----
+
 
 class TestFineTuning:
     def test_record_episode(self):
@@ -206,6 +207,7 @@ class TestFineTuning:
 
 # ---- Multi-Agent ----
 
+
 class TestMultiAgent:
     def test_debate_env_create(self):
         env = DebateEnv()
@@ -226,15 +228,15 @@ class TestMultiAgent:
         env.reset()
 
         # Pro submits
-        result1 = env.step_agent("pro", {
-            "argument": "AI safety and alignment are critical risks"
-        })
+        result1 = env.step_agent(
+            "pro", {"argument": "AI safety and alignment are critical risks"}
+        )
         assert result1["status"] == "waiting"
 
         # Con submits
-        result2 = env.step_agent("con", {
-            "argument": "Progress and innovation require continued development"
-        })
+        result2 = env.step_agent(
+            "con", {"argument": "Progress and innovation require continued development"}
+        )
         # Both submitted -> resolved
         assert "_done" in result2
         assert "pro" in result2
@@ -245,12 +247,15 @@ class TestMultiAgent:
         env.reset()
 
         # Pro hits all key points
-        env.step_agent("pro", {
-            "argument": "AI poses safety risks, alignment is unsolved, regulation needed to manage risk"
-        })
-        result = env.step_agent("con", {
-            "argument": "generic argument with no key points"
-        })
+        env.step_agent(
+            "pro",
+            {
+                "argument": "AI poses safety risks, alignment is unsolved, regulation needed to manage risk"
+            },
+        )
+        result = env.step_agent(
+            "con", {"argument": "generic argument with no key points"}
+        )
 
         pro_score = result["pro"]["eval_result"]["base_score"]
         con_score = result["con"]["eval_result"]["base_score"]

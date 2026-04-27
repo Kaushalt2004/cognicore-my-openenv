@@ -39,8 +39,12 @@ class MetaRewardOptimizer:
         learning_rate: float = 0.01,
     ):
         self.components = components or [
-            "memory_bonus", "reflection_bonus", "streak_penalty",
-            "novelty_bonus", "confidence_cal", "propose_bonus",
+            "memory_bonus",
+            "reflection_bonus",
+            "streak_penalty",
+            "novelty_bonus",
+            "confidence_cal",
+            "propose_bonus",
         ]
         self.learning_rate = learning_rate
         self.weights: Dict[str, float] = {c: 1.0 for c in self.components}
@@ -54,12 +58,14 @@ class MetaRewardOptimizer:
         accuracy: float = 0.0,
     ):
         """Record a reward observation and whether it led to improvement."""
-        self._history.append({
-            "components": reward_components,
-            "improved": accuracy_improved,
-            "accuracy": accuracy,
-            "weights": copy.deepcopy(self.weights),
-        })
+        self._history.append(
+            {
+                "components": reward_components,
+                "improved": accuracy_improved,
+                "accuracy": accuracy,
+                "weights": copy.deepcopy(self.weights),
+            }
+        )
 
     def optimize(self, verbose: bool = False) -> Dict[str, float]:
         """Optimize reward weights based on observed correlations.
@@ -81,12 +87,12 @@ class MetaRewardOptimizer:
 
         for comp in self.components:
             # Average component value when improving vs declining
-            imp_avg = sum(
-                abs(h["components"].get(comp, 0)) for h in improving
-            ) / len(improving)
-            dec_avg = sum(
-                abs(h["components"].get(comp, 0)) for h in declining
-            ) / len(declining)
+            imp_avg = sum(abs(h["components"].get(comp, 0)) for h in improving) / len(
+                improving
+            )
+            dec_avg = sum(abs(h["components"].get(comp, 0)) for h in declining) / len(
+                declining
+            )
 
             # If component is higher when improving → increase weight
             if imp_avg > dec_avg:
@@ -119,7 +125,8 @@ class MetaRewardOptimizer:
             "observations": len(self._history),
             "weights": dict(self.weights),
             "improving_rate": (
-                sum(1 for h in self._history if h["improved"]) /
-                len(self._history) if self._history else 0
+                sum(1 for h in self._history if h["improved"]) / len(self._history)
+                if self._history
+                else 0
             ),
         }

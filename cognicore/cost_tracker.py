@@ -75,28 +75,31 @@ class CostTracker:
 
         Returns cost and budget info for this call.
         """
-        cost = (input_tokens * self.cost_per_input +
-                output_tokens * self.cost_per_output)
+        cost = input_tokens * self.cost_per_input + output_tokens * self.cost_per_output
 
         self._total_input_tokens += input_tokens
         self._total_output_tokens += output_tokens
         self._total_cost += cost
         self._total_latency_ms += latency_ms
 
-        self.calls.append({
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "cost": cost,
-            "latency_ms": latency_ms,
-            "episode": episode,
-            "step": step,
-            "timestamp": time.time(),
-        })
+        self.calls.append(
+            {
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "cost": cost,
+                "latency_ms": latency_ms,
+                "episode": episode,
+                "step": step,
+                "timestamp": time.time(),
+            }
+        )
 
         result = {
             "call_cost": cost,
             "total_cost": self._total_cost,
-            "budget_remaining": (self.budget_limit - self._total_cost) if self.budget_limit else None,
+            "budget_remaining": (self.budget_limit - self._total_cost)
+            if self.budget_limit
+            else None,
             "over_budget": self.budget_limit and self._total_cost > self.budget_limit,
         }
 
@@ -145,10 +148,14 @@ class CostTracker:
             "total_output_tokens": self._total_output_tokens,
             "total_tokens": self.total_tokens,
             "total_cost_usd": round(self._total_cost, 6),
-            "avg_cost_per_call": round(self._total_cost / len(self.calls), 6) if self.calls else 0,
+            "avg_cost_per_call": round(self._total_cost / len(self.calls), 6)
+            if self.calls
+            else 0,
             "avg_latency_ms": round(self.avg_latency_ms, 1),
             "budget_limit": self.budget_limit,
-            "budget_remaining": round(self.budget_limit - self._total_cost, 6) if self.budget_limit else None,
+            "budget_remaining": round(self.budget_limit - self._total_cost, 6)
+            if self.budget_limit
+            else None,
             "budget_warnings": self._budget_warnings,
         }
 
@@ -170,8 +177,10 @@ class CostTracker:
 
         comparison = {}
         for model, pricing in self.PRICING.items():
-            cost = (total_in * pricing["input"] / 1000 +
-                    total_out * pricing["output"] / 1000)
+            cost = (
+                total_in * pricing["input"] / 1000
+                + total_out * pricing["output"] / 1000
+            )
             comparison[model] = round(cost, 6)
 
         return comparison
@@ -190,8 +199,8 @@ class CostTracker:
         print(f"  Avg per call:    ${s['avg_cost_per_call']:.6f}")
         print(f"  Avg latency:     {s['avg_latency_ms']:.0f}ms")
 
-        if s['budget_limit']:
-            remaining = s['budget_remaining']
+        if s["budget_limit"]:
+            remaining = s["budget_remaining"]
             print(f"  Budget:          ${s['budget_limit']:.2f}")
             print(f"  Remaining:       ${remaining:.4f}")
 

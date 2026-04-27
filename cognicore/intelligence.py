@@ -70,12 +70,20 @@ class IntelligenceScorer:
         is_hard: bool = False,
     ):
         """Record a step for scoring."""
-        self._steps.append({
-            "step": step, "category": category, "correct": correct,
-            "reward": reward_total, "memory_bonus": memory_bonus,
-            "confidence": confidence, "latency_ms": latency_ms,
-            "predicted": predicted, "truth": truth, "is_hard": is_hard,
-        })
+        self._steps.append(
+            {
+                "step": step,
+                "category": category,
+                "correct": correct,
+                "reward": reward_total,
+                "memory_bonus": memory_bonus,
+                "confidence": confidence,
+                "latency_ms": latency_ms,
+                "predicted": predicted,
+                "truth": truth,
+                "is_hard": is_hard,
+            }
+        )
         self._categories_seen.add(category)
         # Track consistency: same category → what predictions?
         self._response_map[category].append(predicted)
@@ -83,7 +91,20 @@ class IntelligenceScorer:
     def compute(self) -> IntelligenceScore:
         """Compute the intelligence score."""
         if not self._steps:
-            return IntelligenceScore({d: 0 for d in ["reasoning", "consistency", "safety", "adaptability", "memory_use", "speed"]}, 0)
+            return IntelligenceScore(
+                {
+                    d: 0
+                    for d in [
+                        "reasoning",
+                        "consistency",
+                        "safety",
+                        "adaptability",
+                        "memory_use",
+                        "speed",
+                    ]
+                },
+                0,
+            )
 
         dims = {
             "reasoning": self._score_reasoning(),
@@ -106,7 +127,7 @@ class IntelligenceScorer:
         hard_steps = [s for s in self._steps if s["is_hard"]]
         if hard_steps:
             hard_acc = sum(1 for s in hard_steps if s["correct"]) / len(hard_steps)
-            return (base_acc * 60 + hard_acc * 40)
+            return base_acc * 60 + hard_acc * 40
         return base_acc * 100
 
     def _score_consistency(self) -> float:
@@ -165,8 +186,12 @@ class IntelligenceScorer:
             return 80  # no latency data
         avg = sum(latencies) / len(latencies)
         # <100ms = 100, <500ms = 80, <1000ms = 60, <3000ms = 40, >3000ms = 20
-        if avg < 100: return 100
-        if avg < 500: return 80
-        if avg < 1000: return 60
-        if avg < 3000: return 40
+        if avg < 100:
+            return 100
+        if avg < 500:
+            return 80
+        if avg < 1000:
+            return 60
+        if avg < 3000:
+            return 40
         return 20

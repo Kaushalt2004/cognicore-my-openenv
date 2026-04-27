@@ -18,6 +18,7 @@ from cognicore.cache import ResponseCache
 class TestPersistence:
     def test_save_load(self, tmp_path):
         from cognicore.smart_agents import AutoLearner
+
         agent = AutoLearner()
         agent.knowledge["security"]["UNSAFE"] = 5.0
 
@@ -31,6 +32,7 @@ class TestPersistence:
 
     def test_save_evolve_agent(self, tmp_path):
         from cognicore.evolution import EvolvableAgent
+
         agent = EvolvableAgent()
         agent.fitness = 42.0
 

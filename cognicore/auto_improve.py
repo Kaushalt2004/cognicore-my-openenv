@@ -92,7 +92,7 @@ def auto_improve(
                 obs, reward, done, _, info = env.step(action)
 
                 # Let agent learn
-                if hasattr(agent, 'learn'):
+                if hasattr(agent, "learn"):
                     agent.learn(reward, info)
 
                 er = info.get("eval_result", {})
@@ -117,7 +117,7 @@ def auto_improve(
                 if done:
                     break
 
-            stats = env.episode_stats()
+            env.episode_stats()
             cycle_score = env.get_score()
             analyzer.record_episode(env, cycle)
 
@@ -178,8 +178,10 @@ def auto_improve(
 
     if verbose:
         print("\n  Summary:")
-        print(f"    {result['initial_accuracy']:.0%} -> {result['final_accuracy']:.0%} "
-              f"(improvement: {result['improvement']:+.0%})")
+        print(
+            f"    {result['initial_accuracy']:.0%} -> {result['final_accuracy']:.0%} "
+            f"(improvement: {result['improvement']:+.0%})"
+        )
         if result["weak_categories"]:
             print("    Still weak on:")
             for w in result["weak_categories"][:3]:

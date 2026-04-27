@@ -64,9 +64,7 @@ class ConversationEnv(CogniCoreEnv):
                 "category": TextSpace(),
             }
         )
-        self.action_space = DictSpace(
-            fields={"response": TextSpace()}
-        )
+        self.action_space = DictSpace(fields={"response": TextSpace()})
 
     def _generate_tasks(self) -> List[ConversationCase]:
         return get_conversation_cases(self.difficulty)

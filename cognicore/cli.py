@@ -39,7 +39,9 @@ import time
 # Fix Windows console encoding
 if sys.platform == "win32":
     try:
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.buffer, encoding="utf-8", errors="replace"
+        )
     except Exception:
         pass
 
@@ -51,6 +53,7 @@ from cognicore.agents.base_agent import RandomAgent
 # Original Commands (Phase 3)
 # =====================================================================
 
+
 def cmd_list(args):
     """List all registered environments."""
     envs = cognicore.list_envs()
@@ -58,7 +61,11 @@ def cmd_list(args):
     print(f"{'ID':<40s} {'Description'}")
     print("-" * 80)
     for e in envs:
-        desc = e["description"][:55] + "..." if len(e["description"]) > 55 else e["description"]
+        desc = (
+            e["description"][:55] + "..."
+            if len(e["description"]) > 55
+            else e["description"]
+        )
         print(f"{e['id']:<40s} {desc}")
     print()
 
@@ -116,7 +123,9 @@ def cmd_run(args):
                 total_correct += 1
 
             if args.verbose:
-                status = "[OK]" if info.get("eval_result", {}).get("correct") else "[  ]"
+                status = (
+                    "[OK]" if info.get("eval_result", {}).get("correct") else "[  ]"
+                )
                 print(f"  Step {step_count:3d}: {status} reward={reward.total:+.2f}")
 
             if done:
@@ -155,8 +164,12 @@ def cmd_serve(args):
     print()
 
     app = create_app()
-    uvicorn.run(app, host=args.host, port=args.port,
-                log_level="info" if args.verbose else "warning")
+    uvicorn.run(
+        app,
+        host=args.host,
+        port=args.port,
+        log_level="info" if args.verbose else "warning",
+    )
 
 
 def cmd_dashboard(args):
@@ -184,9 +197,13 @@ def cmd_leaderboard(args):
         return
 
     stats = lb.get_stats()
-    print(f"\nCogniCore Leaderboard ({stats['total_submissions']} submissions, {stats['unique_agents']} agents)")
+    print(
+        f"\nCogniCore Leaderboard ({stats['total_submissions']} submissions, {stats['unique_agents']} agents)"
+    )
     print("=" * 80)
-    print(f"{'Rank':<6} {'Agent':<20} {'Environment':<30} {'Score':<10} {'Accuracy':<10}")
+    print(
+        f"{'Rank':<6} {'Agent':<20} {'Environment':<30} {'Score':<10} {'Accuracy':<10}"
+    )
     print("-" * 80)
 
     for r in rankings:
@@ -195,7 +212,7 @@ def cmd_leaderboard(args):
             f"{r['agent_id']:<20} "
             f"{r['env_id']:<30} "
             f"{r['score']:<10.4f} "
-            f"{r['accuracy']*100:<9.0f}%"
+            f"{r['accuracy'] * 100:<9.0f}%"
         )
     print()
 
@@ -203,6 +220,7 @@ def cmd_leaderboard(args):
 # =====================================================================
 # Training Commands (Phase 4-6)
 # =====================================================================
+
 
 def cmd_benchmark(args):
     """Benchmark an agent across environments."""
@@ -247,7 +265,7 @@ def cmd_improve(args):
     """Self-improvement loop (run -> analyze -> improve -> repeat)."""
     from cognicore.auto_improve import auto_improve
 
-    result = auto_improve(
+    auto_improve(
         env_id=args.env_id,
         difficulty=args.difficulty,
         target_accuracy=args.target,
@@ -269,12 +287,13 @@ def cmd_evolve(args):
         elite_count=max(2, args.pop // 5),
         mutation_rate=args.mutation,
     )
-    best = engine.evolve(generations=args.generations, verbose=True)
+    engine.evolve(generations=args.generations, verbose=True)
 
 
 # =====================================================================
 # Testing Commands (Phase 5-6)
 # =====================================================================
+
 
 def cmd_stress(args):
     """Adversarial stress test — find agent weaknesses."""
@@ -317,6 +336,7 @@ def cmd_debug(args):
 # Analysis Commands (Phase 5-6)
 # =====================================================================
 
+
 def cmd_explain(args):
     """Explainable AI — run agent and show why it fails."""
     from cognicore.explainer import Explainer
@@ -347,7 +367,9 @@ def cmd_explain(args):
         )
 
         if not er.get("correct", True):
-            print(f"  Step {step} [{er.get('category', '?')}]: {result.get('why_wrong', '')[:80]}")
+            print(
+                f"  Step {step} [{er.get('category', '?')}]: {result.get('why_wrong', '')[:80]}"
+            )
 
         if done:
             break
@@ -366,6 +388,7 @@ def cmd_iq(args):
     # Use AutoLearner for more interesting results
     try:
         from cognicore.smart_agents import AutoLearner
+
         agent = AutoLearner()
     except Exception:
         agent = RandomAgent(env.action_space)
@@ -385,7 +408,7 @@ def cmd_iq(args):
             obs, reward, done, _, info = env.step(action)
             er = info.get("eval_result", {})
 
-            if hasattr(agent, 'learn'):
+            if hasattr(agent, "learn"):
                 agent.learn(reward, info)
 
             scorer.record(
@@ -474,7 +497,7 @@ def cmd_transfer(args):
             if done:
                 break
         stats = env.episode_stats()
-        print(f"    Expert episode {ep+1}: accuracy={stats.accuracy:.0%}")
+        print(f"    Expert episode {ep + 1}: accuracy={stats.accuracy:.0%}")
 
     # Transfer
     print(f"\n  Phase 2: Transferring knowledge ({args.method})...")
@@ -505,12 +528,15 @@ def cmd_transfer(args):
 # Phase 8 Commands
 # =====================================================================
 
+
 def cmd_swarm(args):
     """Swarm intelligence — multi-agent collaboration."""
     from cognicore.swarm import Swarm
 
     swarm = Swarm(size=args.size, diversity=True)
-    result = swarm.solve(args.env_id, difficulty=args.difficulty, episodes=args.episodes)
+    result = swarm.solve(
+        args.env_id, difficulty=args.difficulty, episodes=args.episodes
+    )
     result.print_report()
 
 
@@ -550,7 +576,7 @@ def cmd_build(args):
     while True:
         action = agent.act(obs)
         obs, reward, done, _, info_d = env.step(action)
-        if hasattr(agent, 'learn'):
+        if hasattr(agent, "learn"):
             agent.learn(reward, info_d)
         if done:
             break
@@ -573,7 +599,9 @@ def cmd_causal(args):
             action = agent.act(obs)
             obs, reward, done, _, info = env.step(action)
             er = info.get("eval_result", {})
-            engine.observe_step(obs, action, er.get("correct", False), er.get("category", ""))
+            engine.observe_step(
+                obs, action, er.get("correct", False), er.get("category", "")
+            )
             if done:
                 break
 
@@ -619,9 +647,13 @@ def cmd_doctor(args):
     # Core imports
     print("\n  Core Modules:")
     for mod_name in [
-        "cognicore.core.base_env", "cognicore.core.types", "cognicore.core.spaces",
-        "cognicore.middleware.memory", "cognicore.middleware.reflection",
-        "cognicore.middleware.rewards", "cognicore.middleware.propose_revise",
+        "cognicore.core.base_env",
+        "cognicore.core.types",
+        "cognicore.core.spaces",
+        "cognicore.middleware.memory",
+        "cognicore.middleware.reflection",
+        "cognicore.middleware.rewards",
+        "cognicore.middleware.propose_revise",
         "cognicore.middleware.safety_monitor",
     ]:
         check(mod_name.split(".")[-1], lambda m=mod_name: importlib.import_module(m))
@@ -629,7 +661,14 @@ def cmd_doctor(args):
     # Environments
     print("\n  Environments:")
     envs = cognicore.list_envs()
-    check(f"{len(envs)} environments registered", lambda: None if len(envs) == 24 else (_ for _ in ()).throw(Exception(f"Expected 24, got {len(envs)}")))
+    check(
+        f"{len(envs)} environments registered",
+        lambda: (
+            None
+            if len(envs) == 24
+            else (_ for _ in ()).throw(Exception(f"Expected 24, got {len(envs)}"))
+        ),
+    )
 
     for env_id in ["SafetyClassification-v1", "MathReasoning-v1", "CodeDebugging-v1"]:
         check(f"make({env_id})", lambda eid=env_id: cognicore.make(eid).reset())
@@ -637,37 +676,58 @@ def cmd_doctor(args):
     # Premium modules
     print("\n  Premium Modules:")
     for mod_name in [
-        "cognicore.advanced_memory", "cognicore.explainer", "cognicore.adversarial",
-        "cognicore.smart_agents", "cognicore.auto_improve",
-        "cognicore.safety_layer", "cognicore.cost_tracker",
+        "cognicore.advanced_memory",
+        "cognicore.explainer",
+        "cognicore.adversarial",
+        "cognicore.smart_agents",
+        "cognicore.auto_improve",
+        "cognicore.safety_layer",
+        "cognicore.cost_tracker",
     ]:
         check(mod_name.split(".")[-1], lambda m=mod_name: importlib.import_module(m))
 
     # Research modules
     print("\n  Research Modules:")
     for mod_name in [
-        "cognicore.predictive", "cognicore.multi_memory", "cognicore.red_blue",
-        "cognicore.debugger", "cognicore.intelligence", "cognicore.thought_trace",
-        "cognicore.knowledge_transfer", "cognicore.evolution",
+        "cognicore.predictive",
+        "cognicore.multi_memory",
+        "cognicore.red_blue",
+        "cognicore.debugger",
+        "cognicore.intelligence",
+        "cognicore.thought_trace",
+        "cognicore.knowledge_transfer",
+        "cognicore.evolution",
     ]:
         check(mod_name.split(".")[-1], lambda m=mod_name: importlib.import_module(m))
 
     # Platform modules
     print("\n  Platform Modules:")
     for mod_name in [
-        "cognicore.persistence", "cognicore.report", "cognicore.replay",
-        "cognicore.profiles", "cognicore.prompt_optimizer", "cognicore.webhooks",
-        "cognicore.augmentation", "cognicore.fingerprint", "cognicore.difficulty",
-        "cognicore.rate_limiter", "cognicore.cache",
+        "cognicore.persistence",
+        "cognicore.report",
+        "cognicore.replay",
+        "cognicore.profiles",
+        "cognicore.prompt_optimizer",
+        "cognicore.webhooks",
+        "cognicore.augmentation",
+        "cognicore.fingerprint",
+        "cognicore.difficulty",
+        "cognicore.rate_limiter",
+        "cognicore.cache",
     ]:
         check(mod_name.split(".")[-1], lambda m=mod_name: importlib.import_module(m))
 
     # Phase 8 modules
     print("\n  Phase 8 Modules:")
     for mod_name in [
-        "cognicore.meta_rewards", "cognicore.causal", "cognicore.agent_builder",
-        "cognicore.strategy", "cognicore.lifelong", "cognicore.swarm",
-        "cognicore.knowledge_transfer", "cognicore.evolution",
+        "cognicore.meta_rewards",
+        "cognicore.causal",
+        "cognicore.agent_builder",
+        "cognicore.strategy",
+        "cognicore.lifelong",
+        "cognicore.swarm",
+        "cognicore.knowledge_transfer",
+        "cognicore.evolution",
     ]:
         check(mod_name.split(".")[-1], lambda m=mod_name: importlib.import_module(m))
 
@@ -681,8 +741,12 @@ def cmd_doctor(args):
 
     # Optional dependencies
     print("\n  Optional Dependencies:")
-    for pkg, label in [("fastapi", "FastAPI (server)"), ("uvicorn", "Uvicorn (server)"),
-                        ("openai", "OpenAI (LLM)"), ("pytest", "Pytest (dev)")]:
+    for pkg, label in [
+        ("fastapi", "FastAPI (server)"),
+        ("uvicorn", "Uvicorn (server)"),
+        ("openai", "OpenAI (LLM)"),
+        ("pytest", "Pytest (dev)"),
+    ]:
         try:
             importlib.import_module(pkg)
             check(label, lambda: None)
@@ -695,7 +759,9 @@ def cmd_doctor(args):
     if failed == 0:
         print("  CogniCore is healthy!")
     else:
-        print("  Some checks failed. Run 'pip install cognicore-env[all]' for full features.")
+        print(
+            "  Some checks failed. Run 'pip install cognicore-env[all]' for full features."
+        )
     print(f"  Exports: {len(cognicore.__all__)}")
     print(f"  Environments: {len(envs)}")
     print(f"{'=' * 55}\n")
@@ -708,23 +774,33 @@ def _test_random_agent():
     action = agent.act(obs)
     env.step(action)
 
+
 def _test_auto_learner():
     from cognicore.smart_agents import AutoLearner
+
     agent = AutoLearner()
-    obs = {"category": "test", "prompt": "hello", "memory_context": [], "reflection_hints": ""}
+    obs = {
+        "category": "test",
+        "prompt": "hello",
+        "memory_context": [],
+        "reflection_hints": "",
+    }
     action = agent.act(obs)
     assert "classification" in action
+
 
 def _test_semantic_memory():
     mem = cognicore.SemanticMemory()
     mem.store({"text": "test input", "correct": True})
     assert mem.stats()["total_entries"] == 1
 
+
 def _test_predictor():
     pred = cognicore.FailurePredictor()
     pred.observe("test", correct=True)
     risk = pred.predict_risk("test")
     assert "risk" in risk
+
 
 def _test_cognitive_memory():
     mem = cognicore.CognitiveMemory()
@@ -735,6 +811,7 @@ def _test_cognitive_memory():
 # =====================================================================
 # Main Entry Point
 # =====================================================================
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -756,8 +833,9 @@ examples:
   cognicore doctor                                  Health check everything
 """,
     )
-    parser.add_argument("--version", action="version",
-                        version=f"cognicore {cognicore.__version__}")
+    parser.add_argument(
+        "--version", action="version", version=f"cognicore {cognicore.__version__}"
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
@@ -795,17 +873,27 @@ examples:
     sub_lb.set_defaults(func=cmd_leaderboard)
 
     # ---- Training ----
-    sub_bench = subparsers.add_parser("benchmark", help="Benchmark agent across all envs")
-    sub_bench.add_argument("--envs", default="all", help="'all' or comma-separated env IDs")
+    sub_bench = subparsers.add_parser(
+        "benchmark", help="Benchmark agent across all envs"
+    )
+    sub_bench.add_argument(
+        "--envs", default="all", help="'all' or comma-separated env IDs"
+    )
     sub_bench.add_argument("--difficulties", default="easy,medium,hard")
     sub_bench.add_argument("--episodes", type=int, default=1)
     sub_bench.set_defaults(func=cmd_benchmark)
 
-    sub_cur = subparsers.add_parser("curriculum", help="Curriculum learning (auto-difficulty)")
+    sub_cur = subparsers.add_parser(
+        "curriculum", help="Curriculum learning (auto-difficulty)"
+    )
     sub_cur.add_argument("env_id", help="Environment ID")
     sub_cur.add_argument("--episodes", type=int, default=15)
-    sub_cur.add_argument("--threshold", type=float, default=0.8, help="Promotion threshold")
-    sub_cur.add_argument("--demotion", type=float, default=0.3, help="Demotion threshold")
+    sub_cur.add_argument(
+        "--threshold", type=float, default=0.8, help="Promotion threshold"
+    )
+    sub_cur.add_argument(
+        "--demotion", type=float, default=0.3, help="Demotion threshold"
+    )
     sub_cur.add_argument("--window", type=int, default=3)
     sub_cur.set_defaults(func=cmd_curriculum)
 
@@ -839,7 +927,9 @@ examples:
     sub_dbg = subparsers.add_parser("debug", help="AI debugger with breakpoints")
     sub_dbg.add_argument("env_id", nargs="?", default="SafetyClassification-v1")
     sub_dbg.add_argument("--difficulty", default="easy")
-    sub_dbg.add_argument("--on-wrong", action="store_true", default=True, help="Break on wrong answers")
+    sub_dbg.add_argument(
+        "--on-wrong", action="store_true", default=True, help="Break on wrong answers"
+    )
     sub_dbg.add_argument("--category", default=None, help="Break on this category")
     sub_dbg.set_defaults(func=cmd_debug)
 
@@ -856,8 +946,17 @@ examples:
     sub_iq.set_defaults(func=cmd_iq)
 
     sub_cost = subparsers.add_parser("cost", help="Cost estimation for LLM usage")
-    sub_cost.add_argument("--model", default="gemini-flash",
-                          choices=["gemini-flash", "gemini-pro", "gpt-4o-mini", "gpt-4o", "claude-sonnet"])
+    sub_cost.add_argument(
+        "--model",
+        default="gemini-flash",
+        choices=[
+            "gemini-flash",
+            "gemini-pro",
+            "gpt-4o-mini",
+            "gpt-4o",
+            "claude-sonnet",
+        ],
+    )
     sub_cost.add_argument("--env-id", dest="env_id", default="SafetyClassification-v1")
     sub_cost.add_argument("--difficulty", default="easy")
     sub_cost.set_defaults(func=cmd_cost)
@@ -865,7 +964,9 @@ examples:
     sub_xfer = subparsers.add_parser("transfer", help="Knowledge transfer demo")
     sub_xfer.add_argument("--env-id", dest="env_id", default="SafetyClassification-v1")
     sub_xfer.add_argument("--expert-episodes", type=int, default=3)
-    sub_xfer.add_argument("--method", default="full", choices=["full", "successes_only", "selective"])
+    sub_xfer.add_argument(
+        "--method", default="full", choices=["full", "successes_only", "selective"]
+    )
     sub_xfer.set_defaults(func=cmd_transfer)
 
     # ---- Phase 8 ----
@@ -885,13 +986,19 @@ examples:
     sub_life.set_defaults(func=cmd_lifelong)
 
     sub_build = subparsers.add_parser("build", help="Auto-build agent from goal")
-    sub_build.add_argument("--goal", default="maximize accuracy", help="High-level goal")
-    sub_build.add_argument("--risk", default="medium", choices=["low", "medium", "high"])
+    sub_build.add_argument(
+        "--goal", default="maximize accuracy", help="High-level goal"
+    )
+    sub_build.add_argument(
+        "--risk", default="medium", choices=["low", "medium", "high"]
+    )
     sub_build.add_argument("--env-id", dest="env_id", default="SafetyClassification-v1")
     sub_build.set_defaults(func=cmd_build)
 
     sub_report = subparsers.add_parser("report", help="Generate HTML report")
-    sub_report.add_argument("--env-id", dest="env_id", default="SafetyClassification-v1")
+    sub_report.add_argument(
+        "--env-id", dest="env_id", default="SafetyClassification-v1"
+    )
     sub_report.add_argument("--difficulty", default="easy")
     sub_report.add_argument("--episodes", type=int, default=3)
     sub_report.add_argument("--output", default="cognicore_report.html")

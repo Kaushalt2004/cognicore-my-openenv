@@ -104,7 +104,7 @@ class Experiment:
                     total_streak += reward.streak_penalty
 
                     # RL agents might have learn()
-                    if hasattr(_agent, 'learn'):
+                    if hasattr(_agent, "learn"):
                         _agent.learn(reward.total)
 
                     if done:
@@ -113,20 +113,22 @@ class Experiment:
                 stats = env.episode_stats()
                 elapsed = time.time() - start
 
-                var_results.append({
-                    "episode": ep + 1,
-                    "score": env.get_score(),
-                    "accuracy": stats.accuracy,
-                    "correct": stats.correct_count,
-                    "total": stats.steps,
-                    "memory_bonus_total": total_memory,
-                    "streak_penalty_total": total_streak,
-                    "time_seconds": elapsed,
-                })
+                var_results.append(
+                    {
+                        "episode": ep + 1,
+                        "score": env.get_score(),
+                        "accuracy": stats.accuracy,
+                        "correct": stats.correct_count,
+                        "total": stats.steps,
+                        "memory_bonus_total": total_memory,
+                        "streak_penalty_total": total_streak,
+                        "time_seconds": elapsed,
+                    }
+                )
 
                 if verbose:
                     print(
-                        f"  [{var_name:15s}] ep={ep+1} "
+                        f"  [{var_name:15s}] ep={ep + 1} "
                         f"acc={stats.accuracy:.0%} "
                         f"score={env.get_score():.4f}"
                     )
@@ -190,7 +192,9 @@ class ExperimentResults:
         print(f"\n{'=' * 65}")
         print(f"  Experiment Results: {self.name}")
         print(f"{'=' * 65}")
-        print(f"  {'Variant':<20s} {'Avg Score':<12s} {'Best Score':<12s} {'Avg Acc':<10s} {'Memory+':<10s}")
+        print(
+            f"  {'Variant':<20s} {'Avg Score':<12s} {'Best Score':<12s} {'Avg Acc':<10s} {'Memory+':<10s}"
+        )
         print(f"  {'-' * 62}")
 
         for var in sorted(s, key=lambda k: -s[k]["avg_score"]):
@@ -200,7 +204,7 @@ class ExperimentResults:
                 f"  {var:<20s} "
                 f"{v['avg_score']:<12.4f} "
                 f"{v['best_score']:<12.4f} "
-                f"{v['avg_accuracy']*100:<9.0f}% "
+                f"{v['avg_accuracy'] * 100:<9.0f}% "
                 f"{v['avg_memory_bonus']:<+10.2f}"
                 f"{marker}"
             )
@@ -209,7 +213,7 @@ class ExperimentResults:
         if imp:
             print(f"\n  {imp['winner']} beats {imp['loser']} by:")
             print(f"    Score: +{imp['score_improvement']:.4f}")
-            print(f"    Accuracy: +{imp['accuracy_improvement']*100:.0f}%")
+            print(f"    Accuracy: +{imp['accuracy_improvement'] * 100:.0f}%")
 
         print(f"{'=' * 65}\n")
 

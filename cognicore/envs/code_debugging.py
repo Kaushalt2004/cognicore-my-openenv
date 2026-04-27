@@ -86,8 +86,10 @@ class CodeDebuggingEnv(CogniCoreEnv):
             predicted_line = -1
 
         base_score = grade_code_answer(
-            predicted_line, case.bug_line,
-            str(predicted_fix), case.fix_type,
+            predicted_line,
+            case.bug_line,
+            str(predicted_fix),
+            case.fix_type,
         )
         correct = base_score >= 1.0
 

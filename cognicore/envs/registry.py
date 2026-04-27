@@ -33,6 +33,7 @@ _REGISTRY: Dict[str, Dict[str, Any]] = {}
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def register(
     env_id: str,
     entry_point: Type[CogniCoreEnv] | str,

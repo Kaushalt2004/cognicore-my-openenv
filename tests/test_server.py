@@ -5,6 +5,7 @@ import pytest
 try:
     from fastapi.testclient import TestClient
     from cognicore.server.app import create_app
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -133,7 +134,9 @@ class TestServerSessions:
 
     def test_list_sessions(self, client):
         # Create two sessions
-        r1 = client.post("/envs/SafetyClassification-v1/create", json={"difficulty": "easy"})
+        r1 = client.post(
+            "/envs/SafetyClassification-v1/create", json={"difficulty": "easy"}
+        )
         r2 = client.post("/envs/MathReasoning-v1/create", json={"difficulty": "easy"})
         sid1 = r1.json()["session_id"]
         sid2 = r2.json()["session_id"]

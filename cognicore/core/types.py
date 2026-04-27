@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 # Structured Reward — CogniCore's signature 8-component reward
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class StructuredReward:
     """8-component reward signal — richer than a single scalar.
@@ -86,6 +87,7 @@ class StructuredReward:
 # Evaluation Result — returned by subclass _evaluate()
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class EvalResult:
     """Result of grading an agent's action.
@@ -118,6 +120,7 @@ class EvalResult:
 # Step Result — the 5-tuple returned by env.step()
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class StepResult:
     """The return value of ``CogniCoreEnv.step()``.
@@ -147,6 +150,7 @@ class StepResult:
 # Episode Stats — summary at end of an episode
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class EpisodeStats:
     """Summary statistics for a completed episode."""
@@ -168,6 +172,7 @@ class EpisodeStats:
 # ---------------------------------------------------------------------------
 # Proposal Feedback — returned by env.propose()
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ProposalFeedback:
@@ -192,6 +197,7 @@ class ProposalFeedback:
 # ---------------------------------------------------------------------------
 # Configuration — controls which middleware to enable
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class CogniCoreConfig:

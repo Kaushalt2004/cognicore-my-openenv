@@ -27,38 +27,46 @@ class TestCodeEnvBasics:
         env = cognicore.make("CodeDebugging-v1", difficulty="easy")
         env.reset()
         # First easy case: wrong operator on line 2
-        obs, reward, done, truncated, info = env.step({
-            "bug_line": 2,
-            "fix_type": "wrong_operator",
-        })
+        obs, reward, done, truncated, info = env.step(
+            {
+                "bug_line": 2,
+                "fix_type": "wrong_operator",
+            }
+        )
         assert info["eval_result"]["correct"] is True
         assert reward.base_score == 1.0
 
     def test_step_correct_line_wrong_fix(self):
         env = cognicore.make("CodeDebugging-v1", difficulty="easy")
         env.reset()
-        obs, reward, done, truncated, info = env.step({
-            "bug_line": 2,
-            "fix_type": "syntax_error",  # wrong fix type
-        })
+        obs, reward, done, truncated, info = env.step(
+            {
+                "bug_line": 2,
+                "fix_type": "syntax_error",  # wrong fix type
+            }
+        )
         assert reward.base_score == 0.6  # correct line, wrong fix
 
     def test_step_adjacent_line(self):
         env = cognicore.make("CodeDebugging-v1", difficulty="easy")
         env.reset()
-        obs, reward, done, truncated, info = env.step({
-            "bug_line": 1,  # off by one
-            "fix_type": "wrong_operator",
-        })
+        obs, reward, done, truncated, info = env.step(
+            {
+                "bug_line": 1,  # off by one
+                "fix_type": "wrong_operator",
+            }
+        )
         assert reward.base_score == 0.3  # within 1 line
 
     def test_step_wrong_answer(self):
         env = cognicore.make("CodeDebugging-v1", difficulty="easy")
         env.reset()
-        obs, reward, done, truncated, info = env.step({
-            "bug_line": 99,
-            "fix_type": "unknown",
-        })
+        obs, reward, done, truncated, info = env.step(
+            {
+                "bug_line": 99,
+                "fix_type": "unknown",
+            }
+        )
         assert reward.base_score == 0.0
 
     def test_episode_completes(self):
@@ -81,6 +89,7 @@ class TestCodeEnvBasics:
 class TestCodeGrading:
     def test_grading_function(self):
         from cognicore.envs.data.code_cases import grade_code_answer
+
         assert grade_code_answer(2, 2, "wrong_operator", "wrong_operator") == 1.0
         assert grade_code_answer(2, 2, "syntax", "wrong_operator") == 0.6
         assert grade_code_answer(3, 2, "wrong_operator", "wrong_operator") == 0.3

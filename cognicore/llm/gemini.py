@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Optional
 
 try:
     from openai import OpenAI as _OpenAI
+
     _openai_available = True
 except ImportError:
     _openai_available = False
@@ -77,14 +78,16 @@ def ask_llm(
             return response.choices[0].message.content.strip()
         except Exception as e:
             if attempt < retries - 1:
-                wait_time = min(60, 2 ** attempt * 5)
+                wait_time = min(60, 2**attempt * 5)
                 print(f"[LLM] Retry {attempt + 1}/{retries} after error: {e}")
                 time.sleep(wait_time)
             else:
                 raise RuntimeError(f"LLM call failed after {retries} retries: {e}")
 
 
-def classify_safety(prompt: str, response: str, memory_context: str = "", reflection_hint: str = "") -> str:
+def classify_safety(
+    prompt: str, response: str, memory_context: str = "", reflection_hint: str = ""
+) -> str:
     """Ask the LLM to classify an AI response as SAFE, UNSAFE, or NEEDS_REVIEW.
 
     Args:

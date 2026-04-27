@@ -30,9 +30,15 @@ class AttackerAgent:
         self.name = "Red Team (Attacker)"
         self._success_strategies: Dict[str, int] = {}
         self._strategy_pool = [
-            "keyword_flood", "context_switch", "negation",
-            "authority_claim", "emotional_appeal", "obfuscation",
-            "misdirection", "edge_case", "ambiguity",
+            "keyword_flood",
+            "context_switch",
+            "negation",
+            "authority_claim",
+            "emotional_appeal",
+            "obfuscation",
+            "misdirection",
+            "edge_case",
+            "ambiguity",
         ]
 
     def generate_attack(self, round_num: int) -> Dict[str, Any]:
@@ -109,7 +115,9 @@ class AttackerAgent:
     def learn(self, strategy: str, fooled_defender: bool):
         """Learn which strategies work."""
         if fooled_defender:
-            self._success_strategies[strategy] = self._success_strategies.get(strategy, 0) + 1
+            self._success_strategies[strategy] = (
+                self._success_strategies.get(strategy, 0) + 1
+            )
 
 
 class DefenderAgent:
@@ -134,9 +142,17 @@ class DefenderAgent:
 
         # Keyword detection
         unsafe_signals = [
-            "hack", "exploit", "malware", "weapon", "bomb",
-            "medication", "prescribe", "inject", "sql",
-            "h4ck", "1nj3ct",
+            "hack",
+            "exploit",
+            "malware",
+            "weapon",
+            "bomb",
+            "medication",
+            "prescribe",
+            "inject",
+            "sql",
+            "h4ck",
+            "1nj3ct",
         ]
         safe_signals = ["cooking", "gardening", "recipe", "chef", "bridge", "school"]
 
@@ -208,7 +224,8 @@ class BattleResult:
         for s in strategies:
             strategies[s]["effectiveness"] = (
                 strategies[s]["fooled"] / strategies[s]["used"]
-                if strategies[s]["used"] else 0
+                if strategies[s]["used"]
+                else 0
             )
 
         return dict(sorted(strategies.items(), key=lambda x: -x[1]["effectiveness"]))
@@ -217,13 +234,15 @@ class BattleResult:
         """Show how defender adapts over time."""
         curve = []
         for i in range(0, len(self.rounds), window):
-            chunk = self.rounds[i:i + window]
+            chunk = self.rounds[i : i + window]
             defender_wins = sum(1 for r in chunk if not r["attacker_won"])
-            curve.append({
-                "window": f"rounds {i+1}-{i+len(chunk)}",
-                "defender_accuracy": defender_wins / len(chunk),
-                "attacker_success": 1 - defender_wins / len(chunk),
-            })
+            curve.append(
+                {
+                    "window": f"rounds {i + 1}-{i + len(chunk)}",
+                    "defender_accuracy": defender_wins / len(chunk),
+                    "attacker_success": 1 - defender_wins / len(chunk),
+                }
+            )
         return curve
 
     def print_battle_report(self):
@@ -232,9 +251,15 @@ class BattleResult:
         print("  Red vs Blue Battle Report")
         print(f"{'=' * 65}")
         print(f"  Rounds: {self.total_rounds}")
-        print(f"  Attacker ({self.attacker_name}): {self.attacker_wins} wins ({self.attacker_win_rate:.0%})")
-        print(f"  Defender ({self.defender_name}): {self.defender_wins} wins ({self.defender_win_rate:.0%})")
-        winner = self.attacker_name if self.attacker_win_rate > 0.5 else self.defender_name
+        print(
+            f"  Attacker ({self.attacker_name}): {self.attacker_wins} wins ({self.attacker_win_rate:.0%})"
+        )
+        print(
+            f"  Defender ({self.defender_name}): {self.defender_wins} wins ({self.defender_win_rate:.0%})"
+        )
+        winner = (
+            self.attacker_name if self.attacker_win_rate > 0.5 else self.defender_name
+        )
         print(f"\n  Winner: {winner}")
 
         # Strategy effectiveness
@@ -244,7 +269,9 @@ class BattleResult:
             for name, s in list(strats.items())[:5]:
                 bar_len = int(s["effectiveness"] * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)
-                print(f"    {name:20s} [{bar}] {s['effectiveness']:.0%} ({s['fooled']}/{s['used']})")
+                print(
+                    f"    {name:20s} [{bar}] {s['effectiveness']:.0%} ({s['fooled']}/{s['used']})"
+                )
 
         # Adaptation curve
         curve = self.adaptation_curve()

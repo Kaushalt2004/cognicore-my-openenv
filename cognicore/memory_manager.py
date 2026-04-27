@@ -65,16 +65,18 @@ class MemoryManager:
                 history = json.load(f)
 
         stats = env.episode_stats()
-        history.append({
-            "episode": stats.episode_number,
-            "steps": stats.steps,
-            "total_reward": stats.total_reward,
-            "accuracy": stats.accuracy,
-            "correct_count": stats.correct_count,
-            "score": env.get_score(),
-            "memory_entries": stats.memory_entries_created,
-            "timestamp": time.time(),
-        })
+        history.append(
+            {
+                "episode": stats.episode_number,
+                "steps": stats.steps,
+                "total_reward": stats.total_reward,
+                "accuracy": stats.accuracy,
+                "correct_count": stats.correct_count,
+                "score": env.get_score(),
+                "memory_entries": stats.memory_entries_created,
+                "timestamp": time.time(),
+            }
+        )
 
         with open(history_path, "w") as f:
             json.dump(history, f, indent=2)
@@ -145,19 +147,24 @@ class MemoryManager:
             if os.path.isdir(agent_dir):
                 meta = self.get_metadata(name)
                 history = self.get_history(name)
-                sessions.append({
-                    "agent_id": name,
-                    "total_episodes": len(history),
-                    "best_score": max((h["score"] for h in history), default=0),
-                    "best_accuracy": max((h["accuracy"] for h in history), default=0),
-                    "last_saved": meta.get("last_saved"),
-                    "env_class": meta.get("env_class", "unknown"),
-                })
+                sessions.append(
+                    {
+                        "agent_id": name,
+                        "total_episodes": len(history),
+                        "best_score": max((h["score"] for h in history), default=0),
+                        "best_accuracy": max(
+                            (h["accuracy"] for h in history), default=0
+                        ),
+                        "last_saved": meta.get("last_saved"),
+                        "env_class": meta.get("env_class", "unknown"),
+                    }
+                )
         return sessions
 
     def delete_session(self, agent_id: str) -> bool:
         """Delete all saved data for an agent."""
         import shutil
+
         d = os.path.join(self.storage_dir, agent_id)
         if os.path.exists(d):
             shutil.rmtree(d)
