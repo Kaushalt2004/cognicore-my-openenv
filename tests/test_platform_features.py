@@ -1,13 +1,10 @@
 """Tests for Phase 7 platform features."""
 
 import os
-import json
-import tempfile
 
-import cognicore
 from cognicore.persistence import save_agent, load_agent
 from cognicore.report import ReportGenerator
-from cognicore.replay import SessionRecorder, replay
+from cognicore.replay import SessionRecorder
 from cognicore.profiles import get_profile, list_profiles
 from cognicore.prompt_optimizer import PromptOptimizer
 from cognicore.webhooks import AlertSystem
@@ -21,6 +18,7 @@ from cognicore.cache import ResponseCache
 class TestPersistence:
     def test_save_load(self, tmp_path):
         from cognicore.smart_agents import AutoLearner
+
         agent = AutoLearner()
         agent.knowledge["security"]["UNSAFE"] = 5.0
 
@@ -34,6 +32,7 @@ class TestPersistence:
 
     def test_save_evolve_agent(self, tmp_path):
         from cognicore.evolution import EvolvableAgent
+
         agent = EvolvableAgent()
         agent.fitness = 42.0
 

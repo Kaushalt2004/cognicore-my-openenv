@@ -53,8 +53,7 @@ def log_step(
     """Log a single environment step in a structured format."""
     status = "✅" if correct else "❌"
     logger.info(
-        f"[STEP] step={step} action={action} reward={reward:.2f} "
-        f"{status} done={done}"
+        f"[STEP] step={step} action={action} reward={reward:.2f} {status} done={done}"
     )
 
 

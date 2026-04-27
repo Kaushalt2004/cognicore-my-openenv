@@ -9,7 +9,7 @@ Hard (10):   Advanced — combinatorics, probability, number theory, multi-step 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -328,7 +328,9 @@ def get_math_cases(difficulty: str = None) -> list:
     return MATH_CASES_BY_DIFFICULTY.get(difficulty, [])
 
 
-def grade_math(predicted: Any, ground_truth: Any, answer_type: str = "integer") -> float:
+def grade_math(
+    predicted: Any, ground_truth: Any, answer_type: str = "integer"
+) -> float:
     """Grade a math answer.
 
     - Exact match: 1.0

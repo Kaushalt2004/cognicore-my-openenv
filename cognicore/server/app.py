@@ -27,12 +27,13 @@ Endpoints::
 from __future__ import annotations
 
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 try:
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel, Field
+
     _FASTAPI_AVAILABLE = True
 except ImportError:
     _FASTAPI_AVAILABLE = False
@@ -54,6 +55,7 @@ except ImportError:
     class CORSMiddleware:  # type: ignore[no-redef]
         pass
 
+
 import cognicore
 from cognicore.core.base_env import CogniCoreEnv
 
@@ -61,6 +63,7 @@ from cognicore.core.base_env import CogniCoreEnv
 # ---------------------------------------------------------------------------
 # Request / Response models
 # ---------------------------------------------------------------------------
+
 
 class CreateRequest(BaseModel):
     difficulty: str = "easy"
@@ -101,6 +104,7 @@ def _get_session(sid: str) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # App factory
 # ---------------------------------------------------------------------------
+
 
 def create_app() -> "FastAPI":
     """Create the CogniCore FastAPI application."""
@@ -151,6 +155,7 @@ def create_app() -> "FastAPI":
             kwargs = {"difficulty": req.difficulty}
             if req.config:
                 from cognicore.core.types import CogniCoreConfig
+
                 kwargs["config"] = CogniCoreConfig(**req.config)
 
             env = cognicore.make(env_id, **kwargs)

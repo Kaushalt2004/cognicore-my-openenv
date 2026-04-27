@@ -8,8 +8,7 @@ The agent can then submit a revised action that actually gets graded.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from cognicore.core.types import ProposalFeedback
 from cognicore.middleware.memory import Memory
@@ -140,9 +139,7 @@ class ProposeReviseProtocol:
         if self._last_proposed_action is None:
             return False
 
-        improved = (
-            final_action != self._last_proposed_action and eval_correct
-        )
+        improved = final_action != self._last_proposed_action and eval_correct
         if improved:
             self._total_improvements += 1
         return improved

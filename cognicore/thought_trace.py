@@ -129,14 +129,16 @@ class ThoughtTracer:
         for chain in self.chains:
             error = chain.reasoning_error()
             if error:
-                errors.append({
-                    "step": chain.step,
-                    "context": chain.context[:60],
-                    "concluded": chain.conclusion,
-                    "truth": chain.truth,
-                    "error": error,
-                    "evidence_count": len(chain.nodes),
-                })
+                errors.append(
+                    {
+                        "step": chain.step,
+                        "context": chain.context[:60],
+                        "concluded": chain.conclusion,
+                        "truth": chain.truth,
+                        "error": error,
+                        "evidence_count": len(chain.nodes),
+                    }
+                )
         return errors
 
     def evidence_accuracy(self) -> Dict[str, Dict[str, float]]:
@@ -150,7 +152,11 @@ class ThoughtTracer:
                 evidence_stats[key]["total"] += 1
 
                 if chain.correct is not None:
-                    if (node.direction == chain.truth) if chain.truth else chain.correct:
+                    if (
+                        (node.direction == chain.truth)
+                        if chain.truth
+                        else chain.correct
+                    ):
                         evidence_stats[key]["helpful"] += 1
                     else:
                         evidence_stats[key]["misleading"] += 1
@@ -187,11 +193,15 @@ class ThoughtTracer:
 
         for i, node in enumerate(chain.nodes):
             arrow = "→" if node.direction else "?"
-            print(f"    {i+1}. {node.evidence} (weight={node.weight:.1f}) {arrow} {node.direction}")
+            print(
+                f"    {i + 1}. {node.evidence} (weight={node.weight:.1f}) {arrow} {node.direction}"
+            )
 
         if chain.conclusion:
             icon = "✓" if chain.correct else "✗" if chain.correct is False else "?"
-            print(f"  Conclusion: {chain.conclusion} (confidence={chain.confidence:.0%}) [{icon}]")
+            print(
+                f"  Conclusion: {chain.conclusion} (confidence={chain.confidence:.0%}) [{icon}]"
+            )
 
         if chain.truth and not chain.correct:
             error = chain.reasoning_error()
@@ -202,18 +212,18 @@ class ThoughtTracer:
     def print_analysis(self):
         """Print full reasoning analysis."""
         print(f"\n{'=' * 60}")
-        print(f"  Thought Trace Analysis")
+        print("  Thought Trace Analysis")
         print(f"  {len(self.chains)} decisions traced")
         print(f"{'=' * 60}")
 
         # Calibration
         cal = self.confidence_calibration()
-        print(f"\n  Confidence Calibration:")
+        print("\n  Confidence Calibration:")
         print(f"    Avg confidence: {cal['avg_confidence']:.0%}")
         print(f"    Actual accuracy: {cal['accuracy']:.0%}")
         print(f"    Calibration error: {cal['calibration_error']:.0%}")
         if cal.get("overconfident"):
-            print(f"    WARNING: Agent is overconfident")
+            print("    WARNING: Agent is overconfident")
 
         # Errors
         errors = self.reasoning_errors()

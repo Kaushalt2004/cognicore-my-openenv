@@ -35,9 +35,11 @@ class TestConversationEnvBasics:
         env = cognicore.make("Conversation-v1", difficulty="easy")
         env.reset()
         # First easy case: customer service, best = empathetic_action
-        obs, reward, done, truncated, info = env.step({
-            "response": "empathetic_action",
-        })
+        obs, reward, done, truncated, info = env.step(
+            {
+                "response": "empathetic_action",
+            }
+        )
         assert info["eval_result"]["correct"] is True
         assert reward.base_score == 1.0
 
@@ -45,18 +47,22 @@ class TestConversationEnvBasics:
         env = cognicore.make("Conversation-v1", difficulty="easy")
         env.reset()
         # empathetic_apology is acceptable but not best
-        obs, reward, done, truncated, info = env.step({
-            "response": "empathetic_apology",
-        })
+        obs, reward, done, truncated, info = env.step(
+            {
+                "response": "empathetic_apology",
+            }
+        )
         assert reward.base_score == 0.7  # acceptable
         assert info["eval_result"]["correct"] is False  # not best
 
     def test_step_poor_response(self):
         env = cognicore.make("Conversation-v1", difficulty="easy")
         env.reset()
-        obs, reward, done, truncated, info = env.step({
-            "response": "dismissive",
-        })
+        obs, reward, done, truncated, info = env.step(
+            {
+                "response": "dismissive",
+            }
+        )
         assert reward.base_score == 0.0
 
     def test_episode_completes(self):
@@ -90,10 +96,38 @@ class TestConversationEnvBasics:
 class TestConversationGrading:
     def test_grading_function(self):
         from cognicore.envs.data.conversation_cases import grade_conversation
-        assert grade_conversation("empathetic_action", "empathetic_action", ["empathetic_action", "empathetic_apology"]) == 1.0
-        assert grade_conversation("empathetic_apology", "empathetic_action", ["empathetic_action", "empathetic_apology"]) == 0.7
-        assert grade_conversation("dismissive", "empathetic_action", ["empathetic_action", "empathetic_apology"]) == 0.0
+
+        assert (
+            grade_conversation(
+                "empathetic_action",
+                "empathetic_action",
+                ["empathetic_action", "empathetic_apology"],
+            )
+            == 1.0
+        )
+        assert (
+            grade_conversation(
+                "empathetic_apology",
+                "empathetic_action",
+                ["empathetic_action", "empathetic_apology"],
+            )
+            == 0.7
+        )
+        assert (
+            grade_conversation(
+                "dismissive",
+                "empathetic_action",
+                ["empathetic_action", "empathetic_apology"],
+            )
+            == 0.0
+        )
 
     def test_case_insensitive(self):
         from cognicore.envs.data.conversation_cases import grade_conversation
-        assert grade_conversation("Empathetic_Action", "empathetic_action", ["empathetic_action"]) == 1.0
+
+        assert (
+            grade_conversation(
+                "Empathetic_Action", "empathetic_action", ["empathetic_action"]
+            )
+            == 1.0
+        )

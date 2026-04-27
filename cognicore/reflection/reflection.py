@@ -63,9 +63,7 @@ class Reflection:
             "recommendation": recommendation,
         }
 
-    def suggest_action(
-        self, category: str, model_prediction: str
-    ) -> Tuple[str, str]:
+    def suggest_action(self, category: str, model_prediction: str) -> Tuple[str, str]:
         """Suggest whether to keep or override the model's prediction.
 
         Args:
@@ -117,9 +115,7 @@ class Reflection:
         ]
 
         if analysis["recommendation"]:
-            hint_parts.append(
-                f"Consider '{analysis['recommendation']}' instead."
-            )
+            hint_parts.append(f"Consider '{analysis['recommendation']}' instead.")
 
         return " ".join(hint_parts)
 

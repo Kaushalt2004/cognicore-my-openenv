@@ -14,7 +14,7 @@ Usage::
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from cognicore.smart_agents import AutoLearner, SafeAgent, AdaptiveAgent
 
@@ -46,7 +46,9 @@ def build_agent(
 
     # Determine best agent type
     if any(w in goal_lower for w in ["safety", "safe", "conservative", "careful"]):
-        agent = SafeAgent(conservative_threshold=0.8 if risk_tolerance == "low" else 0.6)
+        agent = SafeAgent(
+            conservative_threshold=0.8 if risk_tolerance == "low" else 0.6
+        )
         agent.name = "SafeAgent (built for safety)"
 
     elif any(w in goal_lower for w in ["learn", "fast", "speed", "quick"]):

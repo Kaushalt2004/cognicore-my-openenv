@@ -24,7 +24,7 @@ Usage::
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 class Explainer:
@@ -99,9 +99,11 @@ class Explainer:
             explanation += f"Your low confidence ({conf:.0%}) suggests uncertainty — consider using PROPOSE→Revise to explore first. "
 
         # Check if this is a repeated mistake
-        same_cat_fails = [s for s in self.steps[:-1] if s["category"] == cat and not s["correct"]]
+        same_cat_fails = [
+            s for s in self.steps[:-1] if s["category"] == cat and not s["correct"]
+        ]
         if len(same_cat_fails) >= 2:
-            explanation += f"WARNING: You've failed on '{cat}' {len(same_cat_fails)+1} times now. This is a systematic weakness. "
+            explanation += f"WARNING: You've failed on '{cat}' {len(same_cat_fails) + 1} times now. This is a systematic weakness. "
 
         return explanation
 
@@ -156,12 +158,14 @@ class Explainer:
         similar = []
         for s in self.steps[:-1]:
             if not s["correct"] and (s["category"] == cat or s["predicted"] == pred):
-                similar.append({
-                    "step": s["step"],
-                    "category": s["category"],
-                    "predicted": s["predicted"],
-                    "truth": s["truth"],
-                })
+                similar.append(
+                    {
+                        "step": s["step"],
+                        "category": s["category"],
+                        "predicted": s["predicted"],
+                        "truth": s["truth"],
+                    }
+                )
         return similar[-3:]  # last 3
 
     def _get_confusion_pairs(self) -> Dict:
@@ -209,13 +213,15 @@ class ExplanationReport:
 
         for (pred, truth), count in sorted(pairs.items(), key=lambda x: -x[1]):
             if count >= 2:
-                patterns.append({
-                    "type": "confusion",
-                    "description": f"Consistently predicts '{pred}' when answer is '{truth}'",
-                    "count": count,
-                    "severity": "HIGH" if count >= 3 else "MEDIUM",
-                    "fix": f"Add explicit handling for cases where '{truth}' is correct",
-                })
+                patterns.append(
+                    {
+                        "type": "confusion",
+                        "description": f"Consistently predicts '{pred}' when answer is '{truth}'",
+                        "count": count,
+                        "severity": "HIGH" if count >= 3 else "MEDIUM",
+                        "fix": f"Add explicit handling for cases where '{truth}' is correct",
+                    }
+                )
 
         # 2. Category weaknesses
         cat_stats = defaultdict(lambda: {"correct": 0, "wrong": 0})
@@ -225,38 +231,47 @@ class ExplanationReport:
         for cat, stats in cat_stats.items():
             total = stats["correct"] + stats["wrong"]
             if total >= 2 and stats["wrong"] / total >= 0.6:
-                patterns.append({
-                    "type": "weak_category",
-                    "description": f"Weak on '{cat}': {stats['correct']}/{total} correct",
-                    "accuracy": stats["correct"] / total,
-                    "severity": "HIGH" if stats["correct"] / total < 0.3 else "MEDIUM",
-                    "fix": f"Focus training data on '{cat}' examples",
-                })
+                patterns.append(
+                    {
+                        "type": "weak_category",
+                        "description": f"Weak on '{cat}': {stats['correct']}/{total} correct",
+                        "accuracy": stats["correct"] / total,
+                        "severity": "HIGH"
+                        if stats["correct"] / total < 0.3
+                        else "MEDIUM",
+                        "fix": f"Focus training data on '{cat}' examples",
+                    }
+                )
 
         # 3. Overconfidence
         overconfident = [
-            s for s in self.steps
-            if not s["correct"] and s.get("confidence", 0) > 0.7
+            s for s in self.steps if not s["correct"] and s.get("confidence", 0) > 0.7
         ]
         if len(overconfident) >= 2:
-            patterns.append({
-                "type": "overconfidence",
-                "description": f"Agent was confident (>70%) but wrong {len(overconfident)} times",
-                "count": len(overconfident),
-                "severity": "HIGH",
-                "fix": "Calibrate confidence scores — add uncertainty for ambiguous cases",
-            })
+            patterns.append(
+                {
+                    "type": "overconfidence",
+                    "description": f"Agent was confident (>70%) but wrong {len(overconfident)} times",
+                    "count": len(overconfident),
+                    "severity": "HIGH",
+                    "fix": "Calibrate confidence scores — add uncertainty for ambiguous cases",
+                }
+            )
 
         # 4. Memory not helping
-        mem_used_wrong = [s for s in self.steps if s.get("memory_used") and not s["correct"]]
+        mem_used_wrong = [
+            s for s in self.steps if s.get("memory_used") and not s["correct"]
+        ]
         if len(mem_used_wrong) >= 2:
-            patterns.append({
-                "type": "memory_not_helping",
-                "description": f"Memory was used but agent still wrong {len(mem_used_wrong)} times",
-                "count": len(mem_used_wrong),
-                "severity": "MEDIUM",
-                "fix": "Memory may contain incorrect patterns — consider clearing old failure entries",
-            })
+            patterns.append(
+                {
+                    "type": "memory_not_helping",
+                    "description": f"Memory was used but agent still wrong {len(mem_used_wrong)} times",
+                    "count": len(mem_used_wrong),
+                    "severity": "MEDIUM",
+                    "fix": "Memory may contain incorrect patterns — consider clearing old failure entries",
+                }
+            )
 
         return sorted(patterns, key=lambda p: 0 if p["severity"] == "HIGH" else 1)
 
@@ -294,7 +309,9 @@ class ExplanationReport:
             }
 
             if not s["correct"]:
-                entry["explanation"] = f"Predicted '{s['predicted']}' but truth was '{s['truth']}'"
+                entry["explanation"] = (
+                    f"Predicted '{s['predicted']}' but truth was '{s['truth']}'"
+                )
                 if abs(streak) >= 3:
                     entry["alert"] = f"Failure streak of {abs(streak)}!"
 
@@ -304,7 +321,7 @@ class ExplanationReport:
     def print_report(self):
         """Print a formatted XAI report."""
         print(f"\n{'=' * 65}")
-        print(f"  Explainable AI Report")
+        print("  Explainable AI Report")
         print(f"  {self.total_steps} steps | accuracy: {self.accuracy:.0%}")
         print(f"{'=' * 65}")
 
@@ -318,7 +335,7 @@ class ExplanationReport:
 
         # Improvement plan
         plan = self.improvement_plan()
-        print(f"\n  Improvement Plan:")
+        print("\n  Improvement Plan:")
         for item in plan:
             print(f"    {item}")
 

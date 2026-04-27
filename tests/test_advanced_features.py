@@ -1,6 +1,5 @@
 """Tests for Curriculum, Benchmark, and Pipeline (Phase 3/4 features)."""
 
-import cognicore
 from cognicore.curriculum import CurriculumRunner
 from cognicore.benchmark import benchmark_agent, BenchmarkResult
 from cognicore.compose import Pipeline
@@ -21,7 +20,7 @@ class TestCurriculum:
         assert "avg_score" in result
 
     def test_difficulty_levels(self):
-        runner = CurriculumRunner("SafetyClassification-v1")
+        CurriculumRunner("SafetyClassification-v1")
         assert CurriculumRunner.LEVELS == ["easy", "medium", "hard"]
 
     def test_callbacks(self):
@@ -88,26 +87,32 @@ class TestBenchmark:
 
 class TestPipeline:
     def test_create_pipeline(self):
-        pipe = Pipeline([
-            ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
-            ("math", "MathReasoning-v1", {"difficulty": "easy"}),
-        ])
+        pipe = Pipeline(
+            [
+                ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
+                ("math", "MathReasoning-v1", {"difficulty": "easy"}),
+            ]
+        )
         assert len(pipe.stage_defs) == 2
         assert pipe.done is False
 
     def test_pipeline_reset(self):
-        pipe = Pipeline([
-            ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
-        ])
+        pipe = Pipeline(
+            [
+                ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
+            ]
+        )
         obs = pipe.reset()
         assert "_pipeline_stage" in obs
         assert obs["_pipeline_stage"] == "safety"
 
     def test_pipeline_run_through(self):
-        pipe = Pipeline([
-            ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
-            ("math", "MathReasoning-v1", {"difficulty": "easy"}),
-        ])
+        pipe = Pipeline(
+            [
+                ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
+                ("math", "MathReasoning-v1", {"difficulty": "easy"}),
+            ]
+        )
         obs = pipe.reset()
 
         steps = 0
@@ -122,9 +127,11 @@ class TestPipeline:
         assert pipe.done is True
 
     def test_pipeline_report(self):
-        pipe = Pipeline([
-            ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
-        ])
+        pipe = Pipeline(
+            [
+                ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
+            ]
+        )
         obs = pipe.reset()
         for _ in range(10):
             obs, reward, done, _, info = pipe.step({"classification": "SAFE"})
@@ -135,31 +142,45 @@ class TestPipeline:
         assert len(report["stages"]) == 1
 
     def test_pipeline_shared_memory(self):
-        pipe = Pipeline([
-            ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
-            ("math", "MathReasoning-v1", {"difficulty": "easy"}),
-        ], share_memory=True)
+        pipe = Pipeline(
+            [
+                ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
+                ("math", "MathReasoning-v1", {"difficulty": "easy"}),
+            ],
+            share_memory=True,
+        )
         obs = pipe.reset()
 
         # Run through safety stage
         for _ in range(10):
-            obs, reward, done, _, info = pipe.step({"classification": "SAFE", "answer": 42})
+            obs, reward, done, _, info = pipe.step(
+                {"classification": "SAFE", "answer": 42}
+            )
 
         # After stage 1, math env should have memory from safety
         math_env = pipe._stages[1]
         assert len(math_env.memory.entries) > 0
 
     def test_pipeline_no_shared_memory(self):
-        pipe = Pipeline([
-            ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
-            ("math", "MathReasoning-v1", {"difficulty": "easy"}),
-        ], share_memory=False)
+        pipe = Pipeline(
+            [
+                ("safety", "SafetyClassification-v1", {"difficulty": "easy"}),
+                ("math", "MathReasoning-v1", {"difficulty": "easy"}),
+            ],
+            share_memory=False,
+        )
         obs = pipe.reset()
 
         for _ in range(10):
-            obs, reward, done, _, info = pipe.step({"classification": "SAFE", "answer": 42})
+            obs, reward, done, _, info = pipe.step(
+                {"classification": "SAFE", "answer": 42}
+            )
 
         # Math env should NOT have safety memories
         math_env = pipe._stages[1]
-        safety_entries = [e for e in math_env.memory.entries if e.get("category", "").startswith("malw")]
+        safety_entries = [
+            e
+            for e in math_env.memory.entries
+            if e.get("category", "").startswith("malw")
+        ]
         assert len(safety_entries) == 0

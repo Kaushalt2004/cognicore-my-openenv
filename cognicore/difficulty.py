@@ -84,7 +84,9 @@ class DifficultyEstimator:
 
             # Difficulty = 1 - success_rate (hardest = highest)
             difficulty = 1.0 - success_rate
-            avg_reward = sum(data["rewards"]) / len(data["rewards"]) if data["rewards"] else 0
+            avg_reward = (
+                sum(data["rewards"]) / len(data["rewards"]) if data["rewards"] else 0
+            )
 
             if difficulty >= 0.8:
                 level = "VERY_HARD"
@@ -97,14 +99,16 @@ class DifficultyEstimator:
             else:
                 level = "TRIVIAL"
 
-            results.append({
-                "case": key,
-                "difficulty": round(difficulty, 3),
-                "level": level,
-                "success_rate": round(success_rate, 3),
-                "observations": total,
-                "avg_reward": round(avg_reward, 3),
-            })
+            results.append(
+                {
+                    "case": key,
+                    "difficulty": round(difficulty, 3),
+                    "level": level,
+                    "success_rate": round(success_rate, 3),
+                    "observations": total,
+                    "avg_reward": round(avg_reward, 3),
+                }
+            )
 
         return sorted(results, key=lambda x: -x["difficulty"])
 

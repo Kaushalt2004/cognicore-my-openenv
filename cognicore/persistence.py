@@ -53,8 +53,7 @@ def save_agent(agent, path: str, metadata: Optional[Dict] = None) -> Dict[str, A
         if isinstance(knowledge, defaultdict):
             # Convert nested defaultdicts to regular dicts
             data["knowledge"] = {
-                k: dict(v) if isinstance(v, dict) else v
-                for k, v in knowledge.items()
+                k: dict(v) if isinstance(v, dict) else v for k, v in knowledge.items()
             }
         elif isinstance(knowledge, dict):
             data["knowledge"] = dict(knowledge)
@@ -70,8 +69,16 @@ def save_agent(agent, path: str, metadata: Optional[Dict] = None) -> Dict[str, A
         data["history"] = list(history)[-1000:]  # cap at 1000
 
     # Save config
-    for attr in ("epsilon", "name", "threshold", "fitness", "generation",
-                 "_correct", "_total", "actions"):
+    for attr in (
+        "epsilon",
+        "name",
+        "threshold",
+        "fitness",
+        "generation",
+        "_correct",
+        "_total",
+        "actions",
+    ):
         val = getattr(agent, attr, None)
         if val is not None:
             data[attr] = val
@@ -116,6 +123,7 @@ def load_agent(path: str, agent_class=None):
     # Auto-detect class
     if agent_class is None:
         from cognicore.smart_agents import AutoLearner, SafeAgent, AdaptiveAgent
+
         class_map = {
             "AutoLearner": AutoLearner,
             "SafeAgent": SafeAgent,
@@ -123,6 +131,7 @@ def load_agent(path: str, agent_class=None):
         }
         try:
             from cognicore.evolution import EvolvableAgent
+
             class_map["EvolvableAgent"] = EvolvableAgent
         except ImportError:
             pass
@@ -130,6 +139,7 @@ def load_agent(path: str, agent_class=None):
         agent_class = class_map.get(agent_type)
         if agent_class is None:
             from cognicore.smart_agents import AutoLearner
+
             agent_class = AutoLearner
 
     # Instantiate
@@ -148,8 +158,15 @@ def load_agent(path: str, agent_class=None):
                 agent.knowledge[k] = v
 
     # Restore attributes
-    for attr in ("epsilon", "name", "threshold", "fitness", "generation",
-                 "_correct", "_total"):
+    for attr in (
+        "epsilon",
+        "name",
+        "threshold",
+        "fitness",
+        "generation",
+        "_correct",
+        "_total",
+    ):
         if attr in data and hasattr(agent, attr):
             setattr(agent, attr, data[attr])
 

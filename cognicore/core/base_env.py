@@ -30,7 +30,6 @@ from cognicore.core.types import (
     EpisodeStats,
     EvalResult,
     ProposalFeedback,
-    StepResult,
     StructuredReward,
 )
 from cognicore.middleware.memory import Memory
@@ -259,8 +258,7 @@ class CogniCoreEnv(ABC):
         # Start propose-revise protocol for this step
         self.propose_revise.begin_step()
 
-        # Get current task
-        current_task = self._tasks[self._current_step]
+        # Get current task (accessed via self._tasks[self._current_step] when needed)
 
         # Evaluate the action
         eval_result = self._evaluate(action)
@@ -271,9 +269,8 @@ class CogniCoreEnv(ABC):
         streak_penalty = self.safety_monitor.check(eval_result.correct)
 
         # Check if this is a novel group
-        is_novel = (
-            eval_result.category != ""
-            and not self.memory.has_seen_group(eval_result.category)
+        is_novel = eval_result.category != "" and not self.memory.has_seen_group(
+            eval_result.category
         )
 
         # Check if agent followed reflection hint
@@ -410,9 +407,7 @@ class CogniCoreEnv(ABC):
     def state(self) -> Dict[str, Any]:
         """Return full environment state."""
         accuracy = (
-            self._correct_count / self._current_step
-            if self._current_step > 0
-            else 0.0
+            self._correct_count / self._current_step if self._current_step > 0 else 0.0
         )
         return {
             "current_step": self._current_step,

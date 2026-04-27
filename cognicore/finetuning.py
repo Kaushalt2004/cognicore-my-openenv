@@ -21,8 +21,7 @@ Usage::
 from __future__ import annotations
 
 import json
-import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from cognicore.core.types import StructuredReward
 
@@ -59,21 +58,31 @@ class EpisodeRecorder:
         if not self._recording:
             return
 
-        self._current_episode.append({
-            "observation": _sanitize(observation),
-            "action": _sanitize(action),
-            "reward": reward.to_dict() if hasattr(reward, "to_dict") else {"total": float(reward)},
-            "correct": info.get("eval_result", {}).get("correct", False),
-            "ground_truth": info.get("eval_result", {}).get("ground_truth", ""),
-        })
+        self._current_episode.append(
+            {
+                "observation": _sanitize(observation),
+                "action": _sanitize(action),
+                "reward": reward.to_dict()
+                if hasattr(reward, "to_dict")
+                else {"total": float(reward)},
+                "correct": info.get("eval_result", {}).get("correct", False),
+                "ground_truth": info.get("eval_result", {}).get("ground_truth", ""),
+            }
+        )
 
     def end_episode(self, score: float = 0.0, accuracy: float = 0.0):
         """End the current episode."""
         if self._recording and self._current_episode:
-            self.episodes.append({
-                "metadata": {**self._episode_meta, "score": score, "accuracy": accuracy},
-                "steps": self._current_episode,
-            })
+            self.episodes.append(
+                {
+                    "metadata": {
+                        **self._episode_meta,
+                        "score": score,
+                        "accuracy": accuracy,
+                    },
+                    "steps": self._current_episode,
+                }
+            )
         self._current_episode = []
         self._recording = False
 

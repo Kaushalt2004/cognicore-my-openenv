@@ -9,13 +9,13 @@ Usage::
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional
 
 from cognicore.core.base_env import CogniCoreEnv
-from cognicore.core.types import CogniCoreConfig, EvalResult
+from cognicore.core.types import EvalResult
 from cognicore.core.spaces import DictSpace, TextSpace
 from cognicore.envs.data.summarization_cases import (
-    SummarizationCase, get_summarization_cases, grade_summary,
+    get_summarization_cases,
+    grade_summary,
 )
 
 
@@ -31,10 +31,13 @@ class TextSummarizationEnv(CogniCoreEnv):
         super().__init__(config=config, **kwargs)
 
     def _setup(self, **kwargs):
-        self.observation_space = DictSpace(fields={
-            "text": TextSpace(), "category": TextSpace(),
-            "max_summary_length": TextSpace(),
-        })
+        self.observation_space = DictSpace(
+            fields={
+                "text": TextSpace(),
+                "category": TextSpace(),
+                "max_summary_length": TextSpace(),
+            }
+        )
         self.action_space = DictSpace(fields={"summary": TextSpace()})
 
     def _generate_tasks(self):
@@ -45,13 +48,22 @@ class TextSummarizationEnv(CogniCoreEnv):
         predicted = action.get("summary", "")
         score = grade_summary(str(predicted), case.reference_summary, case.key_points)
         return EvalResult(
-            base_score=score, correct=score >= 0.7,
-            ground_truth=case.reference_summary, predicted=str(predicted),
+            base_score=score,
+            correct=score >= 0.7,
+            ground_truth=case.reference_summary,
+            predicted=str(predicted),
             category=case.category,
-            metadata={"case_id": case.id, "key_points": case.key_points, "difficulty": case.difficulty},
+            metadata={
+                "case_id": case.id,
+                "key_points": case.key_points,
+                "difficulty": case.difficulty,
+            },
         )
 
     def _get_obs(self):
         case = self._tasks[self._current_step]
-        return {"text": case.text, "category": case.category,
-                "max_summary_length": case.max_summary_length}
+        return {
+            "text": case.text,
+            "category": case.category,
+            "max_summary_length": case.max_summary_length,
+        }

@@ -15,10 +15,10 @@ Usage::
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from cognicore.core.base_env import CogniCoreEnv
-from cognicore.core.types import CogniCoreConfig, EvalResult, StructuredReward
+from cognicore.core.types import CogniCoreConfig, EvalResult
 
 
 class MultiAgentEnv(CogniCoreEnv):
@@ -58,7 +58,7 @@ class MultiAgentEnv(CogniCoreEnv):
         """Reset and return observations for all agents."""
         self._agent_actions = {}
         self._current_agent_idx = 0
-        obs = super().reset(**kwargs)
+        super().reset(**kwargs)
 
         # Build per-agent observations
         multi_obs = {}
@@ -92,9 +92,7 @@ class MultiAgentEnv(CogniCoreEnv):
         return {
             "status": "waiting",
             "agent": agent_id,
-            "waiting_for": [
-                a for a in self.agent_ids if a not in self._agent_actions
-            ],
+            "waiting_for": [a for a in self.agent_ids if a not in self._agent_actions],
         }
 
     def _resolve_step(self) -> Dict[str, Any]:
@@ -105,9 +103,14 @@ class MultiAgentEnv(CogniCoreEnv):
         multi_results = {}
         for aid in self.agent_ids:
             agent_result = results.get(aid, {})
-            eval_result = agent_result.get("eval_result", EvalResult(
-                base_score=0.0, correct=False, category="multi_agent",
-            ))
+            eval_result = agent_result.get(
+                "eval_result",
+                EvalResult(
+                    base_score=0.0,
+                    correct=False,
+                    category="multi_agent",
+                ),
+            )
 
             # Use base class step for the first agent to advance state
             multi_results[aid] = {
@@ -202,7 +205,9 @@ class DebateEnv(MultiAgentEnv):
     ]
 
     def __init__(self, config=None, **kwargs):
-        super().__init__(num_agents=2, agent_ids=["pro", "con"], config=config, **kwargs)
+        super().__init__(
+            num_agents=2, agent_ids=["pro", "con"], config=config, **kwargs
+        )
 
     def _setup(self, **kwargs):
         pass
@@ -237,7 +242,11 @@ class DebateEnv(MultiAgentEnv):
         return results
 
     def _get_obs_for_agent(self, agent_id):
-        task = self._tasks[self._current_step] if self._current_step < len(self._tasks) else {}
+        task = (
+            self._tasks[self._current_step]
+            if self._current_step < len(self._tasks)
+            else {}
+        )
         return {
             "topic": task.get("topic", ""),
             "your_side": agent_id,

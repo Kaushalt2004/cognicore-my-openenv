@@ -90,11 +90,23 @@ class SafetyLayer:
 
     # Default risk keywords and weights
     RISK_KEYWORDS = {
-        "malware": 90, "hack": 85, "exploit": 85, "weapon": 95,
-        "bomb": 95, "attack": 80, "kill": 90, "drug": 75,
-        "phishing": 80, "credential": 70, "password": 60,
-        "violence": 85, "illegal": 80, "fraud": 75,
-        "bias": 50, "discrimination": 60, "misinformation": 65,
+        "malware": 90,
+        "hack": 85,
+        "exploit": 85,
+        "weapon": 95,
+        "bomb": 95,
+        "attack": 80,
+        "kill": 90,
+        "drug": 75,
+        "phishing": 80,
+        "credential": 70,
+        "password": 60,
+        "violence": 85,
+        "illegal": 80,
+        "fraud": 75,
+        "bias": 50,
+        "discrimination": 60,
+        "misinformation": 65,
     }
 
     def __init__(self):
@@ -112,12 +124,14 @@ class SafetyLayer:
 
     def _add_default_policies(self):
         """Built-in safety policies."""
-        self.add_policy(Policy(
-            "no_empty_action",
-            lambda a, c: bool(a),
-            severity="WARNING",
-            description="Action must not be empty",
-        ))
+        self.add_policy(
+            Policy(
+                "no_empty_action",
+                lambda a, c: bool(a),
+                severity="WARNING",
+                description="Action must not be empty",
+            )
+        )
 
     def add_policy(self, policy: Policy) -> None:
         """Add a compliance policy."""
@@ -173,7 +187,9 @@ class SafetyLayer:
             if not policy.evaluate(action, context):
                 violations.append(policy.name)
                 self._stats["total_violations"] += 1
-                if severity_order.get(policy.severity, 0) > severity_order.get(max_severity, 0):
+                if severity_order.get(policy.severity, 0) > severity_order.get(
+                    max_severity, 0
+                ):
                     max_severity = policy.severity
 
         # Decision
@@ -212,13 +228,15 @@ class SafetyLayer:
         """Return recent audit entries."""
         entries = []
         for e in self.audit[-last_n:]:
-            entries.append({
-                "timestamp": e.timestamp,
-                "risk_score": e.risk_score,
-                "decision": e.decision,
-                "violations": e.violations,
-                "action_preview": str(e.action)[:80],
-            })
+            entries.append(
+                {
+                    "timestamp": e.timestamp,
+                    "risk_score": e.risk_score,
+                    "decision": e.decision,
+                    "violations": e.violations,
+                    "action_preview": str(e.action)[:80],
+                }
+            )
         return entries
 
     def compliance_report(self) -> Dict[str, Any]:
@@ -241,7 +259,7 @@ class SafetyLayer:
         """Print formatted compliance report."""
         r = self.compliance_report()
         print(f"\n{'=' * 50}")
-        print(f"  Safety Compliance Report")
+        print("  Safety Compliance Report")
         print(f"{'=' * 50}")
         print(f"  Total checks:    {r['total_checks']}")
         print(f"  Violations:      {r['total_violations']}")

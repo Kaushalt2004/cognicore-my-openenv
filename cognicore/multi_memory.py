@@ -59,11 +59,13 @@ class EpisodicMemory:
         self.max_size = max_size
 
     def store(self, episode: Dict[str, Any]) -> None:
-        self.entries.append({
-            **episode,
-            "_em_time": time.time(),
-            "_em_id": len(self.entries),
-        })
+        self.entries.append(
+            {
+                **episode,
+                "_em_time": time.time(),
+                "_em_id": len(self.entries),
+            }
+        )
         if len(self.entries) > self.max_size:
             self.entries.pop(0)
 
@@ -128,7 +130,9 @@ class SemanticKnowledge:
 
         if best_action is None:
             return None
-        confidence = best_score * min(1.0, fact["times_seen"] / 5)  # confidence grows with experience
+        confidence = best_score * min(
+            1.0, fact["times_seen"] / 5
+        )  # confidence grows with experience
         return best_action, confidence
 
     def get_knowledge(self, category: str) -> Optional[Dict]:
@@ -138,7 +142,9 @@ class SemanticKnowledge:
         return {
             "category": category,
             "times_seen": fact["times_seen"],
-            "accuracy": fact["total_correct"] / fact["times_seen"] if fact["times_seen"] else 0,
+            "accuracy": fact["total_correct"] / fact["times_seen"]
+            if fact["times_seen"]
+            else 0,
             "best_action": self.get_best_action(category),
         }
 
@@ -195,11 +201,13 @@ class ProceduralMemory:
             result = self.get_action(cat)
             if result:
                 action, conf = result
-                rules.append({
-                    "rule": f"IF category='{cat}' THEN action='{action}'",
-                    "confidence": conf,
-                    "observations": self._totals[cat],
-                })
+                rules.append(
+                    {
+                        "rule": f"IF category='{cat}' THEN action='{action}'",
+                        "confidence": conf,
+                        "observations": self._totals[cat],
+                    }
+                )
         return sorted(rules, key=lambda r: -r["confidence"])
 
 
@@ -269,8 +277,7 @@ class CognitiveMemory:
         if category:
             eps = self.episodic.recall_by_category(category, limit=3)
             result["episodic"] = [
-                {k: v for k, v in e.items() if not k.startswith("_")}
-                for e in eps
+                {k: v for k, v in e.items() if not k.startswith("_")} for e in eps
             ]
             if eps:
                 result["sources_used"].append("episodic")
@@ -314,23 +321,24 @@ class CognitiveMemory:
             "episodic_memories": self.episodic.size,
             "semantic_categories": self.semantic.categories_known,
             "procedural_rules": len(self.procedural.list_rules()),
-            "total_entries": (
-                self.working.size +
-                self.episodic.size
-            ),
+            "total_entries": (self.working.size + self.episodic.size),
         }
 
     def print_state(self):
         """Print current memory state across all tiers."""
         s = self.stats()
-        print(f"\n  Cognitive Memory State:")
-        print(f"    Working Memory:   {s['working_memory']} items (capacity: {self.working.capacity})")
+        print("\n  Cognitive Memory State:")
+        print(
+            f"    Working Memory:   {s['working_memory']} items (capacity: {self.working.capacity})"
+        )
         print(f"    Episodic Memory:  {s['episodic_memories']} experiences")
         print(f"    Semantic Memory:  {s['semantic_categories']} categories known")
         print(f"    Procedural Rules: {s['procedural_rules']} learned rules")
 
         rules = self.procedural.list_rules()
         if rules:
-            print(f"\n    Learned rules:")
+            print("\n    Learned rules:")
             for r in rules[:5]:
-                print(f"      {r['rule']} ({r['confidence']:.0%}, n={r['observations']})")
+                print(
+                    f"      {r['rule']} ({r['confidence']:.0%}, n={r['observations']})"
+                )

@@ -5,7 +5,7 @@ In the Colab notebook, the Agent wraps a PPO model for FrozenLake.
 Here, it wraps the LLM client to classify AI responses for safety.
 """
 
-from typing import Tuple, Optional
+from typing import Tuple
 from cognicore.llm.gemini import classify_safety
 from cognicore.memory.vector_memory import VectorMemory
 from cognicore.reflection.reflection import Reflection
@@ -50,7 +50,11 @@ class Agent:
             Tuple of (classification, metadata_dict).
         """
         self._total_actions += 1
-        metadata = {"source": "model_action", "memory_context": "", "reflection_hint": ""}
+        metadata = {
+            "source": "model_action",
+            "memory_context": "",
+            "reflection_hint": "",
+        }
 
         # Step 1: Memory context
         memory_context = ""

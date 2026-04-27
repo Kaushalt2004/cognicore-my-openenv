@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 import cognicore
 from cognicore.agents.base_agent import RandomAgent
@@ -29,7 +29,9 @@ from cognicore.agents.base_agent import RandomAgent
 class SessionRecorder:
     """Record full episodes step-by-step for replay."""
 
-    def __init__(self, env_id: str = "SafetyClassification-v1", difficulty: str = "easy"):
+    def __init__(
+        self, env_id: str = "SafetyClassification-v1", difficulty: str = "easy"
+    ):
         self.env_id = env_id
         self.difficulty = difficulty
         self.recordings: List[Dict] = []
@@ -53,29 +55,33 @@ class SessionRecorder:
                 action = _agent.act(obs)
                 latency = (time.time() - t0) * 1000
 
-                obs_before = {k: str(v)[:200] for k, v in obs.items() if not k.startswith("_")}
+                obs_before = {
+                    k: str(v)[:200] for k, v in obs.items() if not k.startswith("_")
+                }
                 obs, reward, done, _, info = env.step(action)
                 er = info.get("eval_result", {})
 
-                if hasattr(_agent, 'learn'):
+                if hasattr(_agent, "learn"):
                     _agent.learn(reward, info)
 
-                steps.append({
-                    "step": step_num,
-                    "observation": obs_before,
-                    "action": {k: str(v) for k, v in action.items()},
-                    "category": er.get("category", "?"),
-                    "correct": er.get("correct", False),
-                    "predicted": str(er.get("predicted", "")),
-                    "ground_truth": str(er.get("ground_truth", "")),
-                    "reward_total": reward.total,
-                    "reward_base": reward.base_score,
-                    "memory_bonus": reward.memory_bonus,
-                    "streak_penalty": reward.streak_penalty,
-                    "novelty_bonus": reward.novelty_bonus,
-                    "latency_ms": round(latency, 2),
-                    "timestamp": time.time(),
-                })
+                steps.append(
+                    {
+                        "step": step_num,
+                        "observation": obs_before,
+                        "action": {k: str(v) for k, v in action.items()},
+                        "category": er.get("category", "?"),
+                        "correct": er.get("correct", False),
+                        "predicted": str(er.get("predicted", "")),
+                        "ground_truth": str(er.get("ground_truth", "")),
+                        "reward_total": reward.total,
+                        "reward_base": reward.base_score,
+                        "memory_bonus": reward.memory_bonus,
+                        "streak_penalty": reward.streak_penalty,
+                        "novelty_bonus": reward.novelty_bonus,
+                        "latency_ms": round(latency, 2),
+                        "timestamp": time.time(),
+                    }
+                )
 
                 if done:
                     break
@@ -99,13 +105,20 @@ class SessionRecorder:
 
     def save(self, path: str = "session.json"):
         """Save recordings to JSON."""
-        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True
+        )
         with open(path, "w", encoding="utf-8") as f:
-            json.dump({
-                "_cognicore_session": True,
-                "_version": "1.0",
-                "recordings": self.recordings,
-            }, f, indent=2, default=str)
+            json.dump(
+                {
+                    "_cognicore_session": True,
+                    "_version": "1.0",
+                    "recordings": self.recordings,
+                },
+                f,
+                indent=2,
+                default=str,
+            )
         return path
 
     @staticmethod
@@ -139,7 +152,9 @@ def replay(path: str, speed: float = 1.0, verbose: bool = True):
                 )
 
         if verbose:
-            print(f"\n  Result: {rec['accuracy']:.0%} accuracy, score={rec['score']:.4f}")
+            print(
+                f"\n  Result: {rec['accuracy']:.0%} accuracy, score={rec['score']:.4f}"
+            )
             print(f"{'=' * 60}")
 
     return recordings

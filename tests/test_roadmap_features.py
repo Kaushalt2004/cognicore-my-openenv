@@ -1,7 +1,5 @@
 """Tests for Phase 8 — Roadmap features."""
 
-import os
-import cognicore
 from cognicore.meta_rewards import MetaRewardOptimizer
 from cognicore.causal import CausalEngine
 from cognicore.agent_builder import build_agent, describe_agent
@@ -13,10 +11,18 @@ from cognicore.swarm import Swarm
 class TestMetaRewardOptimizer:
     def test_observe_and_optimize(self):
         meta = MetaRewardOptimizer()
-        meta.observe({"memory_bonus": 0.05, "streak_penalty": -0.1}, accuracy_improved=True)
-        meta.observe({"memory_bonus": 0.01, "streak_penalty": -0.3}, accuracy_improved=False)
-        meta.observe({"memory_bonus": 0.06, "streak_penalty": -0.05}, accuracy_improved=True)
-        meta.observe({"memory_bonus": 0.02, "streak_penalty": -0.2}, accuracy_improved=False)
+        meta.observe(
+            {"memory_bonus": 0.05, "streak_penalty": -0.1}, accuracy_improved=True
+        )
+        meta.observe(
+            {"memory_bonus": 0.01, "streak_penalty": -0.3}, accuracy_improved=False
+        )
+        meta.observe(
+            {"memory_bonus": 0.06, "streak_penalty": -0.05}, accuracy_improved=True
+        )
+        meta.observe(
+            {"memory_bonus": 0.02, "streak_penalty": -0.2}, accuracy_improved=False
+        )
         weights = meta.optimize()
         assert "memory_bonus" in weights
         assert meta.stats()["generation"] == 1

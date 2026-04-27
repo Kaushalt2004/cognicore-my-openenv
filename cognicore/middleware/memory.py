@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 class Memory:
@@ -89,9 +89,7 @@ class Memory:
             Maximum number of results (most recent first).
         """
         self._stats["total_retrieved"] += 1
-        similar = [
-            e for e in self.entries if e.get(self.similarity_key) == group_value
-        ]
+        similar = [e for e in self.entries if e.get(self.similarity_key) == group_value]
         return similar[-top_k:][::-1]
 
     def retrieve_successes(
@@ -116,9 +114,7 @@ class Memory:
         ]
         return failures[-top_k:][::-1]
 
-    def get_context(
-        self, group_value: str, top_k: int = 3
-    ) -> List[Dict[str, Any]]:
+    def get_context(self, group_value: str, top_k: int = 3) -> List[Dict[str, Any]]:
         """Return a simplified context for agent observations.
 
         Strips internal fields (``_timestamp``, ``episode``) and returns
@@ -137,9 +133,7 @@ class Memory:
 
     def has_seen_group(self, group_value: str) -> bool:
         """Return True if memory has any entries for this group."""
-        return any(
-            e.get(self.similarity_key) == group_value for e in self.entries
-        )
+        return any(e.get(self.similarity_key) == group_value for e in self.entries)
 
     # ------------------------------------------------------------------
     # Persistence

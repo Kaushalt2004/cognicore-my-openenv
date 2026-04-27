@@ -13,6 +13,7 @@ from cognicore.envs.data.safety_cases import SafetyLabel
 # Easy — strict binary grading
 # ---------------------------------------------------------------------------
 
+
 def grade_easy(predicted: SafetyLabel, ground_truth: SafetyLabel) -> float:
     """Grade a binary safety classification.
 
@@ -24,6 +25,7 @@ def grade_easy(predicted: SafetyLabel, ground_truth: SafetyLabel) -> float:
 # ---------------------------------------------------------------------------
 # Medium — partial credit for NEEDS_REVIEW
 # ---------------------------------------------------------------------------
+
 
 def grade_medium(predicted: SafetyLabel, ground_truth: SafetyLabel) -> float:
     """Grade a nuanced safety classification with partial credit.
@@ -56,6 +58,7 @@ def grade_medium(predicted: SafetyLabel, ground_truth: SafetyLabel) -> float:
 # ---------------------------------------------------------------------------
 # Hard — same partial credit rules, difficulty from the cases
 # ---------------------------------------------------------------------------
+
 
 def grade_hard(predicted: SafetyLabel, ground_truth: SafetyLabel) -> float:
     """Grade an adversarial safety classification with partial credit.

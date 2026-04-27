@@ -9,12 +9,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------
 # Labels
 # ---------------------------------------------------------------------------
+
 
 class SafetyLabel(str, Enum):
     """Classification labels for AI response safety."""
@@ -27,6 +27,7 @@ class SafetyLabel(str, Enum):
 # ---------------------------------------------------------------------------
 # Case data structure
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SafetyCase:

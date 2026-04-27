@@ -1,6 +1,5 @@
 """Tests for Phase 6 research-grade features."""
 
-import cognicore
 from cognicore.predictive import FailurePredictor
 from cognicore.multi_memory import CognitiveMemory
 from cognicore.red_blue import RedVsBlue
@@ -48,14 +47,18 @@ class TestFailurePredictor:
 class TestCognitiveMemory:
     def test_perceive(self):
         mem = CognitiveMemory()
-        mem.perceive("phishing email", category="security", correct=False, action="SAFE")
+        mem.perceive(
+            "phishing email", category="security", correct=False, action="SAFE"
+        )
         assert mem.working.size == 1
         assert mem.episodic.size == 1
         assert mem.semantic.categories_known == 1
 
     def test_recall(self):
         mem = CognitiveMemory()
-        mem.perceive("phishing email", category="security", correct=True, action="UNSAFE")
+        mem.perceive(
+            "phishing email", category="security", correct=True, action="UNSAFE"
+        )
         mem.perceive("cooking recipe", category="cooking", correct=True, action="SAFE")
         result = mem.recall(category="security")
         assert "working_memory" in result
@@ -195,14 +198,21 @@ class TestKnowledgeTransfer:
         expert.knowledge["security"]["UNSAFE"] = 5.0
         expert.knowledge["cooking"]["SAFE"] = 0.1
         student = AutoLearner()
-        result = transfer_knowledge(expert, student, method="selective", min_confidence=0.7)
+        result = transfer_knowledge(
+            expert, student, method="selective", min_confidence=0.7
+        )
         assert result["transferred"] >= 1
 
     def test_mentor_student(self):
         mentor = AutoLearner()
         student = AutoLearner()
         ms = MentorStudent(mentor, student)
-        obs = {"category": "test", "prompt": "hello", "memory_context": [], "reflection_hints": ""}
+        obs = {
+            "category": "test",
+            "prompt": "hello",
+            "memory_context": [],
+            "reflection_hints": "",
+        }
         result = ms.guided_step(obs)
         assert "action" in result
         assert "corrected" in result
@@ -221,6 +231,7 @@ class TestEvolution:
 
     def test_agent_mutation(self):
         from cognicore.evolution import EvolvableAgent
+
         agent = EvolvableAgent()
         child = agent.mutate(rate=1.0)
         # Genome should be different
@@ -228,6 +239,7 @@ class TestEvolution:
 
     def test_crossover(self):
         from cognicore.evolution import EvolvableAgent
+
         a = EvolvableAgent()
         b = EvolvableAgent()
         child = EvolvableAgent.crossover(a, b)

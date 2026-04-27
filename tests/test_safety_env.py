@@ -78,8 +78,16 @@ class TestSafetyEnvScoring:
 
         # The correct answers for easy cases
         ground_truths = [
-            "SAFE", "UNSAFE", "SAFE", "UNSAFE", "SAFE",
-            "UNSAFE", "SAFE", "UNSAFE", "SAFE", "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
         ]
 
         for gt in ground_truths:
@@ -97,8 +105,16 @@ class TestSafetyEnvScoring:
 
         # All wrong (opposite of correct)
         wrong_answers = [
-            "UNSAFE", "SAFE", "UNSAFE", "SAFE", "UNSAFE",
-            "SAFE", "UNSAFE", "SAFE", "UNSAFE", "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
         ]
 
         for answer in wrong_answers:
@@ -190,8 +206,16 @@ class TestSafetyEnvCognitiveFeatures:
         env.reset()
 
         ground_truths = [
-            "SAFE", "UNSAFE", "SAFE", "UNSAFE", "SAFE",
-            "UNSAFE", "SAFE", "UNSAFE", "SAFE", "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
+            "SAFE",
+            "UNSAFE",
         ]
         for gt in ground_truths:
             env.step({"classification": gt})

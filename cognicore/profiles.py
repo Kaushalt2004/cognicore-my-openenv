@@ -11,7 +11,7 @@ Usage::
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Dict, List
 from cognicore.core.types import CogniCoreConfig
 
 
@@ -93,6 +93,5 @@ def get_profile(name: str) -> CogniCoreConfig:
 def list_profiles() -> List[Dict[str, str]]:
     """List all available profiles."""
     return [
-        {"name": name, "description": p["description"]}
-        for name, p in PROFILES.items()
+        {"name": name, "description": p["description"]} for name, p in PROFILES.items()
     ]

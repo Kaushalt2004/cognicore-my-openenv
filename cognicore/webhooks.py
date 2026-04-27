@@ -118,7 +118,10 @@ class AlertSystem:
             condition = conditions[event]
             default_msg = f"{event}: threshold={threshold or count}"
         else:
-            condition = lambda d: False
+
+            def condition(_d):
+                return False
+
             default_msg = f"Custom: {event}"
 
         rule = AlertRule(
@@ -152,33 +155,40 @@ class AlertSystem:
 
     def add_file_handler(self, path: str) -> "AlertSystem":
         """Add a file-based alert handler."""
+
         def file_handler(alert):
             with open(path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(alert, default=str) + "\n")
+
         self.handlers.append(file_handler)
         return self
 
     def add_webhook_handler(self, url: str) -> "AlertSystem":
         """Add an HTTP webhook handler (requires httpx/requests)."""
+
         def webhook_handler(alert):
             try:
                 import httpx
+
                 httpx.post(url, json=alert, timeout=5)
             except ImportError:
                 try:
                     import urllib.parse
                     import urllib.request
+
                     parsed = urllib.parse.urlparse(url)
                     if parsed.scheme not in ("http", "https"):
                         raise ValueError("Webhook URL must use http or https protocol")
                     data = json.dumps(alert, default=str).encode()
                     req = urllib.request.Request(
-                        url, data=data,
+                        url,
+                        data=data,
                         headers={"Content-Type": "application/json"},
                     )
                     urllib.request.urlopen(req, timeout=5)  # nosec B310
                 except Exception:
                     pass
+
         self.handlers.append(webhook_handler)
         return self
 

@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 
 from cognicore.core.base_env import CogniCoreEnv
 from cognicore.core.types import CogniCoreConfig, EvalResult
-from cognicore.core.spaces import DiscreteSpace, DictSpace, TextSpace
+from cognicore.core.spaces import DictSpace, TextSpace
 from cognicore.envs.data.conversation_cases import (
     ConversationCase,
     get_conversation_cases,
@@ -64,9 +64,7 @@ class ConversationEnv(CogniCoreEnv):
                 "category": TextSpace(),
             }
         )
-        self.action_space = DictSpace(
-            fields={"response": TextSpace()}
-        )
+        self.action_space = DictSpace(fields={"response": TextSpace()})
 
     def _generate_tasks(self) -> List[ConversationCase]:
         return get_conversation_cases(self.difficulty)

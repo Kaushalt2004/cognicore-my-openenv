@@ -96,12 +96,14 @@ class CausalEngine:
         else:
             link.negative += 1
 
-        self._observations.append({
-            "cause": cause,
-            "action": action,
-            "outcome": outcome,
-            "category": category,
-        })
+        self._observations.append(
+            {
+                "cause": cause,
+                "action": action,
+                "outcome": outcome,
+                "category": category,
+            }
+        )
 
     def observe_step(self, obs: Dict, action: Dict, correct: bool, category: str = ""):
         """Convenience: observe from an env step."""
@@ -117,7 +119,14 @@ class CausalEngine:
     def _extract_causes(self, text: str) -> List[str]:
         """Extract causal signals from text."""
         signals = {
-            "unsafe_keywords": ["hack", "malware", "exploit", "weapon", "bomb", "attack"],
+            "unsafe_keywords": [
+                "hack",
+                "malware",
+                "exploit",
+                "weapon",
+                "bomb",
+                "attack",
+            ],
             "safe_keywords": ["cook", "recipe", "garden", "travel", "education"],
             "authority_claim": ["researcher", "expert", "authorized", "certified"],
             "emotional_appeal": ["urgent", "desperate", "emergency", "please help"],
@@ -144,7 +153,11 @@ class CausalEngine:
             What would happen if the agent did this instead?
         """
         if cause not in self._links:
-            return {"prediction": "unknown", "confidence": 0, "reason": "No data for this cause"}
+            return {
+                "prediction": "unknown",
+                "confidence": 0,
+                "reason": "No data for this cause",
+            }
 
         actions = self._links[cause]
         if alternative_action in actions:
@@ -184,14 +197,18 @@ class CausalEngine:
         if not action_scores:
             return None
 
-        best = max(action_scores, key=lambda a: sum(action_scores[a]) / len(action_scores[a]))
+        best = max(
+            action_scores, key=lambda a: sum(action_scores[a]) / len(action_scores[a])
+        )
         score = sum(action_scores[best]) / len(action_scores[best])
         return best, score
 
     def print_graph(self):
         """Print the causal graph."""
         print(f"\n{'=' * 60}")
-        print(f"  Causal Graph ({len(self._links)} causes, {len(self._observations)} observations)")
+        print(
+            f"  Causal Graph ({len(self._links)} causes, {len(self._observations)} observations)"
+        )
         print(f"{'=' * 60}")
         for cause in sorted(self._links.keys()):
             print(f"\n  {cause}:")

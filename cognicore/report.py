@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import time
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import cognicore
 from cognicore.agents.base_agent import RandomAgent
@@ -50,33 +50,39 @@ class ReportGenerator:
             action = agent.act(obs)
             obs, reward, done, _, info = env.step(action)
             er = info.get("eval_result", {})
-            if hasattr(agent, 'learn'):
+            if hasattr(agent, "learn"):
                 agent.learn(reward, info)
-            steps.append({
-                "category": er.get("category", "?"),
-                "correct": er.get("correct", False),
-                "reward": reward.total,
-                "memory_bonus": reward.memory_bonus,
-                "streak_penalty": reward.streak_penalty,
-            })
+            steps.append(
+                {
+                    "category": er.get("category", "?"),
+                    "correct": er.get("correct", False),
+                    "reward": reward.total,
+                    "memory_bonus": reward.memory_bonus,
+                    "streak_penalty": reward.streak_penalty,
+                }
+            )
             if done:
                 break
 
         stats = env.episode_stats()
-        self._episodes.append({
-            "env_id": env_id,
-            "difficulty": difficulty,
-            "accuracy": stats.accuracy,
-            "score": env.get_score(),
-            "steps": steps,
-            "correct": stats.correct_count,
-            "total": stats.steps,
-        })
+        self._episodes.append(
+            {
+                "env_id": env_id,
+                "difficulty": difficulty,
+                "accuracy": stats.accuracy,
+                "score": env.get_score(),
+                "steps": steps,
+                "correct": stats.correct_count,
+                "total": stats.steps,
+            }
+        )
 
     def export(self, path: str = "cognicore_report.html") -> str:
         """Export as standalone HTML file."""
         html = self._build_html()
-        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True
+        )
         with open(path, "w", encoding="utf-8") as f:
             f.write(html)
         return path
@@ -88,11 +94,11 @@ class ReportGenerator:
         metric_cards = ""
         if self.metrics:
             for name, data in self.metrics.items():
-                metric_cards += f'''
+                metric_cards += f"""
                 <div class="metric-card">
                     <div class="metric-value">{data["value"]}{data["unit"]}</div>
                     <div class="metric-label">{name}</div>
-                </div>'''
+                </div>"""
 
         # Build episode results
         episode_rows = ""
@@ -127,11 +133,15 @@ class ReportGenerator:
                     cat_stats[cat]["correct"] += 1
 
         cat_rows = ""
-        for cat, data in sorted(cat_stats.items(), key=lambda x: x[1]["correct"]/max(x[1]["total"],1)):
+        for cat, data in sorted(
+            cat_stats.items(), key=lambda x: x[1]["correct"] / max(x[1]["total"], 1)
+        ):
             acc = data["correct"] / data["total"] if data["total"] else 0
             bar_width = int(acc * 100)
-            bar_color = "#4ade80" if acc >= 0.7 else "#fbbf24" if acc >= 0.4 else "#f87171"
-            cat_rows += f'''
+            bar_color = (
+                "#4ade80" if acc >= 0.7 else "#fbbf24" if acc >= 0.4 else "#f87171"
+            )
+            cat_rows += f"""
             <tr>
                 <td>{cat}</td>
                 <td>{data["correct"]}/{data["total"]}</td>
@@ -139,23 +149,23 @@ class ReportGenerator:
                     <div class="bar-bg"><div class="bar-fill" style="width:{bar_width}%;background:{bar_color}"></div></div>
                 </td>
                 <td>{acc:.0%}</td>
-            </tr>'''
+            </tr>"""
 
         # Custom sections
         custom_sections = ""
         for sec in self.sections:
-            custom_sections += f'''
+            custom_sections += f"""
             <div class="section">
                 <h2>{sec["title"]}</h2>
                 <pre>{sec["content"]}</pre>
-            </div>'''
+            </div>"""
 
         # Overall stats
         total_correct = sum(ep["correct"] for ep in self._episodes)
         total_steps = sum(ep["total"] for ep in self._episodes)
         overall_acc = total_correct / total_steps if total_steps else 0
 
-        return f'''<!DOCTYPE html>
+        return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -226,4 +236,4 @@ pre {{ background:#0f172a; padding:1rem; border-radius:8px; overflow-x:auto; fon
 <div class="footer">CogniCore v{cognicore.__version__} | {len(cognicore.__all__)} exports | {len(cognicore.list_envs())} environments</div>
 </div>
 </body>
-</html>'''
+</html>"""

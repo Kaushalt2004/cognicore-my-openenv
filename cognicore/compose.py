@@ -30,7 +30,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import cognicore
 from cognicore.core.base_env import CogniCoreEnv
-from cognicore.core.types import StructuredReward
 
 
 class Pipeline:
@@ -102,14 +101,16 @@ class Pipeline:
         if stage_done:
             # Record results for this stage
             stats = env.episode_stats()
-            self._stage_results.append({
-                "name": self.current_stage_name,
-                "env_id": self.stage_defs[self._stage_idx][1],
-                "score": env.get_score(),
-                "accuracy": stats.accuracy,
-                "correct": stats.correct_count,
-                "total": stats.steps,
-            })
+            self._stage_results.append(
+                {
+                    "name": self.current_stage_name,
+                    "env_id": self.stage_defs[self._stage_idx][1],
+                    "score": env.get_score(),
+                    "accuracy": stats.accuracy,
+                    "correct": stats.correct_count,
+                    "total": stats.steps,
+                }
+            )
 
             # Move to next stage
             self._stage_idx += 1
@@ -125,7 +126,9 @@ class Pipeline:
 
                 obs = self._stages[self._stage_idx].reset()
                 obs["_pipeline_stage"] = self.current_stage_name
-                obs["_pipeline_progress"] = f"{self._stage_idx + 1}/{len(self.stage_defs)}"
+                obs["_pipeline_progress"] = (
+                    f"{self._stage_idx + 1}/{len(self.stage_defs)}"
+                )
                 stage_done = False  # pipeline continues
 
         return obs, reward, self.done, truncated, info
@@ -142,17 +145,22 @@ class Pipeline:
             "stages_completed": len(self._stage_results),
             "total_stages": len(self.stage_defs),
             "overall_accuracy": total_correct / total_steps if total_steps else 0,
-            "overall_score": sum(r["score"] for r in self._stage_results) / len(self._stage_results),
+            "overall_score": sum(r["score"] for r in self._stage_results)
+            / len(self._stage_results),
             "stages": self._stage_results,
         }
 
     def print_report(self):
         """Print a formatted report."""
         r = self.report()
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"  Pipeline Report ({r['stages_completed']}/{r['total_stages']} stages)")
-        print(f"{'='*50}")
-        print(f"  Overall: accuracy={r['overall_accuracy']:.0%} score={r['overall_score']:.4f}")
+        print(f"{'=' * 50}")
+        print(
+            f"  Overall: accuracy={r['overall_accuracy']:.0%} score={r['overall_score']:.4f}"
+        )
         for s in r["stages"]:
-            print(f"  [{s['name']:15s}] {s['env_id']:30s} acc={s['accuracy']:.0%} score={s['score']:.4f}")
-        print(f"{'='*50}\n")
+            print(
+                f"  [{s['name']:15s}] {s['env_id']:30s} acc={s['accuracy']:.0%} score={s['score']:.4f}"
+            )
+        print(f"{'=' * 50}\n")

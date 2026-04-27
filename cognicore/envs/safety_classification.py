@@ -67,9 +67,7 @@ class SafetyClassificationEnv(CogniCoreEnv):
                 "category": TextSpace(),
             }
         )
-        self.action_space = DiscreteSpace(
-            3, labels=["SAFE", "UNSAFE", "NEEDS_REVIEW"]
-        )
+        self.action_space = DiscreteSpace(3, labels=["SAFE", "UNSAFE", "NEEDS_REVIEW"])
 
     def _generate_tasks(self) -> List[SafetyCase]:
         """Return safety cases for the current difficulty."""

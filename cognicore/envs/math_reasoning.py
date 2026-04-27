@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional
 
 from cognicore.core.base_env import CogniCoreEnv
 from cognicore.core.types import CogniCoreConfig, EvalResult
-from cognicore.core.spaces import DiscreteSpace, DictSpace, TextSpace
+from cognicore.core.spaces import DictSpace, TextSpace
 from cognicore.envs.data.math_cases import (
     MathCase,
     get_math_cases,
@@ -61,9 +61,7 @@ class MathReasoningEnv(CogniCoreEnv):
                 "answer_type": TextSpace(),
             }
         )
-        self.action_space = DictSpace(
-            fields={"answer": TextSpace()}
-        )
+        self.action_space = DictSpace(fields={"answer": TextSpace()})
 
     def _generate_tasks(self) -> List[MathCase]:
         return get_math_cases(self.difficulty)

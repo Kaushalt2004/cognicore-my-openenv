@@ -8,8 +8,7 @@ Hard (10):   Subtle bugs — race conditions, floating point, security flaws
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
 
 
 @dataclass
@@ -434,7 +433,12 @@ def get_code_cases(difficulty: str = None) -> list:
     return CODE_CASES_BY_DIFFICULTY.get(difficulty, [])
 
 
-def grade_code_answer(predicted_line: int, correct_line: int, predicted_fix_type: str, correct_fix_type: str) -> float:
+def grade_code_answer(
+    predicted_line: int,
+    correct_line: int,
+    predicted_fix_type: str,
+    correct_fix_type: str,
+) -> float:
     """Grade a code debugging answer.
 
     - Correct line AND fix type: 1.0
@@ -443,7 +447,9 @@ def grade_code_answer(predicted_line: int, correct_line: int, predicted_fix_type
     - Wrong: 0.0
     """
     line_correct = predicted_line == correct_line
-    type_correct = predicted_fix_type.lower().strip() == correct_fix_type.lower().strip()
+    type_correct = (
+        predicted_fix_type.lower().strip() == correct_fix_type.lower().strip()
+    )
 
     if line_correct and type_correct:
         return 1.0

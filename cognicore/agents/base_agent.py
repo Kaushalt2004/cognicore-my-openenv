@@ -29,7 +29,7 @@ Usage::
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from cognicore.core.types import EpisodeStats, StructuredReward
 
@@ -115,5 +115,6 @@ class RandomAgent(BaseAgent):
             return {"action": sample}
         # Default: random safety label
         import random
+
         label = random.choice(["SAFE", "UNSAFE", "NEEDS_REVIEW"])
         return {"classification": label}

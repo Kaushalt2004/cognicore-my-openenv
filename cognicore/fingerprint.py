@@ -68,7 +68,9 @@ class AgentFingerprint:
     multi-dimensional behavior vector.
     """
 
-    def __init__(self, env_id: str = "SafetyClassification-v1", difficulty: str = "easy"):
+    def __init__(
+        self, env_id: str = "SafetyClassification-v1", difficulty: str = "easy"
+    ):
         self.env_id = env_id
         self.difficulty = difficulty
 
@@ -79,9 +81,13 @@ class AgentFingerprint:
 
         name = getattr(agent, "name", type(agent).__name__)
         metrics = {
-            "accuracy": [], "reward_avg": [], "memory_bonus_avg": [],
-            "streak_penalty_avg": [], "novelty_avg": [],
-            "action_diversity": [], "confidence_avg": [],
+            "accuracy": [],
+            "reward_avg": [],
+            "memory_bonus_avg": [],
+            "streak_penalty_avg": [],
+            "novelty_avg": [],
+            "action_diversity": [],
+            "confidence_avg": [],
         }
         category_accuracy = {}
         action_counts = {}
@@ -116,7 +122,7 @@ class AgentFingerprint:
                 ep_novelty.append(reward.novelty_bonus)
                 ep_conf.append(er.get("confidence", 0))
 
-                if hasattr(agent, 'learn'):
+                if hasattr(agent, "learn"):
                     agent.learn(reward, info)
 
                 if done:
@@ -126,13 +132,17 @@ class AgentFingerprint:
             metrics["accuracy"].append(stats.accuracy)
             metrics["reward_avg"].append(sum(ep_rewards) / max(len(ep_rewards), 1))
             metrics["memory_bonus_avg"].append(sum(ep_memory) / max(len(ep_memory), 1))
-            metrics["streak_penalty_avg"].append(sum(ep_streak) / max(len(ep_streak), 1))
+            metrics["streak_penalty_avg"].append(
+                sum(ep_streak) / max(len(ep_streak), 1)
+            )
             metrics["novelty_avg"].append(sum(ep_novelty) / max(len(ep_novelty), 1))
             metrics["confidence_avg"].append(sum(ep_conf) / max(len(ep_conf), 1))
 
             unique_actions = len(set(action_counts.keys()))
             total_actions_taken = sum(action_counts.values())
-            metrics["action_diversity"].append(unique_actions / max(total_actions_taken, 1))
+            metrics["action_diversity"].append(
+                unique_actions / max(total_actions_taken, 1)
+            )
 
         # Build DNA vector
         vector = {}

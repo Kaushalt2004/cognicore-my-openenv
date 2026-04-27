@@ -22,7 +22,7 @@ import math
 import time
 import re
 from collections import Counter, defaultdict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 
 class SemanticMemory:
@@ -67,7 +67,7 @@ class SemanticMemory:
     def _tokenize(text: str) -> List[str]:
         """Simple whitespace + punctuation tokenizer."""
         text = text.lower()
-        text = re.sub(r'[^a-z0-9\s]', ' ', text)
+        text = re.sub(r"[^a-z0-9\s]", " ", text)
         tokens = text.split()
         # Remove very short tokens
         return [t for t in tokens if len(t) > 1]
@@ -93,7 +93,9 @@ class SemanticMemory:
         tf = self._compute_tf(tokens)
         return {t: tf[t] * self._compute_idf(t) for t in tf}
 
-    def _cosine_similarity(self, vec_a: Dict[str, float], vec_b: Dict[str, float]) -> float:
+    def _cosine_similarity(
+        self, vec_a: Dict[str, float], vec_b: Dict[str, float]
+    ) -> float:
         """Cosine similarity between two sparse vectors."""
         common = set(vec_a.keys()) & set(vec_b.keys())
         if not common:
@@ -146,7 +148,7 @@ class SemanticMemory:
         # Evict if over capacity (remove lowest relevance)
         if len(self.entries) > self.max_size:
             self.entries.sort(key=lambda e: e["_relevance"])
-            evicted = self.entries.pop(0)
+            self.entries.pop(0)
             self._stats["decay_evictions"] += 1
 
     # ------------------------------------------------------------------
@@ -172,7 +174,9 @@ class SemanticMemory:
 
         scored = []
         for entry in self.entries:
-            entry_text = entry.get("text", entry.get("prompt", entry.get("category", "")))
+            entry_text = entry.get(
+                "text", entry.get("prompt", entry.get("category", ""))
+            )
             entry_vec = self._tfidf_vector(str(entry_text))
             sim = self._cosine_similarity(query_vec, entry_vec)
 
@@ -221,7 +225,9 @@ class SemanticMemory:
     # Adaptive Strategy
     # ------------------------------------------------------------------
 
-    def get_adaptive_context(self, query: str, agent_accuracy: float = 0.5) -> Dict[str, Any]:
+    def get_adaptive_context(
+        self, query: str, agent_accuracy: float = 0.5
+    ) -> Dict[str, Any]:
         """Build context that adapts based on agent performance.
 
         - Low accuracy → more failure examples (learn from mistakes)
@@ -260,7 +266,9 @@ class SemanticMemory:
         """Return memory statistics including semantic search metrics."""
         total = len(self.entries)
         successes = sum(1 for e in self.entries if e.get("correct", False))
-        avg_relevance = sum(e["_relevance"] for e in self.entries) / total if total else 0
+        avg_relevance = (
+            sum(e["_relevance"] for e in self.entries) / total if total else 0
+        )
 
         return {
             "total_entries": total,

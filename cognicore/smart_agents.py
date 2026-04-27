@@ -67,8 +67,19 @@ class AutoLearner:
 
         # 4. Heuristic: check prompt keywords
         prompt = obs.get("prompt", "").lower()
-        unsafe_signals = ["malware", "hack", "exploit", "phish", "weapon", "bomb",
-                          "attack", "kill", "drug", "password", "credential"]
+        unsafe_signals = [
+            "malware",
+            "hack",
+            "exploit",
+            "phish",
+            "weapon",
+            "bomb",
+            "attack",
+            "kill",
+            "drug",
+            "password",
+            "credential",
+        ]
         if sum(1 for w in unsafe_signals if w in prompt) >= 1:
             return {"classification": "UNSAFE"}
 
@@ -92,12 +103,14 @@ class AutoLearner:
             if truth:
                 self.knowledge[category][truth] += 0.8
 
-        self.history.append({
-            "category": category,
-            "action": action,
-            "correct": correct,
-            "reward": reward.total,
-        })
+        self.history.append(
+            {
+                "category": category,
+                "action": action,
+                "correct": correct,
+                "reward": reward.total,
+            }
+        )
 
         # Decay epsilon
         self.epsilon = max(0.02, self.epsilon * 0.98)
@@ -120,8 +133,17 @@ class SafeAgent:
         prompt = obs.get("prompt", "").lower()
 
         # Strong unsafe signals
-        strong_unsafe = ["malware", "hack", "exploit", "weapon", "bomb",
-                         "attack", "kill", "drug", "illegal"]
+        strong_unsafe = [
+            "malware",
+            "hack",
+            "exploit",
+            "weapon",
+            "bomb",
+            "attack",
+            "kill",
+            "drug",
+            "illegal",
+        ]
         if any(w in prompt for w in strong_unsafe):
             return {"classification": "UNSAFE"}
 

@@ -71,12 +71,14 @@ class FailurePredictor:
 
         Returns an alert dict if risk is high, None otherwise.
         """
-        self._history.append({
-            "category": category,
-            "correct": correct,
-            "confidence": confidence,
-            "step": step,
-        })
+        self._history.append(
+            {
+                "category": category,
+                "correct": correct,
+                "confidence": confidence,
+                "step": step,
+            }
+        )
 
         # Update category stats
         self._category_stats[category]["correct" if correct else "wrong"] += 1
@@ -88,11 +90,13 @@ class FailurePredictor:
             self._streak = min(self._streak - 1, -1)
 
         # Track confidence calibration
-        self._confidences.append({
-            "confidence": confidence,
-            "correct": correct,
-            "overconfident": confidence > 0.7 and not correct,
-        })
+        self._confidences.append(
+            {
+                "confidence": confidence,
+                "correct": correct,
+                "overconfident": confidence > 0.7 and not correct,
+            }
+        )
 
         # Check for early warning
         risk = self.predict_risk(category)
@@ -139,13 +143,17 @@ class FailurePredictor:
         streak_risk = self._streak_risk()
         risk_factors.append(streak_risk * self.streak_weight)
         if self._streak <= -2:
-            reasons.append(f"Failure streak of {abs(self._streak)} — momentum trending down")
+            reasons.append(
+                f"Failure streak of {abs(self._streak)} — momentum trending down"
+            )
 
         # 3. Confidence calibration
         cal_risk = self._calibration_risk()
         risk_factors.append(cal_risk * self.calibration_weight)
         if cal_risk > 0.5:
-            reasons.append("Agent is overconfident — high confidence but frequent errors")
+            reasons.append(
+                "Agent is overconfident — high confidence but frequent errors"
+            )
 
         # 4. Recent window trend
         trend_risk = self._trend_risk()
@@ -199,7 +207,7 @@ class FailurePredictor:
 
     def _calibration_risk(self) -> float:
         """Risk from overconfidence."""
-        recent = self._confidences[-self.window:]
+        recent = self._confidences[-self.window :]
         if not recent:
             return 0.0
         overconfident = sum(1 for c in recent if c["overconfident"])
@@ -207,13 +215,15 @@ class FailurePredictor:
 
     def _trend_risk(self) -> float:
         """Risk from declining performance trend."""
-        recent = list(self._history)[-self.window:]
+        recent = list(self._history)[-self.window :]
         if len(recent) < 4:
             return 0.3  # not enough data
 
         half = len(recent) // 2
         first_half = sum(1 for s in recent[:half] if s["correct"]) / half
-        second_half = sum(1 for s in recent[half:] if s["correct"]) / max(len(recent) - half, 1)
+        second_half = sum(1 for s in recent[half:] if s["correct"]) / max(
+            len(recent) - half, 1
+        )
 
         if second_half < first_half:
             return min(1.0, (first_half - second_half) * 2)
@@ -221,7 +231,7 @@ class FailurePredictor:
 
     def _get_trajectory(self) -> str:
         """Determine overall performance trajectory."""
-        recent = list(self._history)[-self.window:]
+        recent = list(self._history)[-self.window :]
         if len(recent) < 6:
             return "insufficient_data"
 
@@ -260,12 +270,12 @@ class FailurePredictor:
             "trajectory": self._get_trajectory(),
             "alerts_triggered": len(self._alerts),
             "highest_risk_categories": [
-                {"category": cat, **data}
-                for cat, data in risky[:5]
+                {"category": cat, **data} for cat, data in risky[:5]
             ],
             "overall_accuracy": (
-                sum(1 for s in self._history if s["correct"]) /
-                len(self._history) if self._history else 0
+                sum(1 for s in self._history if s["correct"]) / len(self._history)
+                if self._history
+                else 0
             ),
         }
 
@@ -273,7 +283,7 @@ class FailurePredictor:
         """Print formatted risk report."""
         r = self.risk_report()
         print(f"\n{'=' * 55}")
-        print(f"  Predictive Failure Report")
+        print("  Predictive Failure Report")
         print(f"{'=' * 55}")
         print(f"  Observations: {r['total_observations']}")
         print(f"  Accuracy: {r['overall_accuracy']:.0%}")
@@ -282,7 +292,7 @@ class FailurePredictor:
         print(f"  Alerts: {r['alerts_triggered']}")
 
         if r["highest_risk_categories"]:
-            print(f"\n  Riskiest categories:")
+            print("\n  Riskiest categories:")
             for c in r["highest_risk_categories"][:5]:
                 bar_len = int(c["failure_rate"] * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)

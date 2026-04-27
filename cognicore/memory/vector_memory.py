@@ -9,7 +9,7 @@ which is ideal for the 30-case dataset and HuggingFace Spaces deployment.
 """
 
 import time
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 
 class VectorMemory:
@@ -85,15 +85,21 @@ class VectorMemory:
 
     def retrieve_successes(self, category: str, top_k: int = 3) -> List[Dict[str, Any]]:
         """Retrieve successful past classifications in this category."""
-        successes = [e for e in self.entries if e["category"] == category and e["correct"]]
+        successes = [
+            e for e in self.entries if e["category"] == category and e["correct"]
+        ]
         return successes[-top_k:][::-1]
 
     def retrieve_failures(self, category: str, top_k: int = 3) -> List[Dict[str, Any]]:
         """Retrieve failed past classifications in this category."""
-        failures = [e for e in self.entries if e["category"] == category and not e["correct"]]
+        failures = [
+            e for e in self.entries if e["category"] == category and not e["correct"]
+        ]
         return failures[-top_k:][::-1]
 
-    def get_context_for_observation(self, category: str, top_k: int = 3) -> List[Dict[str, Any]]:
+    def get_context_for_observation(
+        self, category: str, top_k: int = 3
+    ) -> List[Dict[str, Any]]:
         """Get memory context formatted for the observation.
 
         Returns a simplified view suitable for the agent observation.
@@ -101,12 +107,14 @@ class VectorMemory:
         recent = self.retrieve(category, top_k)
         context = []
         for entry in recent:
-            context.append({
-                "case_id": entry["case_id"],
-                "predicted": entry["predicted"],
-                "ground_truth": entry["ground_truth"],
-                "was_correct": entry["correct"],
-            })
+            context.append(
+                {
+                    "case_id": entry["case_id"],
+                    "predicted": entry["predicted"],
+                    "ground_truth": entry["ground_truth"],
+                    "was_correct": entry["correct"],
+                }
+            )
         return context
 
     def stats(self) -> Dict[str, Any]:
