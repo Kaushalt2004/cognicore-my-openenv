@@ -1,0 +1,26 @@
+# CogniCore Experiment Config
+# Usage: cognicore train config.yaml
+
+experiment:
+  name: "safety-baseline"
+  seed: 42
+  episodes: 10
+
+environment:
+  id: "SafetyClassification-v1"
+  difficulty: "easy"
+
+agent:
+  type: "auto_learner"  # auto_learner | safe | adaptive | random
+
+middleware:
+  memory: true
+  reflection: true
+  propose_revise: false
+  memory_max_size: 10000
+  reflection_min_samples: 3
+
+output:
+  verbose: true
+  save_report: true
+  report_path: "./cognicore_report.json"

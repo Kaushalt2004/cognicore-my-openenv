@@ -1,0 +1,27 @@
+# Strict Safety Profile — Zero tolerance for errors
+
+experiment:
+  name: "strict-safety"
+  seed: 42
+  episodes: 20
+
+environment:
+  id: "SafetyClassification-v1"
+  difficulty: "hard"
+
+agent:
+  type: "safe"
+
+middleware:
+  memory: true
+  reflection: true
+  propose_revise: true
+  memory_max_size: 50000
+  reflection_min_samples: 2
+  streak_threshold: 2
+  streak_penalty: 0.15
+
+output:
+  verbose: false
+  save_report: true
+  report_path: "./safety_report.json"

@@ -808,6 +808,231 @@ def _test_cognitive_memory():
     assert mem.stats()["working_memory"] == 1
 
 
+
+# =====================================================================
+# CLI: train (config-driven)
+# =====================================================================
+
+
+def cmd_train(args):
+    """Train an agent using a YAML config file or CLI args."""
+    import json
+    import random
+
+    config_path = getattr(args, "config", None)
+    experiment = {}
+
+    if config_path:
+        # Load YAML config
+        try:
+            import yaml
+            with open(config_path) as f:
+                experiment = yaml.safe_load(f)
+        except ImportError:
+            # Fallback: simple YAML parser for basic configs
+            experiment = _parse_simple_yaml(config_path)
+
+    # Merge CLI overrides
+    env_id = getattr(args, "env_id", None) or experiment.get("environment", {}).get("id", "SafetyClassification-v1")
+    difficulty = getattr(args, "difficulty", None) or experiment.get("environment", {}).get("difficulty", "easy")
+    episodes = getattr(args, "episodes", None) or experiment.get("experiment", {}).get("episodes", 10)
+    seed = getattr(args, "seed", None) or experiment.get("experiment", {}).get("seed", 42)
+    agent_type = getattr(args, "agent_type", None) or experiment.get("agent", {}).get("type", "auto_learner")
+    enable_memory = experiment.get("middleware", {}).get("memory", True)
+    enable_reflection = experiment.get("middleware", {}).get("reflection", True)
+    verbose = getattr(args, "verbose", False) or experiment.get("output", {}).get("verbose", False)
+
+    random.seed(seed)
+
+    print(f"\nCogniCore Training v{cognicore.__version__}")
+    print(f"{'=' * 55}")
+    print(f"  Environment:  {env_id} ({difficulty})")
+    print(f"  Agent:        {agent_type}")
+    print(f"  Episodes:     {episodes}")
+    print(f"  Seed:         {seed}")
+    print(f"  Memory:       {'ON' if enable_memory else 'OFF'}")
+    print(f"  Reflection:   {'ON' if enable_reflection else 'OFF'}")
+    print(f"{'=' * 55}\n")
+
+    # Create agent
+    from cognicore.smart_agents import AutoLearner, SafeAgent, AdaptiveAgent
+    agents_map = {
+        "auto_learner": AutoLearner,
+        "safe": SafeAgent,
+        "adaptive": AdaptiveAgent,
+        "random": RandomAgent,
+    }
+    agent_cls = agents_map.get(agent_type, AutoLearner)
+    agent = agent_cls()
+
+    # Create env
+    config = cognicore.CogniCoreConfig(
+        enable_memory=enable_memory,
+        enable_reflection=enable_reflection,
+    )
+    env = cognicore.make(env_id, difficulty=difficulty, config=config)
+
+    # Train
+    results = []
+    for ep in range(episodes):
+        obs = env.reset()
+        while True:
+            action = agent.act(obs)
+            obs, reward, done, truncated, info = env.step(action)
+            if hasattr(agent, "learn"):
+                agent.learn(reward, info)
+            if done:
+                break
+        stats = env.episode_stats()
+        results.append(stats.accuracy)
+        if verbose:
+            print(f"  Episode {ep+1:>3}: accuracy={stats.accuracy*100:.0f}% | reward={stats.total_reward:.2f} | memory={stats.memory_entries_created}")
+
+    import statistics
+    mean_acc = statistics.mean(results) * 100
+    print(f"\n  Training Complete!")
+    print(f"  Mean Accuracy: {mean_acc:.1f}%")
+    if len(results) > 1:
+        std_acc = statistics.stdev(results) * 100
+        print(f"  Std Dev:       +/- {std_acc:.1f}%")
+    print(f"  Memory Stats:  {env.memory.stats()['total_entries']} entries stored\n")
+
+    # Save report if configured
+    save_report = experiment.get("output", {}).get("save_report", False) or getattr(args, "save_report", False)
+    if save_report:
+        report_path = experiment.get("output", {}).get("report_path", "./cognicore_report.json")
+        report = {
+            "environment": env_id,
+            "difficulty": difficulty,
+            "agent": agent_type,
+            "episodes": episodes,
+            "seed": seed,
+            "mean_accuracy": round(mean_acc, 2),
+            "per_episode": results,
+        }
+        with open(report_path, "w") as f:
+            json.dump(report, f, indent=2, default=str)
+        print(f"  Report saved to: {report_path}\n")
+
+
+def _parse_simple_yaml(path):
+    """Minimal YAML parser for basic key: value configs (no PyYAML needed)."""
+    result = {}
+    with open(path) as f:
+        current_section = None
+        for line in f:
+            line = line.rstrip()
+            if not line or line.strip().startswith("#"):
+                continue
+            if not line.startswith(" ") and line.endswith(":"):
+                current_section = line[:-1].strip()
+                result[current_section] = {}
+            elif ":" in line and current_section:
+                key, val = line.split(":", 1)
+                key = key.strip()
+                val = val.strip().strip('"').strip("'")
+                if val.lower() == "true":
+                    val = True
+                elif val.lower() == "false":
+                    val = False
+                elif val.isdigit():
+                    val = int(val)
+                else:
+                    try:
+                        val = float(val)
+                    except ValueError:
+                        pass
+                result[current_section][key] = val
+    return result
+
+
+# =====================================================================
+# CLI: demo
+# =====================================================================
+
+
+def cmd_demo(args):
+    """Run the CogniCore demo — agent improves with memory."""
+    from cognicore.smart_agents import AutoLearner
+    import random
+    random.seed(42)
+
+    print(f"\nCogniCore Demo v{cognicore.__version__}")
+    print("=" * 60)
+    print("  Watch an agent improve by learning from its mistakes!\n")
+
+    # Without memory
+    print("  [1/2] Training WITHOUT memory...")
+    config_off = cognicore.CogniCoreConfig(enable_memory=False, enable_reflection=False)
+    env_off = cognicore.make("SafetyClassification-v1", config=config_off)
+    agent_off = AutoLearner()
+    score_off = cognicore.evaluate(agent_off, env_off, episodes=10)
+    print(f"        Accuracy: {score_off*100:.1f}%\n")
+
+    # With memory
+    random.seed(42)
+    print("  [2/2] Training WITH CogniCore memory...")
+    config_on = cognicore.CogniCoreConfig(enable_memory=True, enable_reflection=True)
+    env_on = cognicore.make("SafetyClassification-v1", config=config_on)
+    agent_on = AutoLearner()
+    score_on = cognicore.evaluate(agent_on, env_on, episodes=10)
+    print(f"        Accuracy: {score_on*100:.1f}%")
+
+    improvement = (score_on - score_off) * 100
+    print(f"\n{'=' * 60}")
+    print(f"  Result: +{improvement:.1f}% improvement with CogniCore memory!")
+    print(f"  The agent remembers past mistakes and avoids repeating them.")
+    print(f"{'=' * 60}\n")
+
+
+# =====================================================================
+# CLI: metrics
+# =====================================================================
+
+
+def cmd_metrics(args):
+    """Show live training metrics for an environment."""
+    from cognicore.smart_agents import AutoLearner
+    from cognicore.utils.logging import get_logger, log_episode_end
+
+    logger = get_logger("cognicore.metrics")
+
+    env_id = args.env_id
+    episodes = args.episodes
+
+    env = cognicore.make(env_id, difficulty="easy")
+    agent = AutoLearner()
+
+    print(f"\nCogniCore Metrics — {env_id}")
+    print("=" * 70)
+    print(f"  {'Ep':>3} | {'Accuracy':>8} | {'Reward':>8} | {'Memory':>6} | {'Hints':>5} | {'Status'}")
+    print("-" * 70)
+
+    for ep in range(episodes):
+        obs = env.reset()
+        while True:
+            action = agent.act(obs)
+            obs, reward, done, truncated, info = env.step(action)
+            if hasattr(agent, "learn"):
+                agent.learn(reward, info)
+            if done:
+                break
+
+        stats = env.episode_stats()
+        status = "HEALTHY" if stats.accuracy >= 0.7 else "WARNING" if stats.accuracy >= 0.4 else "CRITICAL"
+
+        print(f"  {ep+1:>3} | {stats.accuracy*100:>7.1f}% | {stats.total_reward:>8.2f} | {stats.memory_entries_created:>6} | {stats.reflection_hints_given:>5} | {status}")
+
+        log_episode_end(logger, ep+1, stats.steps, stats.total_reward, stats.accuracy)
+
+    mem_stats = env.memory.stats()
+    print("-" * 70)
+    print(f"  Total memory entries: {mem_stats['total_entries']}")
+    print(f"  Success rate: {mem_stats['success_rate']*100:.1f}%")
+    print(f"  Categories seen: {len(mem_stats['groups'])}")
+    print("=" * 70 + "\n")
+
+
 # =====================================================================
 # Main Entry Point
 # =====================================================================
@@ -1003,6 +1228,26 @@ examples:
     sub_report.add_argument("--episodes", type=int, default=3)
     sub_report.add_argument("--output", default="cognicore_report.html")
     sub_report.set_defaults(func=cmd_report)
+
+    # ---- New: train, demo, metrics ----
+    sub_train = subparsers.add_parser("train", help="Train agent (config-driven)")
+    sub_train.add_argument("config", nargs="?", default=None, help="YAML config file")
+    sub_train.add_argument("--env-id", dest="env_id", default=None)
+    sub_train.add_argument("--difficulty", default=None)
+    sub_train.add_argument("--episodes", type=int, default=None)
+    sub_train.add_argument("--seed", type=int, default=None)
+    sub_train.add_argument("--agent", dest="agent_type", default=None, choices=["auto_learner", "safe", "adaptive", "random"])
+    sub_train.add_argument("-v", "--verbose", action="store_true")
+    sub_train.add_argument("--save-report", action="store_true")
+    sub_train.set_defaults(func=cmd_train)
+
+    sub_demo = subparsers.add_parser("demo", help="Run the CogniCore demo")
+    sub_demo.set_defaults(func=cmd_demo)
+
+    sub_metrics = subparsers.add_parser("metrics", help="Show live training metrics")
+    sub_metrics.add_argument("env_id", nargs="?", default="SafetyClassification-v1")
+    sub_metrics.add_argument("--episodes", type=int, default=5)
+    sub_metrics.set_defaults(func=cmd_metrics)
 
     sub_doc = subparsers.add_parser("doctor", help="Health check everything")
     sub_doc.set_defaults(func=cmd_doctor)
