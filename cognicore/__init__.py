@@ -35,6 +35,7 @@ from cognicore.core.types import (
     StructuredReward,
 )
 from cognicore.core.spaces import DiscreteSpace, DictSpace, TextSpace
+from cognicore.core.api import train, evaluate
 
 # Registry
 from cognicore.envs.registry import make, register, list_envs
@@ -112,6 +113,8 @@ __all__ = [
     "__version__",
     # Core
     "CogniCoreEnv",
+    "train",
+    "evaluate",
     "CogniCoreConfig",
     "StructuredReward",
     "EvalResult",
