@@ -79,16 +79,12 @@ def make(env_id: str, **kwargs: Any) -> CogniCoreEnv:
 
     Raises
     ------
-    KeyError
+    InvalidEnvironmentError
         If ``env_id`` is not registered.
     """
     if env_id not in _REGISTRY:
-        available = ", ".join(sorted(_REGISTRY.keys())) or "(none)"
-        raise KeyError(
-            f"Environment '{env_id}' not found. "
-            f"Available: {available}. "
-            f"Use cognicore.list_envs() to see all registered environments."
-        )
+        from cognicore.core.errors import InvalidEnvironmentError
+        raise InvalidEnvironmentError(env_id, list(_REGISTRY.keys()))
 
     spec = _REGISTRY[env_id]
     entry_point = spec["entry_point"]

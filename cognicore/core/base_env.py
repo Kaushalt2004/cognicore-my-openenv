@@ -21,6 +21,7 @@ Subclasses implement four abstract methods to define their domain:
 
 from __future__ import annotations
 
+import logging
 import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
@@ -37,6 +38,9 @@ from cognicore.middleware.reflection import ReflectionEngine
 from cognicore.middleware.rewards import RewardBuilder
 from cognicore.middleware.propose_revise import ProposeReviseProtocol
 from cognicore.middleware.safety_monitor import SafetyMonitor
+from cognicore.core.errors import EpisodeFinishedError, InvalidActionError
+
+logger = logging.getLogger("cognicore.env")
 
 
 class CogniCoreEnv(ABC):
@@ -244,14 +248,7 @@ class CogniCoreEnv(ABC):
             where ``reward`` is a ``StructuredReward``.
         """
         if self._done:
-            empty_reward = StructuredReward()
-            return (
-                self._build_observation(),
-                empty_reward,
-                True,
-                self._truncated,
-                {"error": "Episode is done. Call reset()."},
-            )
+            raise EpisodeFinishedError()
 
         self._step_start_time = time.time()
 

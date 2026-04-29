@@ -22,7 +22,7 @@ Quick start::
     print(env.episode_stats())
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 # Core
 from cognicore.core.base_env import CogniCoreEnv
@@ -36,6 +36,15 @@ from cognicore.core.types import (
 )
 from cognicore.core.spaces import DiscreteSpace, DictSpace, TextSpace
 from cognicore.core.api import train, evaluate
+from cognicore.core.errors import (
+    CogniCoreError,
+    InvalidEnvironmentError,
+    InvalidActionError,
+    InvalidConfigError,
+    EnvironmentNotResetError,
+    EpisodeFinishedError,
+    AgentInterfaceError,
+)
 
 # Registry
 from cognicore.envs.registry import make, register, list_envs

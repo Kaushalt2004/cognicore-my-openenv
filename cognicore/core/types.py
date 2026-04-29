@@ -204,6 +204,8 @@ class CogniCoreConfig:
     """Configuration for CogniCore middleware.
 
     Pass to ``CogniCoreEnv.__init__()`` to toggle features.
+    All fields are validated on construction — invalid values raise
+    ``InvalidConfigError`` immediately rather than failing silently later.
     """
 
     # Memory
@@ -235,5 +237,52 @@ class CogniCoreConfig:
     time_decay_rate: float = 0.001
     time_decay_threshold_seconds: float = 30.0
 
+    def __post_init__(self) -> None:
+        """Validate all config fields on construction."""
+        self.validate()
+
+    def validate(self) -> None:
+        """Check all config values are within valid ranges.
+
+        Raises
+        ------
+        cognicore.core.errors.InvalidConfigError
+            If any field has an invalid value.
+        """
+        from cognicore.core.errors import InvalidConfigError
+
+        if self.memory_max_size < 1:
+            raise InvalidConfigError(
+                "memory_max_size", self.memory_max_size,
+                "Must be >= 1.",
+            )
+        if self.memory_retrieve_top_k < 1:
+            raise InvalidConfigError(
+                "memory_retrieve_top_k", self.memory_retrieve_top_k,
+                "Must be >= 1.",
+            )
+        if self.reflection_min_samples < 1:
+            raise InvalidConfigError(
+                "reflection_min_samples", self.reflection_min_samples,
+                "Must be >= 1.",
+            )
+        if self.streak_threshold < 1:
+            raise InvalidConfigError(
+                "streak_threshold", self.streak_threshold,
+                "Must be >= 1.",
+            )
+        if self.max_proposals_per_step < 0:
+            raise InvalidConfigError(
+                "max_proposals_per_step", self.max_proposals_per_step,
+                "Must be >= 0.",
+            )
+        if self.time_decay_threshold_seconds < 0:
+            raise InvalidConfigError(
+                "time_decay_threshold_seconds",
+                self.time_decay_threshold_seconds,
+                "Must be >= 0.",
+            )
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
