@@ -14,6 +14,9 @@ Usage::
 """
 
 from __future__ import annotations
+import logging
+
+logger = logging.getLogger("cognicore.dashboard")
 
 DASHBOARD_HTML = r"""<!DOCTYPE html>
 <html lang="en">
@@ -842,9 +845,9 @@ def serve_dashboard(host: str = "127.0.0.1", port: int = 8050) -> None:
 
     import cognicore
 
-    print(f"\nCogniCore Dashboard v{cognicore.__version__}")
-    print(f"  Dashboard: http://localhost:{port}/dashboard")
-    print(f"  API Docs:  http://localhost:{port}/docs")
+    logger.info(f"\nCogniCore Dashboard v{cognicore.__version__}")
+    logger.info(f"  Dashboard: http://localhost:{port}/dashboard")
+    logger.info(f"  API Docs:  http://localhost:{port}/docs")
     print()
 
     app = create_dashboard_app()

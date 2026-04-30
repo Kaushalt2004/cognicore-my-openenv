@@ -21,6 +21,9 @@ from __future__ import annotations
 from typing import Dict, List
 
 import cognicore
+import logging
+
+logger = logging.getLogger("cognicore.adversarial")
 
 
 class AdversarialTester:
@@ -108,9 +111,9 @@ class AdversarialTester:
         }
 
         if verbose:
-            print(f"\n{'=' * 60}")
-            print(f"  Adversarial Testing: {self.env_id}")
-            print(f"{'=' * 60}")
+            logger.info(f"\n{'=' * 60}")
+            logger.info(f"  Adversarial Testing: {self.env_id}")
+            logger.info(f"{'=' * 60}")
 
         # 1. Prompt injection tests
         if verbose:
@@ -123,27 +126,27 @@ class AdversarialTester:
             if verbose:
                 icon = "PASS" if result["resisted"] else "FAIL"
                 desc = attack[:40] + "..." if len(attack) > 40 else attack
-                print(f"    [{icon}] {desc}")
+                logger.info(f"    [{icon}] {desc}")
 
         # 2. Edge case tests
         if verbose:
-            print(f"\n  [2/4] Edge Cases ({len(self.EDGE_CASES)} tests)")
+            logger.info(f"\n  [2/4] Edge Cases ({len(self.EDGE_CASES)} tests)")
         for edge in self.EDGE_CASES:
             result = self._test_edge_case(agent, edge)
             results["edge_case_results"].append(result)
             if verbose:
                 icon = "PASS" if result["handled"] else "FAIL"
-                print(f"    [{icon}] {edge['description']}")
+                logger.info(f"    [{icon}] {edge['description']}")
 
         # 3. Stress testing (rapid fire episodes)
         if verbose:
-            print(f"\n  [3/4] Stress Testing ({rounds} rapid episodes)")
+            logger.info(f"\n  [3/4] Stress Testing ({rounds} rapid episodes)")
         stress = self._run_stress(agent, rounds, verbose)
         results["stress_results"] = stress
 
         # 4. Consistency testing (same input, different runs)
         if verbose:
-            print("\n  [4/4] Consistency Testing (10 repetitions)")
+            logger.info("\n  [4/4] Consistency Testing (10 repetitions)")
         consistency = self._test_consistency(agent)
         results["consistency_results"] = consistency
 
@@ -421,20 +424,20 @@ class AdversarialReport:
 
     def print_vulnerabilities(self):
         """Print formatted vulnerability report."""
-        print(f"\n{'=' * 65}")
-        print("  Adversarial Test Results")
-        print(f"{'=' * 65}")
-        print(f"  Injection resistance: {self.injection_resistance:.0%}")
-        print(f"  Edge case handling:   {self.edge_case_handling:.0%}")
-        print(f"  Stress stability:     {self.stress_stability:.0%}")
+        logger.info(f"\n{'=' * 65}")
+        logger.info("  Adversarial Test Results")
+        logger.info(f"{'=' * 65}")
+        logger.info(f"  Injection resistance: {self.injection_resistance:.0%}")
+        logger.info(f"  Edge case handling:   {self.edge_case_handling:.0%}")
+        logger.info(f"  Stress stability:     {self.stress_stability:.0%}")
 
         vulns = self.vulnerabilities()
         if vulns:
-            print(f"\n  Vulnerabilities Found ({len(vulns)}):")
+            logger.info(f"\n  Vulnerabilities Found ({len(vulns)}):")
             for v in vulns[:10]:
-                print(f"    [{v['severity']:8s}] {v['type']:12s} — {v['detail']}")
+                logger.info(f"    [{v['severity']:8s}] {v['type']:12s} — {v['detail']}")
         else:
-            print("\n  No vulnerabilities found. Agent is robust.")
+            logger.info("\n  No vulnerabilities found. Agent is robust.")
 
         # Consistency
         cons = self.results.get("consistency_results", {})
@@ -444,7 +447,7 @@ class AdversarialReport:
                 f"({'deterministic' if cons.get('is_deterministic') else 'non-deterministic'})"
             )
 
-        print(f"{'=' * 65}\n")
+        logger.info(f"{'=' * 65}\n")
 
     def to_dict(self) -> Dict:
         return {

@@ -19,6 +19,9 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
+import logging
+
+logger = logging.getLogger("cognicore.causal")
 
 
 class CausalLink:
@@ -205,13 +208,13 @@ class CausalEngine:
 
     def print_graph(self):
         """Print the causal graph."""
-        print(f"\n{'=' * 60}")
+        logger.info(f"\n{'=' * 60}")
         print(
             f"  Causal Graph ({len(self._links)} causes, {len(self._observations)} observations)"
         )
-        print(f"{'=' * 60}")
+        logger.info(f"{'=' * 60}")
         for cause in sorted(self._links.keys()):
-            print(f"\n  {cause}:")
+            logger.info(f"\n  {cause}:")
             for action, link in self._links[cause].items():
                 bar_len = int(link.strength * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)
@@ -219,4 +222,4 @@ class CausalEngine:
                     f"    → {action:15s} [{bar}] {link.strength:.0%} correct "
                     f"({link.observations} obs, conf={link.confidence:.0%})"
                 )
-        print(f"{'=' * 60}\n")
+        logger.info(f"{'=' * 60}\n")

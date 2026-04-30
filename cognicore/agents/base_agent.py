@@ -29,9 +29,31 @@ Usage::
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, runtime_checkable
+
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol
 
 from cognicore.core.types import EpisodeStats, StructuredReward
+
+
+@runtime_checkable
+class AgentProtocol(Protocol):
+    """Protocol (duck-type) interface for CogniCore agents.
+
+    Any object with an ``act()`` method satisfies this protocol.
+    Use this for isinstance checks without requiring inheritance::
+
+        def train(agent: AgentProtocol, env: CogniCoreEnv) -> None:
+            if not isinstance(agent, AgentProtocol):
+                raise AgentInterfaceError(agent, "act")
+    """
+
+    def act(self, observation: Dict[str, Any]) -> Dict[str, Any]:
+        """Choose an action given an observation."""
+        ...
 
 
 class BaseAgent(ABC):

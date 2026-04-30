@@ -23,6 +23,9 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import Dict, List
+import logging
+
+logger = logging.getLogger("cognicore.intelligence")
 
 
 class IntelligenceScore:
@@ -34,15 +37,15 @@ class IntelligenceScore:
 
     def print_card(self):
         """Print formatted intelligence card."""
-        print(f"\n{'=' * 50}")
-        print("  Intelligence Score Card")
-        print(f"  Overall: {self.overall:.0f} / 100")
-        print(f"{'=' * 50}")
+        logger.info(f"\n{'=' * 50}")
+        logger.info("  Intelligence Score Card")
+        logger.info(f"  Overall: {self.overall:.0f} / 100")
+        logger.info(f"{'=' * 50}")
         for dim, score in sorted(self.dimensions.items(), key=lambda x: -x[1]):
             bar_len = int(score / 5)
             bar = "█" * bar_len + "░" * (20 - bar_len)
-            print(f"  {dim:20s} [{bar}] {score:.0f}")
-        print(f"{'=' * 50}\n")
+            logger.info(f"  {dim:20s} [{bar}] {score:.0f}")
+        logger.info(f"{'=' * 50}\n")
 
     def to_dict(self) -> Dict:
         return {"overall": self.overall, "dimensions": self.dimensions}

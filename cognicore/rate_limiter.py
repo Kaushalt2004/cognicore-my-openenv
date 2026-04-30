@@ -16,6 +16,9 @@ from __future__ import annotations
 import time
 from collections import deque
 from typing import Any, Dict
+import logging
+
+logger = logging.getLogger("cognicore.rate_limiter")
 
 
 class RateLimiter:
@@ -127,7 +130,7 @@ class RateLimiter:
     def print_usage(self):
         """Print usage stats."""
         u = self.usage()
-        print("\n  Rate Limiter Status:")
+        logger.info("\n  Rate Limiter Status:")
         for period in ("minute", "hour", "day"):
             data = u[period]
             pct = data["used"] / data["limit"] if data["limit"] else 0
@@ -136,6 +139,6 @@ class RateLimiter:
             print(
                 f"    {period:8s} [{bar}] {data['used']}/{data['limit']} ({data['remaining']} remaining)"
             )
-        print(f"    Total calls: {u['total_calls']}")
+        logger.info(f"    Total calls: {u['total_calls']}")
         if u["total_waited_seconds"] > 0:
-            print(f"    Time waited: {u['total_waited_seconds']}s")
+            logger.info(f"    Time waited: {u['total_waited_seconds']}s")

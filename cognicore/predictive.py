@@ -21,6 +21,9 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from typing import Any, Dict, List, Optional
+import logging
+
+logger = logging.getLogger("cognicore.predictive")
 
 
 class FailurePredictor:
@@ -282,20 +285,20 @@ class FailurePredictor:
     def print_report(self):
         """Print formatted risk report."""
         r = self.risk_report()
-        print(f"\n{'=' * 55}")
-        print("  Predictive Failure Report")
-        print(f"{'=' * 55}")
-        print(f"  Observations: {r['total_observations']}")
-        print(f"  Accuracy: {r['overall_accuracy']:.0%}")
-        print(f"  Trajectory: {r['trajectory']}")
-        print(f"  Streak: {r['current_streak']}")
-        print(f"  Alerts: {r['alerts_triggered']}")
+        logger.info(f"\n{'=' * 55}")
+        logger.info("  Predictive Failure Report")
+        logger.info(f"{'=' * 55}")
+        logger.info(f"  Observations: {r['total_observations']}")
+        logger.info(f"  Accuracy: {r['overall_accuracy']:.0%}")
+        logger.info(f"  Trajectory: {r['trajectory']}")
+        logger.info(f"  Streak: {r['current_streak']}")
+        logger.info(f"  Alerts: {r['alerts_triggered']}")
 
         if r["highest_risk_categories"]:
-            print("\n  Riskiest categories:")
+            logger.info("\n  Riskiest categories:")
             for c in r["highest_risk_categories"][:5]:
                 bar_len = int(c["failure_rate"] * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)
-                print(f"    {c['category']:20s} [{bar}] {c['failure_rate']:.0%} fail")
+                logger.info(f"    {c['category']:20s} [{bar}] {c['failure_rate']:.0%} fail")
 
-        print(f"{'=' * 55}\n")
+        logger.info(f"{'=' * 55}\n")

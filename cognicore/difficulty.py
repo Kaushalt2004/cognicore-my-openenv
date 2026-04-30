@@ -20,6 +20,9 @@ from typing import Any, Dict, List
 
 import cognicore
 from cognicore.agents.base_agent import RandomAgent
+import logging
+
+logger = logging.getLogger("cognicore.difficulty")
 
 
 class DifficultyEstimator:
@@ -43,8 +46,8 @@ class DifficultyEstimator:
     ):
         """Calibrate difficulty by running agents."""
         if verbose:
-            print(f"\nCalibrating difficulty: {env_id} ({difficulty})")
-            print(f"  Episodes: {episodes}")
+            logger.info(f"\nCalibrating difficulty: {env_id} ({difficulty})")
+            logger.info(f"  Episodes: {episodes}")
 
         for ep in range(episodes):
             env = cognicore.make(env_id, difficulty=difficulty)
@@ -69,7 +72,7 @@ class DifficultyEstimator:
                     break
 
         if verbose:
-            print(f"  Cases tracked: {len(self._case_stats)}")
+            logger.info(f"  Cases tracked: {len(self._case_stats)}")
 
     def get_difficulty_map(self) -> List[Dict[str, Any]]:
         """Get difficulty scores for all tracked cases.
@@ -115,11 +118,11 @@ class DifficultyEstimator:
     def print_map(self, top_n: int = 20):
         """Print difficulty map."""
         results = self.get_difficulty_map()
-        print(f"\n{'=' * 70}")
-        print(f"  Difficulty Map ({len(results)} cases)")
-        print(f"{'=' * 70}")
+        logger.info(f"\n{'=' * 70}")
+        logger.info(f"  Difficulty Map ({len(results)} cases)")
+        logger.info(f"{'=' * 70}")
         for r in results[:top_n]:
             bar_len = int(r["difficulty"] * 20)
             bar = "█" * bar_len + "░" * (20 - bar_len)
-            print(f"  [{r['level']:10s}] [{bar}] {r['case'][:40]}")
-        print(f"{'=' * 70}\n")
+            logger.info(f"  [{r['level']:10s}] [{bar}] {r['case'][:40]}")
+        logger.info(f"{'=' * 70}\n")

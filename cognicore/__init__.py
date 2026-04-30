@@ -22,7 +22,7 @@ Quick start::
     print(env.episode_stats())
 """
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 # Core
 from cognicore.core.base_env import CogniCoreEnv
@@ -50,7 +50,7 @@ from cognicore.core.errors import (
 from cognicore.envs.registry import make, register, list_envs
 
 # Agents
-from cognicore.agents.base_agent import BaseAgent, RandomAgent
+from cognicore.agents.base_agent import BaseAgent, RandomAgent, AgentProtocol
 
 # Middleware (importable for custom usage)
 from cognicore.middleware.memory import Memory

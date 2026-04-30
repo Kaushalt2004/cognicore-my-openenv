@@ -17,6 +17,9 @@ Usage::
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+import logging
+
+logger = logging.getLogger("cognicore.strategy")
 
 
 class StrategyMode:
@@ -181,9 +184,9 @@ class StrategySwitcher:
         }
 
     def print_status(self):
-        print(f"\n  Strategy: {self.current_mode}")
-        print(f"  Switches: {len(self.switch_history)}")
+        logger.info(f"\n  Strategy: {self.current_mode}")
+        logger.info(f"  Switches: {len(self.switch_history)}")
         if self.switch_history:
             last = self.switch_history[-1]
-            print(f"  Last switch: {last['from']} → {last['to']} ({last['reason']})")
-        print(f"  Modes: {', '.join(self.modes.keys())}")
+            logger.info(f"  Last switch: {last['from']} → {last['to']} ({last['reason']})")
+        logger.info(f"  Modes: {', '.join(self.modes.keys())}")

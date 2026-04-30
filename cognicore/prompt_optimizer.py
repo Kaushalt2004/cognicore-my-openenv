@@ -18,6 +18,9 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, Optional
 
 import cognicore
+import logging
+
+logger = logging.getLogger("cognicore.prompt_optimizer")
 
 
 class PromptOptimizer:
@@ -68,10 +71,10 @@ class PromptOptimizer:
             self.templates["default"] = "Classify the following: {text}"
 
         if verbose:
-            print(f"\nPrompt Optimizer: {self.env_id}")
-            print(f"  Templates: {len(self.templates)}")
-            print(f"  Episodes per template: {episodes}")
-            print("=" * 55)
+            logger.info(f"\nPrompt Optimizer: {self.env_id}")
+            logger.info(f"  Templates: {len(self.templates)}")
+            logger.info(f"  Episodes per template: {episodes}")
+            logger.info("=" * 55)
 
         for name, template in self.templates.items():
             accuracies = []
@@ -128,9 +131,9 @@ class PromptOptimizer:
         best = self.results[best_name]
 
         if verbose:
-            print(f"\n  Winner: {best_name} ({best['avg_accuracy']:.0%})")
-            print(f"  Template: {best['template'][:80]}")
-            print("=" * 55)
+            logger.info(f"\n  Winner: {best_name} ({best['avg_accuracy']:.0%})")
+            logger.info(f"  Template: {best['template'][:80]}")
+            logger.info("=" * 55)
 
         return {
             "best_prompt": best_name,

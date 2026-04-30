@@ -29,6 +29,9 @@ from typing import Any, Dict, List
 
 import cognicore
 from cognicore.smart_agents import AutoLearner
+import logging
+
+logger = logging.getLogger("cognicore.lifelong")
 
 
 class LifelongAgent:
@@ -221,18 +224,18 @@ class LifelongAgent:
     def print_biography(self):
         """Print formatted agent biography."""
         bio = self.biography()
-        print(f"\n{'=' * 55}")
-        print(f"  Agent: {bio['agent_id']}")
-        print(f"  Age: {bio['age_hours']:.1f} hours")
-        print(f"{'=' * 55}")
-        print(f"  Sessions: {bio['total_sessions']}")
-        print(f"  Steps: {bio['total_steps']}")
-        print(f"  Lifetime accuracy: {bio['lifetime_accuracy']:.0%}")
-        print(f"  Environments: {bio['environments_experienced']}")
-        print(f"  Categories known: {bio['knowledge_categories']}")
+        logger.info(f"\n{'=' * 55}")
+        logger.info(f"  Agent: {bio['agent_id']}")
+        logger.info(f"  Age: {bio['age_hours']:.1f} hours")
+        logger.info(f"{'=' * 55}")
+        logger.info(f"  Sessions: {bio['total_sessions']}")
+        logger.info(f"  Steps: {bio['total_steps']}")
+        logger.info(f"  Lifetime accuracy: {bio['lifetime_accuracy']:.0%}")
+        logger.info(f"  Environments: {bio['environments_experienced']}")
+        logger.info(f"  Categories known: {bio['knowledge_categories']}")
 
         if bio["env_performance"]:
-            print("\n  Performance by environment:")
+            logger.info("\n  Performance by environment:")
             for env_id, perf in bio["env_performance"].items():
                 bar_len = int(perf.get("best_accuracy", 0) * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)
@@ -240,4 +243,4 @@ class LifelongAgent:
                     f"    {env_id:35s} [{bar}] best={perf.get('best_accuracy', 0):.0%}"
                 )
 
-        print(f"{'=' * 55}\n")
+        logger.info(f"{'=' * 55}\n")

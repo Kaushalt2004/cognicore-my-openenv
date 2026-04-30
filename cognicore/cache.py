@@ -20,6 +20,9 @@ import hashlib
 import time
 from collections import OrderedDict
 from typing import Any, Dict, Optional
+import logging
+
+logger = logging.getLogger("cognicore.cache")
 
 
 class ResponseCache:
@@ -115,8 +118,8 @@ class ResponseCache:
     def print_stats(self):
         """Print cache statistics."""
         s = self.stats()
-        print("\n  Response Cache:")
-        print(f"    Size: {s['size']}/{s['max_size']}")
-        print(f"    Hits: {s['hits']} | Misses: {s['misses']}")
-        print(f"    Hit rate: {s['hit_rate']:.0%}")
-        print(f"    Tokens saved: {s['tokens_saved']}")
+        logger.info("\n  Response Cache:")
+        logger.info(f"    Size: {s['size']}/{s['max_size']}")
+        logger.info(f"    Hits: {s['hits']} | Misses: {s['misses']}")
+        logger.info(f"    Hit rate: {s['hit_rate']:.0%}")
+        logger.info(f"    Tokens saved: {s['tokens_saved']}")

@@ -25,6 +25,9 @@ import time
 from typing import Any, Callable, Dict, List, Optional
 
 import cognicore
+import logging
+
+logger = logging.getLogger("cognicore.debugger")
 
 
 class Breakpoint:
@@ -161,12 +164,12 @@ class ExecutionTrace:
 
     def print_trace(self, max_lines: int = 30):
         """Print formatted execution trace."""
-        print(f"\n{'=' * 65}")
-        print("  AI Debugger — Execution Trace")
+        logger.info(f"\n{'=' * 65}")
+        logger.info("  AI Debugger — Execution Trace")
         print(
             f"  {len(self.steps)} steps | {len(self.breakpoint_hits)} breakpoints hit"
         )
-        print(f"{'=' * 65}")
+        logger.info(f"{'=' * 65}")
 
         for s in self.steps[:max_lines]:
             icon = (
@@ -181,11 +184,11 @@ class ExecutionTrace:
             )
 
         if len(self.steps) > max_lines:
-            print(f"  ... ({len(self.steps) - max_lines} more steps)")
+            logger.info(f"  ... ({len(self.steps) - max_lines} more steps)")
 
         # Breakpoint summary
         if self.breakpoint_hits:
-            print("\n  Breakpoint Hits:")
+            logger.info("\n  Breakpoint Hits:")
             for bp in self.breakpoint_hits[:10]:
                 d = bp.to_dict()
                 print(
@@ -197,16 +200,16 @@ class ExecutionTrace:
         # Decision tree
         tree = self.decision_tree()
         if tree:
-            print("\n  Decision Tree:")
+            logger.info("\n  Decision Tree:")
             for cat in sorted(tree.keys()):
                 node = tree[cat]
-                print(f"    {cat} ({node['total']} cases):")
+                logger.info(f"    {cat} ({node['total']} cases):")
                 for action, counts in node["actions"].items():
                     total = counts["correct"] + counts["wrong"]
                     acc = counts["correct"] / total if total else 0
-                    print(f"      -> {action}: {acc:.0%} ({counts['correct']}/{total})")
+                    logger.info(f"      -> {action}: {acc:.0%} ({counts['correct']}/{total})")
 
-        print(f"{'=' * 65}\n")
+        logger.info(f"{'=' * 65}\n")
 
 
 class AIDebugger:
@@ -300,9 +303,9 @@ class AIDebugger:
         trace = ExecutionTrace()
 
         if verbose:
-            print(f"\n  AI Debugger: {self.env_id} ({self.difficulty})")
-            print(f"  Breakpoints: {len(self.breakpoints)}")
-            print(f"  {'-' * 50}")
+            logger.info(f"\n  AI Debugger: {self.env_id} ({self.difficulty})")
+            logger.info(f"  Breakpoints: {len(self.breakpoints)}")
+            logger.info(f"  {'-' * 50}")
 
         obs = env.reset()
         step = 0

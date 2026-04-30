@@ -20,6 +20,9 @@ Usage::
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+import logging
+
+logger = logging.getLogger("cognicore.thought_trace")
 
 
 class ThoughtNode:
@@ -184,12 +187,12 @@ class ThoughtTracer:
     def print_chain(self, chain_idx: int = -1):
         """Print a specific reasoning chain."""
         if not self.chains:
-            print("  No reasoning chains recorded.")
+            logger.info("  No reasoning chains recorded.")
             return
 
         chain = self.chains[chain_idx]
-        print(f"\n  Thought Chain #{chain.step}:")
-        print(f"  Context: {chain.context}")
+        logger.info(f"\n  Thought Chain #{chain.step}:")
+        logger.info(f"  Context: {chain.context}")
 
         for i, node in enumerate(chain.nodes):
             arrow = "→" if node.direction else "?"
@@ -205,31 +208,31 @@ class ThoughtTracer:
 
         if chain.truth and not chain.correct:
             error = chain.reasoning_error()
-            print(f"  Truth: {chain.truth}")
+            logger.info(f"  Truth: {chain.truth}")
             if error:
-                print(f"  Error: {error}")
+                logger.info(f"  Error: {error}")
 
     def print_analysis(self):
         """Print full reasoning analysis."""
-        print(f"\n{'=' * 60}")
-        print("  Thought Trace Analysis")
-        print(f"  {len(self.chains)} decisions traced")
-        print(f"{'=' * 60}")
+        logger.info(f"\n{'=' * 60}")
+        logger.info("  Thought Trace Analysis")
+        logger.info(f"  {len(self.chains)} decisions traced")
+        logger.info(f"{'=' * 60}")
 
         # Calibration
         cal = self.confidence_calibration()
-        print("\n  Confidence Calibration:")
-        print(f"    Avg confidence: {cal['avg_confidence']:.0%}")
-        print(f"    Actual accuracy: {cal['accuracy']:.0%}")
-        print(f"    Calibration error: {cal['calibration_error']:.0%}")
+        logger.info("\n  Confidence Calibration:")
+        logger.info(f"    Avg confidence: {cal['avg_confidence']:.0%}")
+        logger.info(f"    Actual accuracy: {cal['accuracy']:.0%}")
+        logger.info(f"    Calibration error: {cal['calibration_error']:.0%}")
         if cal.get("overconfident"):
-            print("    WARNING: Agent is overconfident")
+            logger.info("    WARNING: Agent is overconfident")
 
         # Errors
         errors = self.reasoning_errors()
         if errors:
-            print(f"\n  Reasoning Errors ({len(errors)}):")
+            logger.info(f"\n  Reasoning Errors ({len(errors)}):")
             for e in errors[:5]:
-                print(f"    Step {e['step']}: {e['error']}")
+                logger.info(f"    Step {e['step']}: {e['error']}")
 
-        print(f"{'=' * 60}\n")
+        logger.info(f"{'=' * 60}\n")
