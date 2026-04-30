@@ -23,7 +23,7 @@ class CogniCoreError(Exception):
     pass
 
 
-class InvalidEnvironmentError(CogniCoreError):
+class InvalidEnvironmentError(CogniCoreError, KeyError):
     """Raised when an environment ID is not found in the registry."""
 
     def __init__(self, env_id: str, available: list[str] | None = None) -> None:
