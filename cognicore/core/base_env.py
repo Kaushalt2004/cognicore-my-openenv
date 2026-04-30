@@ -248,7 +248,13 @@ class CogniCoreEnv(ABC):
             where ``reward`` is a ``StructuredReward``.
         """
         if self._done:
-            raise EpisodeFinishedError()
+            obs = self._build_observation()
+            info = {
+                "error": str(EpisodeFinishedError()),
+                "step": self._current_step,
+                "max_steps": self._max_steps,
+            }
+            return obs, StructuredReward(), True, False, info
 
         self._step_start_time = time.time()
 
