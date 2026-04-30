@@ -18,6 +18,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 from collections import defaultdict
+import logging
+
+logger = logging.getLogger("cognicore.analytics")
 
 
 class PerformanceAnalyzer:
@@ -190,16 +193,16 @@ class AnalyticsReport:
 
     def print_insights(self):
         """Print a human-readable insights report."""
-        print(f"\n{'=' * 60}")
-        print("  CogniCore Performance Insights")
-        print(f"{'=' * 60}")
+        logger.info(f"\n{'=' * 60}")
+        logger.info("  CogniCore Performance Insights")
+        logger.info(f"{'=' * 60}")
 
         # Learning curve
         if self.episodes:
             first = self.episodes[0]
             last = self.episodes[-1]
             trend = "IMPROVING" if self.is_improving() else "FLAT/DECLINING"
-            print(f"\n  Learning: {trend}")
+            logger.info(f"\n  Learning: {trend}")
             print(
                 f"    First episode: accuracy={first['accuracy']:.0%} score={first['score']:.4f}"
             )
@@ -210,7 +213,7 @@ class AnalyticsReport:
         # Weak categories
         weak = self.weak_categories(3)
         if weak:
-            print("\n  Weakest categories:")
+            logger.info("\n  Weakest categories:")
             for w in weak:
                 print(
                     f"    {w['category']:25s} accuracy={w['accuracy']:.0%} ({w['correct']}/{w['total']})"
@@ -218,26 +221,26 @@ class AnalyticsReport:
 
         # Memory impact
         mem = self.memory_impact()
-        print("\n  Memory impact:")
+        logger.info("\n  Memory impact:")
         print(
             f"    Total memory bonus: {mem['memory_total']:+.2f} ({mem['memory_pct_of_reward']:.1f}% of reward)"
         )
-        print(f"    Steps where memory helped: {mem['memory_helped_steps']}")
-        print(f"    Steps with streak penalty: {mem['streak_hit_steps']}")
+        logger.info(f"    Steps where memory helped: {mem['memory_helped_steps']}")
+        logger.info(f"    Steps with streak penalty: {mem['streak_hit_steps']}")
 
         # Streak analysis
         streaks = self.streak_analysis()
-        print("\n  Streaks:")
-        print(f"    Longest failure streak: {streaks['max_streak']}")
-        print(f"    Average streak length: {streaks['avg_streak']:.1f}")
+        logger.info("\n  Streaks:")
+        logger.info(f"    Longest failure streak: {streaks['max_streak']}")
+        logger.info(f"    Average streak length: {streaks['avg_streak']:.1f}")
 
         # Confusion pairs
         confused = self.confusion_pairs(3)
         if confused:
-            print("\n  Most common mistakes:")
+            logger.info("\n  Most common mistakes:")
             for c in confused:
                 print(
                     f"    Predicted '{c['predicted']}' but truth was '{c['truth']}' ({c['count']}x)"
                 )
 
-        print(f"{'=' * 60}\n")
+        logger.info(f"{'=' * 60}\n")

@@ -21,6 +21,9 @@ from typing import Any, Dict, List
 
 import cognicore
 from cognicore.agents.base_agent import RandomAgent
+import logging
+
+logger = logging.getLogger("cognicore.fingerprint")
 
 
 class AgentDNA:
@@ -54,11 +57,11 @@ class AgentDNA:
         return dot / (mag_a * mag_b)
 
     def print_dna(self):
-        print(f"\n  Agent DNA: {self.agent_name}")
+        logger.info(f"\n  Agent DNA: {self.agent_name}")
         for k, v in sorted(self.vector.items()):
             bar_len = int(abs(v) * 20)
             bar = "█" * bar_len + "░" * (20 - bar_len)
-            print(f"    {k:25s} [{bar}] {v:.3f}")
+            logger.info(f"    {k:25s} [{bar}] {v:.3f}")
 
 
 class AgentFingerprint:

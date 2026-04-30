@@ -24,6 +24,9 @@ from __future__ import annotations
 
 import time
 from typing import Any, Callable, Dict, List, Optional
+import logging
+
+logger = logging.getLogger("cognicore.safety_layer")
 
 
 class Policy:
@@ -258,13 +261,13 @@ class SafetyLayer:
     def print_report(self):
         """Print formatted compliance report."""
         r = self.compliance_report()
-        print(f"\n{'=' * 50}")
-        print("  Safety Compliance Report")
-        print(f"{'=' * 50}")
-        print(f"  Total checks:    {r['total_checks']}")
-        print(f"  Violations:      {r['total_violations']}")
-        print(f"  Blocked:         {r['total_blocked']} ({r['block_rate']:.0%})")
-        print(f"  Avg risk score:  {r['avg_risk_score']:.0f}/100")
-        print(f"  Max risk score:  {r['max_risk_score']}/100")
-        print(f"  Active policies: {r['policies_active']}")
-        print(f"{'=' * 50}\n")
+        logger.info(f"\n{'=' * 50}")
+        logger.info("  Safety Compliance Report")
+        logger.info(f"{'=' * 50}")
+        logger.info(f"  Total checks:    {r['total_checks']}")
+        logger.info(f"  Violations:      {r['total_violations']}")
+        logger.info(f"  Blocked:         {r['total_blocked']} ({r['block_rate']:.0%})")
+        logger.info(f"  Avg risk score:  {r['avg_risk_score']:.0f}/100")
+        logger.info(f"  Max risk score:  {r['max_risk_score']}/100")
+        logger.info(f"  Active policies: {r['policies_active']}")
+        logger.info(f"{'=' * 50}\n")

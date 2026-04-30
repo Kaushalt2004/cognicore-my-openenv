@@ -17,6 +17,9 @@ from __future__ import annotations
 
 import copy
 from typing import Any, Dict, List
+import logging
+
+logger = logging.getLogger("cognicore.meta_rewards")
 
 
 class MetaRewardOptimizer:
@@ -104,10 +107,10 @@ class MetaRewardOptimizer:
             self.weights[comp] = max(0.1, min(3.0, self.weights[comp]))
 
         if verbose:
-            print(f"\n  Meta-Reward Optimization (gen {self._generation}):")
+            logger.info(f"\n  Meta-Reward Optimization (gen {self._generation}):")
             for comp, w in sorted(self.weights.items(), key=lambda x: -x[1]):
                 bar = "█" * int(w * 10) + "░" * (30 - int(w * 10))
-                print(f"    {comp:20s} [{bar}] {w:.2f}")
+                logger.info(f"    {comp:20s} [{bar}] {w:.2f}")
 
         return self.weights
 

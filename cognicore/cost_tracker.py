@@ -16,6 +16,9 @@ from __future__ import annotations
 
 import time
 from typing import Any, Dict, List, Optional
+import logging
+
+logger = logging.getLogger("cognicore.cost_tracker")
 
 
 class CostTracker:
@@ -188,28 +191,28 @@ class CostTracker:
     def print_summary(self):
         """Print formatted cost summary."""
         s = self.summary()
-        print(f"\n{'=' * 55}")
-        print(f"  Cost Tracker — {s['model']}")
-        print(f"{'=' * 55}")
-        print(f"  Total calls:     {s['total_calls']}")
-        print(f"  Input tokens:    {s['total_input_tokens']:,}")
-        print(f"  Output tokens:   {s['total_output_tokens']:,}")
-        print(f"  Total tokens:    {s['total_tokens']:,}")
-        print(f"  Total cost:      ${s['total_cost_usd']:.4f}")
-        print(f"  Avg per call:    ${s['avg_cost_per_call']:.6f}")
-        print(f"  Avg latency:     {s['avg_latency_ms']:.0f}ms")
+        logger.info(f"\n{'=' * 55}")
+        logger.info(f"  Cost Tracker — {s['model']}")
+        logger.info(f"{'=' * 55}")
+        logger.info(f"  Total calls:     {s['total_calls']}")
+        logger.info(f"  Input tokens:    {s['total_input_tokens']:,}")
+        logger.info(f"  Output tokens:   {s['total_output_tokens']:,}")
+        logger.info(f"  Total tokens:    {s['total_tokens']:,}")
+        logger.info(f"  Total cost:      ${s['total_cost_usd']:.4f}")
+        logger.info(f"  Avg per call:    ${s['avg_cost_per_call']:.6f}")
+        logger.info(f"  Avg latency:     {s['avg_latency_ms']:.0f}ms")
 
         if s["budget_limit"]:
             remaining = s["budget_remaining"]
-            print(f"  Budget:          ${s['budget_limit']:.2f}")
-            print(f"  Remaining:       ${remaining:.4f}")
+            logger.info(f"  Budget:          ${s['budget_limit']:.2f}")
+            logger.info(f"  Remaining:       ${remaining:.4f}")
 
         # Model comparison
         comp = self.compare_models()
         if comp and self.total_tokens > 0:
-            print("\n  Same usage across models:")
+            logger.info("\n  Same usage across models:")
             for model, cost in sorted(comp.items(), key=lambda x: x[1]):
                 marker = " <-- current" if model == self.model_name else ""
-                print(f"    {model:20s} ${cost:.4f}{marker}")
+                logger.info(f"    {model:20s} ${cost:.4f}{marker}")
 
-        print(f"{'=' * 55}\n")
+        logger.info(f"{'=' * 55}\n")

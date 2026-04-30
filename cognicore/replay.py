@@ -24,6 +24,9 @@ from typing import Dict, List
 
 import cognicore
 from cognicore.agents.base_agent import RandomAgent
+import logging
+
+logger = logging.getLogger("cognicore.replay")
 
 
 class SessionRecorder:
@@ -135,11 +138,11 @@ def replay(path: str, speed: float = 1.0, verbose: bool = True):
 
     for rec in recordings:
         if verbose:
-            print(f"\n{'=' * 60}")
-            print(f"  Replay: {rec['env_id']} ({rec['difficulty']})")
-            print(f"  Agent: {rec['agent']}")
-            print(f"  Episode {rec['episode']} | {rec['total_steps']} steps")
-            print(f"{'=' * 60}")
+            logger.info(f"\n{'=' * 60}")
+            logger.info(f"  Replay: {rec['env_id']} ({rec['difficulty']})")
+            logger.info(f"  Agent: {rec['agent']}")
+            logger.info(f"  Episode {rec['episode']} | {rec['total_steps']} steps")
+            logger.info(f"{'=' * 60}")
 
         for step in rec["steps"]:
             if verbose:
@@ -155,6 +158,6 @@ def replay(path: str, speed: float = 1.0, verbose: bool = True):
             print(
                 f"\n  Result: {rec['accuracy']:.0%} accuracy, score={rec['score']:.4f}"
             )
-            print(f"{'=' * 60}")
+            logger.info(f"{'=' * 60}")
 
     return recordings

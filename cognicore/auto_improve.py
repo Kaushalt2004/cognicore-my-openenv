@@ -23,6 +23,9 @@ from typing import Any, Dict
 import cognicore
 from cognicore.analytics import PerformanceAnalyzer
 from cognicore.smart_agents import AutoLearner
+import logging
+
+logger = logging.getLogger("cognicore.auto_improve")
 
 
 def auto_improve(
@@ -66,12 +69,12 @@ def auto_improve(
         agent = AutoLearner()
 
     if verbose:
-        print(f"\n{'=' * 60}")
-        print("  Auto-Improvement Loop")
-        print(f"  Env: {env_id} ({difficulty})")
-        print(f"  Target: {target_accuracy:.0%} accuracy")
-        print(f"  Max cycles: {max_cycles}")
-        print(f"{'=' * 60}")
+        logger.info(f"\n{'=' * 60}")
+        logger.info("  Auto-Improvement Loop")
+        logger.info(f"  Env: {env_id} ({difficulty})")
+        logger.info(f"  Target: {target_accuracy:.0%} accuracy")
+        logger.info(f"  Max cycles: {max_cycles}")
+        logger.info(f"{'=' * 60}")
 
     history = []
     best_accuracy = 0
@@ -153,12 +156,12 @@ def auto_improve(
         # Check stopping conditions
         if accuracy >= target_accuracy:
             if verbose:
-                print(f"\n  TARGET REACHED! {accuracy:.0%} >= {target_accuracy:.0%}")
+                logger.info(f"\n  TARGET REACHED! {accuracy:.0%} >= {target_accuracy:.0%}")
             break
 
         if no_improve_count >= patience:
             if verbose:
-                print(f"\n  PLATEAU: No improvement for {patience} cycles. Stopping.")
+                logger.info(f"\n  PLATEAU: No improvement for {patience} cycles. Stopping.")
             break
 
     # Final report
@@ -177,15 +180,15 @@ def auto_improve(
     }
 
     if verbose:
-        print("\n  Summary:")
+        logger.info("\n  Summary:")
         print(
             f"    {result['initial_accuracy']:.0%} -> {result['final_accuracy']:.0%} "
             f"(improvement: {result['improvement']:+.0%})"
         )
         if result["weak_categories"]:
-            print("    Still weak on:")
+            logger.info("    Still weak on:")
             for w in result["weak_categories"][:3]:
-                print(f"      - {w['category']}: {w['accuracy']:.0%}")
-        print(f"{'=' * 60}\n")
+                logger.info(f"      - {w['category']}: {w['accuracy']:.0%}")
+        logger.info(f"{'=' * 60}\n")
 
     return result

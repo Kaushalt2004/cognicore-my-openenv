@@ -25,6 +25,9 @@ from __future__ import annotations
 
 from collections import defaultdict
 from typing import Any, Dict, List
+import logging
+
+logger = logging.getLogger("cognicore.explainer")
 
 
 class Explainer:
@@ -320,33 +323,33 @@ class ExplanationReport:
 
     def print_report(self):
         """Print a formatted XAI report."""
-        print(f"\n{'=' * 65}")
-        print("  Explainable AI Report")
-        print(f"  {self.total_steps} steps | accuracy: {self.accuracy:.0%}")
-        print(f"{'=' * 65}")
+        logger.info(f"\n{'=' * 65}")
+        logger.info("  Explainable AI Report")
+        logger.info(f"  {self.total_steps} steps | accuracy: {self.accuracy:.0%}")
+        logger.info(f"{'=' * 65}")
 
         # Patterns
         patterns = self.mistake_patterns()
         if patterns:
-            print(f"\n  Detected Patterns ({len(patterns)}):")
+            logger.info(f"\n  Detected Patterns ({len(patterns)}):")
             for p in patterns:
                 icon = "!!!" if p["severity"] == "HIGH" else " ! "
-                print(f"  [{icon}] {p['description']}")
+                logger.info(f"  [{icon}] {p['description']}")
 
         # Improvement plan
         plan = self.improvement_plan()
-        print("\n  Improvement Plan:")
+        logger.info("\n  Improvement Plan:")
         for item in plan:
-            print(f"    {item}")
+            logger.info(f"    {item}")
 
         # Worst steps
         worst = [s for s in self.steps if not s["correct"]]
         if worst:
-            print(f"\n  Failed Steps ({len(worst)}/{self.total_steps}):")
+            logger.info(f"\n  Failed Steps ({len(worst)}/{self.total_steps}):")
             for s in worst[:5]:
                 print(
                     f"    Step {s['step']}: {s['category']} — "
                     f"predicted '{s['predicted']}' (truth: '{s['truth']}')"
                 )
 
-        print(f"{'=' * 65}\n")
+        logger.info(f"{'=' * 65}\n")

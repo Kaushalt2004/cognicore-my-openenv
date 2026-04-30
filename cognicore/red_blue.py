@@ -18,6 +18,9 @@ from __future__ import annotations
 
 import random
 from typing import Any, Dict, List, Optional
+import logging
+
+logger = logging.getLogger("cognicore.red_blue")
 
 
 class AttackerAgent:
@@ -247,10 +250,10 @@ class BattleResult:
 
     def print_battle_report(self):
         """Print formatted battle report."""
-        print(f"\n{'=' * 65}")
-        print("  Red vs Blue Battle Report")
-        print(f"{'=' * 65}")
-        print(f"  Rounds: {self.total_rounds}")
+        logger.info(f"\n{'=' * 65}")
+        logger.info("  Red vs Blue Battle Report")
+        logger.info(f"{'=' * 65}")
+        logger.info(f"  Rounds: {self.total_rounds}")
         print(
             f"  Attacker ({self.attacker_name}): {self.attacker_wins} wins ({self.attacker_win_rate:.0%})"
         )
@@ -260,12 +263,12 @@ class BattleResult:
         winner = (
             self.attacker_name if self.attacker_win_rate > 0.5 else self.defender_name
         )
-        print(f"\n  Winner: {winner}")
+        logger.info(f"\n  Winner: {winner}")
 
         # Strategy effectiveness
         strats = self.strategy_effectiveness()
         if strats:
-            print("\n  Attack Strategy Effectiveness:")
+            logger.info("\n  Attack Strategy Effectiveness:")
             for name, s in list(strats.items())[:5]:
                 bar_len = int(s["effectiveness"] * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)
@@ -276,13 +279,13 @@ class BattleResult:
         # Adaptation curve
         curve = self.adaptation_curve()
         if len(curve) > 1:
-            print("\n  Defender Adaptation:")
+            logger.info("\n  Defender Adaptation:")
             for c in curve:
                 bar_len = int(c["defender_accuracy"] * 20)
                 bar = "█" * bar_len + "░" * (20 - bar_len)
-                print(f"    {c['window']:20s} [{bar}] {c['defender_accuracy']:.0%}")
+                logger.info(f"    {c['window']:20s} [{bar}] {c['defender_accuracy']:.0%}")
 
-        print(f"{'=' * 65}\n")
+        logger.info(f"{'=' * 65}\n")
 
 
 class RedVsBlue:
@@ -315,10 +318,10 @@ class RedVsBlue:
             Print round-by-round results.
         """
         if verbose:
-            print(f"\n  Red vs Blue: {rounds} rounds")
-            print(f"  Attacker: {self.attacker.name}")
-            print(f"  Defender: {self.defender.name}")
-            print(f"  {'-' * 55}")
+            logger.info(f"\n  Red vs Blue: {rounds} rounds")
+            logger.info(f"  Attacker: {self.attacker.name}")
+            logger.info(f"  Defender: {self.defender.name}")
+            logger.info(f"  {'-' * 55}")
 
         results = []
 

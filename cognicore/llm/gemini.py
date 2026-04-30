@@ -8,6 +8,9 @@ Supports any OpenAI-compatible endpoint via API_BASE_URL.
 import os
 import time
 from typing import TYPE_CHECKING, Optional
+import logging
+
+logger = logging.getLogger("cognicore.llm.gemini")
 
 try:
     from openai import OpenAI as _OpenAI
@@ -79,7 +82,7 @@ def ask_llm(
         except Exception as e:
             if attempt < retries - 1:
                 wait_time = min(60, 2**attempt * 5)
-                print(f"[LLM] Retry {attempt + 1}/{retries} after error: {e}")
+                logger.info(f"[LLM] Retry {attempt + 1}/{retries} after error: {e}")
                 time.sleep(wait_time)
             else:
                 raise RuntimeError(f"LLM call failed after {retries} retries: {e}")

@@ -22,6 +22,9 @@ from typing import Any, Dict, List, Optional
 
 import cognicore
 from cognicore.agents.base_agent import RandomAgent
+import logging
+
+logger = logging.getLogger("cognicore.experiment")
 
 
 class Experiment:
@@ -69,10 +72,10 @@ class Experiment:
             Print progress.
         """
         if verbose:
-            print(f"\nExperiment: {self.name}")
-            print(f"  Env: {self.env_id} ({self.difficulty})")
-            print(f"  Variants: {len(self.variants)} x {episodes} episodes")
-            print("-" * 60)
+            logger.info(f"\nExperiment: {self.name}")
+            logger.info(f"  Env: {self.env_id} ({self.difficulty})")
+            logger.info(f"  Variants: {len(self.variants)} x {episodes} episodes")
+            logger.info("-" * 60)
 
         all_results = {}
 
@@ -189,13 +192,13 @@ class ExperimentResults:
         s = self.summary()
         w = self.winner()
 
-        print(f"\n{'=' * 65}")
-        print(f"  Experiment Results: {self.name}")
-        print(f"{'=' * 65}")
+        logger.info(f"\n{'=' * 65}")
+        logger.info(f"  Experiment Results: {self.name}")
+        logger.info(f"{'=' * 65}")
         print(
             f"  {'Variant':<20s} {'Avg Score':<12s} {'Best Score':<12s} {'Avg Acc':<10s} {'Memory+':<10s}"
         )
-        print(f"  {'-' * 62}")
+        logger.info(f"  {'-' * 62}")
 
         for var in sorted(s, key=lambda k: -s[k]["avg_score"]):
             v = s[var]
@@ -211,11 +214,11 @@ class ExperimentResults:
 
         imp = self.improvement()
         if imp:
-            print(f"\n  {imp['winner']} beats {imp['loser']} by:")
-            print(f"    Score: +{imp['score_improvement']:.4f}")
-            print(f"    Accuracy: +{imp['accuracy_improvement'] * 100:.0f}%")
+            logger.info(f"\n  {imp['winner']} beats {imp['loser']} by:")
+            logger.info(f"    Score: +{imp['score_improvement']:.4f}")
+            logger.info(f"    Accuracy: +{imp['accuracy_improvement'] * 100:.0f}%")
 
-        print(f"{'=' * 65}\n")
+        logger.info(f"{'=' * 65}\n")
 
     def to_dict(self) -> Dict[str, Any]:
         return {

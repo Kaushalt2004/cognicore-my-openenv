@@ -20,6 +20,9 @@ from typing import Any, Dict, List, Optional
 
 import cognicore
 from cognicore.smart_agents import AutoLearner, SafeAgent, AdaptiveAgent
+import logging
+
+logger = logging.getLogger("cognicore.swarm")
 
 
 class SharedMemory:
@@ -125,15 +128,15 @@ class SwarmResult:
         )
 
     def print_report(self):
-        print(f"\n{'=' * 60}")
-        print("  Swarm Intelligence Report")
-        print(f"  {len(self.agents)} agents | avg accuracy: {self.avg_accuracy:.0%}")
-        print(f"{'=' * 60}")
+        logger.info(f"\n{'=' * 60}")
+        logger.info("  Swarm Intelligence Report")
+        logger.info(f"  {len(self.agents)} agents | avg accuracy: {self.avg_accuracy:.0%}")
+        logger.info(f"{'=' * 60}")
 
         for a in sorted(self.agents, key=lambda x: -x.accuracy):
             bar_len = int(a.accuracy * 20)
             bar = "█" * bar_len + "░" * (20 - bar_len)
-            print(f"  {a.name:15s} [{bar}] {a.accuracy:.0%} ({a.correct}/{a.total})")
+            logger.info(f"  {a.name:15s} [{bar}] {a.accuracy:.0%} ({a.correct}/{a.total})")
 
         mem = self.shared.stats()
         print(
@@ -143,7 +146,7 @@ class SwarmResult:
             print(
                 f"  Top contributors: {', '.join(f'{k}({v})' for k, v in mem['top_contributors'].items())}"
             )
-        print(f"{'=' * 60}\n")
+        logger.info(f"{'=' * 60}\n")
 
 
 class Swarm:
@@ -188,9 +191,9 @@ class Swarm:
         through shared memory.
         """
         if verbose:
-            print(f"\n  Swarm: {self.size} agents on {env_id}")
-            print(f"  Episodes per agent: {episodes}")
-            print(f"  {'─' * 50}")
+            logger.info(f"\n  Swarm: {self.size} agents on {env_id}")
+            logger.info(f"  Episodes per agent: {episodes}")
+            logger.info(f"  {'─' * 50}")
 
         for agent in self.agents:
             for ep in range(episodes):
@@ -206,6 +209,6 @@ class Swarm:
 
                 if verbose:
                     stats = env.episode_stats()
-                    print(f"  {agent.name} ep{ep + 1}: accuracy={stats.accuracy:.0%}")
+                    logger.info(f"  {agent.name} ep{ep + 1}: accuracy={stats.accuracy:.0%}")
 
         return SwarmResult(self.agents, self.shared)

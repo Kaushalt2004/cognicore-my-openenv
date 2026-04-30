@@ -19,6 +19,9 @@ from __future__ import annotations
 import json
 import time
 from typing import Any, Callable, Dict, List, Optional
+import logging
+
+logger = logging.getLogger("cognicore.webhooks")
 
 
 class AlertRule:
@@ -222,7 +225,7 @@ class AlertSystem:
         severity = alert["severity"]
         icons = {"INFO": "i", "WARNING": "!", "CRITICAL": "X"}
         icon = icons.get(severity, "?")
-        print(f"  [{icon}] [{severity}] {alert['message']}")
+        logger.info(f"  [{icon}] [{severity}] {alert['message']}")
 
     def get_log(self, last_n: int = 20) -> List[Dict]:
         return self.alert_log[-last_n:]

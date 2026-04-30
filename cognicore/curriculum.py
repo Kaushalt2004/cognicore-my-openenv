@@ -21,6 +21,9 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, List
 
 import cognicore
+import logging
+
+logger = logging.getLogger("cognicore.curriculum")
 
 
 class CurriculumRunner:
@@ -140,7 +143,7 @@ class CurriculumRunner:
                     old = self.difficulty
                     self.current_level += 1
                     if verbose:
-                        print(f"  >> PROMOTED: {old} -> {self.difficulty}")
+                        logger.info(f"  >> PROMOTED: {old} -> {self.difficulty}")
                     for cb in self._callbacks:
                         cb("promote", old, self.difficulty)
 
@@ -148,7 +151,7 @@ class CurriculumRunner:
                     old = self.difficulty
                     self.current_level -= 1
                     if verbose:
-                        print(f"  >> DEMOTED: {old} -> {self.difficulty}")
+                        logger.info(f"  >> DEMOTED: {old} -> {self.difficulty}")
                     for cb in self._callbacks:
                         cb("demote", old, self.difficulty)
 

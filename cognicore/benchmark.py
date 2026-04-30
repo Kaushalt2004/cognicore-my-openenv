@@ -15,6 +15,9 @@ from typing import Any, Dict, List, Optional
 
 import cognicore
 from cognicore.agents.base_agent import BaseAgent, RandomAgent
+import logging
+
+logger = logging.getLogger("cognicore.benchmark")
 
 
 class BenchmarkResult:
@@ -75,28 +78,28 @@ class BenchmarkResult:
 
     def print_report(self):
         """Print a formatted benchmark report."""
-        print(f"\n{'=' * 70}")
-        print(f"  CogniCore Benchmark Report - Agent: {self.agent_id}")
-        print(f"{'=' * 70}")
+        logger.info(f"\n{'=' * 70}")
+        logger.info(f"  CogniCore Benchmark Report - Agent: {self.agent_id}")
+        logger.info(f"{'=' * 70}")
         print(
             f"  Overall: accuracy={self.overall_accuracy:.0%}  score={self.overall_score:.4f}"
         )
-        print(f"  Environments tested: {len(self.by_env())}")
-        print(f"  Total runs: {len(self.results)}")
-        print(f"\n  {'Environment':<35} {'Score':<10} {'Accuracy':<10}")
-        print(f"  {'-' * 55}")
+        logger.info(f"  Environments tested: {len(self.by_env())}")
+        logger.info(f"  Total runs: {len(self.results)}")
+        logger.info(f"\n  {'Environment':<35} {'Score':<10} {'Accuracy':<10}")
+        logger.info(f"  {'-' * 55}")
         for env, stats in sorted(self.by_env().items()):
             print(
                 f"  {env:<35} {stats['avg_score']:<10.4f} {stats['avg_accuracy'] * 100:<9.0f}%"
             )
 
-        print(f"\n  {'Difficulty':<15} {'Score':<10} {'Accuracy':<10}")
-        print(f"  {'-' * 35}")
+        logger.info(f"\n  {'Difficulty':<15} {'Score':<10} {'Accuracy':<10}")
+        logger.info(f"  {'-' * 35}")
         for d, stats in sorted(self.by_difficulty().items()):
             print(
                 f"  {d:<15} {stats['avg_score']:<10.4f} {stats['avg_accuracy'] * 100:<9.0f}%"
             )
-        print(f"{'=' * 70}\n")
+        logger.info(f"{'=' * 70}\n")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -157,7 +160,7 @@ def benchmark_agent(
         print(
             f"\nBenchmarking {agent_id} across {len(base_ids)} envs x {len(difficulties)} difficulties x {episodes} episodes = {total} runs"
         )
-        print("-" * 60)
+        logger.info("-" * 60)
 
     run = 0
     for env_id in base_ids:

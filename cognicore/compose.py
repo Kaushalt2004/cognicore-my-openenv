@@ -19,7 +19,7 @@ Usage::
     while not pipe.done:
         action = agent.act(obs)
         obs, reward, done, _, info = pipe.step(action)
-        print(f"Stage: {pipe.current_stage_name}, Reward: {reward.total:.2f}")
+        logger.info(f"Stage: {pipe.current_stage_name}, Reward: {reward.total:.2f}")
 
     print(pipe.report())
 """
@@ -30,6 +30,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import cognicore
 from cognicore.core.base_env import CogniCoreEnv
+import logging
+
+logger = logging.getLogger("cognicore.compose")
 
 
 class Pipeline:
@@ -153,9 +156,9 @@ class Pipeline:
     def print_report(self):
         """Print a formatted report."""
         r = self.report()
-        print(f"\n{'=' * 50}")
-        print(f"  Pipeline Report ({r['stages_completed']}/{r['total_stages']} stages)")
-        print(f"{'=' * 50}")
+        logger.info(f"\n{'=' * 50}")
+        logger.info(f"  Pipeline Report ({r['stages_completed']}/{r['total_stages']} stages)")
+        logger.info(f"{'=' * 50}")
         print(
             f"  Overall: accuracy={r['overall_accuracy']:.0%} score={r['overall_score']:.4f}"
         )
@@ -163,4 +166,4 @@ class Pipeline:
             print(
                 f"  [{s['name']:15s}] {s['env_id']:30s} acc={s['accuracy']:.0%} score={s['score']:.4f}"
             )
-        print(f"{'=' * 50}\n")
+        logger.info(f"{'=' * 50}\n")

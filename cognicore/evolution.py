@@ -21,6 +21,9 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 import cognicore
+import logging
+
+logger = logging.getLogger("cognicore.evolution")
 
 
 class EvolvableAgent:
@@ -202,11 +205,11 @@ class EvolutionEngine:
         Returns the best agent from the final generation.
         """
         if verbose:
-            print(f"\n{'=' * 60}")
-            print("  Evolutionary Training")
-            print(f"  Env: {self.env_id} ({self.difficulty})")
-            print(f"  Population: {self.population_size} | Generations: {generations}")
-            print(f"{'=' * 60}")
+            logger.info(f"\n{'=' * 60}")
+            logger.info("  Evolutionary Training")
+            logger.info(f"  Env: {self.env_id} ({self.difficulty})")
+            logger.info(f"  Population: {self.population_size} | Generations: {generations}")
+            logger.info(f"{'=' * 60}")
 
         for gen in range(1, generations + 1):
             # Evaluate all agents
@@ -263,10 +266,10 @@ class EvolutionEngine:
 
         best = self.population[0]
         if verbose:
-            print("\n  Best agent genome:")
+            logger.info("\n  Best agent genome:")
             for k, v in best.genome.items():
-                print(f"    {k:25s} = {v}")
-            print(f"  Fitness: {best.fitness:.1f}")
-            print(f"{'=' * 60}\n")
+                logger.info(f"    {k:25s} = {v}")
+            logger.info(f"  Fitness: {best.fitness:.1f}")
+            logger.info(f"{'=' * 60}\n")
 
         return best
