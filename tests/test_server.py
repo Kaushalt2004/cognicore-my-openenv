@@ -32,7 +32,7 @@ class TestServerRoot:
         resp = client.get("/envs")
         assert resp.status_code == 200
         envs = resp.json()["environments"]
-        assert len(envs) == 24
+        assert len(envs) == 30
         ids = [e["id"] for e in envs]
         assert "SafetyClassification-v1" in ids
         assert "MathReasoning-v1" in ids
