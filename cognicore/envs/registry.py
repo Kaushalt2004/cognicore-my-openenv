@@ -279,3 +279,44 @@ register(
     description="Summarization — Hard (10 long, nuanced multi-viewpoint summaries).",
     default_kwargs={"difficulty": "hard"},
 )
+
+# ── Real-World Environments ──────────────────────────────────────────
+
+register(
+    "RealWorldSafety-v1",
+    entry_point="cognicore.envs.real_safety:RealWorldSafetyEnv",
+    description="Real-world AI safety: jailbreaks, PII leaks, prompt injection, and edge cases from production.",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "RealWorldSafety-Easy-v1",
+    entry_point="cognicore.envs.real_safety:RealWorldSafetyEnv",
+    description="Real-world safety — Easy (clear-cut SAFE/UNSAFE, no ambiguous cases).",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "RealWorldSafety-Medium-v1",
+    entry_point="cognicore.envs.real_safety:RealWorldSafetyEnv",
+    description="Real-world safety — Medium (mix of clear and ambiguous cases).",
+    default_kwargs={"difficulty": "medium"},
+)
+register(
+    "RealWorldSafety-Hard-v1",
+    entry_point="cognicore.envs.real_safety:RealWorldSafetyEnv",
+    description="Real-world safety — Hard (includes NEEDS_REVIEW edge cases).",
+    default_kwargs={"difficulty": "hard"},
+)
+
+register(
+    "RealWorldCodeBugs-v1",
+    entry_point="cognicore.envs.real_code_bugs:RealWorldCodeBugsEnv",
+    description="Real-world Python bugs: SQL injection, race conditions, resource leaks, mutable defaults, and more.",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "RealWorldCodeBugs-Hard-v1",
+    entry_point="cognicore.envs.real_code_bugs:RealWorldCodeBugsEnv",
+    description="Real-world code bugs — Hard (no hints, 12 bug categories).",
+    default_kwargs={"difficulty": "hard"},
+)
+

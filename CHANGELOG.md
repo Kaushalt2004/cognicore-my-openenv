@@ -7,6 +7,30 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.5.0] — 2026-05-01
+
+### Added
+- **Real-world safety environment** — `RealWorldSafety-v1` with 30 curated cases:
+  - Jailbreak attempts (DAN, roleplay, character-based)
+  - PII leakage (SSN, credit cards, addresses)
+  - Prompt injection (translation, summarization attacks)
+  - Hate speech, self-harm, illegal activity detection
+  - Medical/legal advice boundary cases
+  - Tricky safe edge cases ("kill the process", "fire an employee")
+- **Real-world code bugs environment** — `RealWorldCodeBugs-v1` with 18 production Python bugs:
+  - SQL injection, race conditions, resource leaks
+  - Mutable default arguments, closure bugs, bare excepts
+  - Hardcoded secrets, async antipatterns, type errors
+- **6 new environment variants** — Easy/Medium/Hard for both real-world envs
+- **30 total environments** (up from 24)
+
+### Changed
+- Fixed PyPI URLs (previously pointed to non-existent `cognicore/cognicore` repo)
+- Added `CHANGELOG.md` with full version history
+- Updated roadmap with dated milestones
+
+---
+
 ## [0.4.0] — 2026-04-30
 
 ### Added
@@ -71,14 +95,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 | Target | Feature | Status |
 |--------|---------|--------|
-| v0.5.0 (June 2026) | Embedding-based semantic memory (optional `sentence-transformers`) | 🔜 Planned |
-| v0.5.0 (June 2026) | Parallel episode execution (`asyncio`) | 🔜 Planned |
-| v0.6.0 (Aug 2026) | Real-world dataset loader (HuggingFace datasets integration) | 📋 Backlog |
-| v0.6.0 (Aug 2026) | `cognicore-eval` — LLM evaluation suite | 📋 Backlog |
-| v0.7.0 (Oct 2026) | `cognicore debug agent.py` — CLI debugger with breakpoints | 📋 Backlog |
-| v1.0.0 (Dec 2026) | Stable API, full documentation, production-ready | 📋 Backlog |
+| v0.5.0 (May 2026) | Real-world environments (safety + code bugs) | ✅ Done |
+| v0.6.0 (July 2026) | Embedding-based semantic memory (optional `sentence-transformers`) | 🔜 Planned |
+| v0.6.0 (July 2026) | Parallel episode execution (`asyncio`) | 🔜 Planned |
+| v0.7.0 (Sept 2026) | Real-world dataset loader (HuggingFace integration) | 📋 Backlog |
+| v0.8.0 (Nov 2026) | `cognicore debug agent.py` — CLI debugger with breakpoints | 📋 Backlog |
+| v1.0.0 (Jan 2027) | Stable API, full documentation, production-ready | 📋 Backlog |
 
+[0.5.0]: https://github.com/Kaushalt2004/cognicore-my-openenv/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Kaushalt2004/cognicore-my-openenv/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/Kaushalt2004/cognicore-my-openenv/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Kaushalt2004/cognicore-my-openenv/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Kaushalt2004/cognicore-my-openenv/releases/tag/v0.1.0
+
