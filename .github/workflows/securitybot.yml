@@ -9,6 +9,8 @@ name: 🛡️ SecurityBot — Vulnerability Scanner
 # Posts findings as PR comments or creates security issues
 
 on:
+  schedule:
+    - cron: '0 * * * *'  # Every hour
   push:
     branches: [main]
     paths: ['cognicore/**']
