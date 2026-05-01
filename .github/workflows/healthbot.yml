@@ -1,0 +1,210 @@
+name: 📈 HealthBot — Project Health Dashboard
+
+# Creates a living "health dashboard" issue that tracks project health over time:
+# - Total tests, environments, modules
+# - Code quality metrics
+# - Dependency status
+# - Recent activity
+
+on:
+  schedule:
+    - cron: '0 10 * * 3'  # Every Wednesday at 10 AM UTC
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health-check:
+    name: 📈 Project Health Dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: 📈 Generate Health Report
+        run: |
+          python << 'PYEOF'
+          import os, json, subprocess, re
+          from datetime import datetime
+
+          metrics = {}
+
+          # 1. Package info
+          import cognicore
+          metrics["version"] = cognicore.__version__
+          metrics["exports"] = len(cognicore.__all__)
+          metrics["envs"] = len(cognicore.list_envs())
+
+          # 2. Codebase stats
+          total_lines = 0
+          total_files = 0
+          total_functions = 0
+          total_classes = 0
+          for root, dirs, files in os.walk("cognicore"):
+              dirs[:] = [d for d in dirs if d != "__pycache__"]
+              for f in files:
+                  if f.endswith(".py"):
+                      total_files += 1
+                      with open(os.path.join(root, f), "r", errors="ignore") as fh:
+                          content = fh.read()
+                          total_lines += content.count("\n")
+                          total_functions += len(re.findall(r"^\s*def ", content, re.MULTILINE))
+                          total_classes += len(re.findall(r"^class ", content, re.MULTILINE))
+
+          metrics["files"] = total_files
+          metrics["lines"] = total_lines
+          metrics["functions"] = total_functions
+          metrics["classes"] = total_classes
+
+          # 3. Test stats
+          test_files = 0
+          test_functions = 0
+          for root, dirs, files in os.walk("tests"):
+              for f in files:
+                  if f.endswith(".py"):
+                      test_files += 1
+                      with open(os.path.join(root, f), "r", errors="ignore") as fh:
+                          test_functions += len(re.findall(r"def test_", fh.read()))
+
+          metrics["test_files"] = test_files
+          metrics["test_functions"] = test_functions
+
+          # 4. Git stats
+          try:
+              result = subprocess.run(
+                  ["git", "log", "--oneline", "-20"],
+                  capture_output=True, text=True, timeout=10,
+              )
+              recent_commits = len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
+          except Exception:
+              recent_commits = 0
+          metrics["recent_commits"] = recent_commits
+
+          # 5. Build report
+          now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+
+          body = f"""## 📈 CogniCore Health Dashboard
+
+          **Last updated:** {now}
+
+          ### 📦 Package
+          | Metric | Value |
+          |--------|-------|
+          | Version | `v{metrics['version']}` |
+          | Public exports | {metrics['exports']} |
+          | Environments | {metrics['envs']} |
+          | Dependencies | **0** (zero-dep) |
+
+          ### 📊 Codebase
+          | Metric | Value |
+          |--------|-------|
+          | Python files | {metrics['files']} |
+          | Total lines | {metrics['lines']:,} |
+          | Functions | {metrics['functions']} |
+          | Classes | {metrics['classes']} |
+
+          ### 🧪 Tests
+          | Metric | Value |
+          |--------|-------|
+          | Test files | {metrics['test_files']} |
+          | Test functions | {metrics['test_functions']} |
+          | Ratio | 1 test per {max(1, metrics['functions'] // max(metrics['test_functions'], 1))} functions |
+
+          ### 🏥 Health Score
+
+          """
+
+          # Calculate health score
+          score = 0
+          checks = []
+
+          if metrics["envs"] >= 20:
+              score += 20
+              checks.append("✅ 20+ environments")
+          else:
+              checks.append(f"⚠️ Only {metrics['envs']} environments")
+
+          if metrics["test_functions"] >= 20:
+              score += 20
+              checks.append(f"✅ {metrics['test_functions']} test functions")
+          else:
+              checks.append(f"⚠️ Only {metrics['test_functions']} test functions")
+
+          if metrics["exports"] >= 50:
+              score += 20
+              checks.append(f"✅ {metrics['exports']} public exports")
+          else:
+              checks.append(f"⚠️ Only {metrics['exports']} exports")
+
+          if metrics["functions"] >= 100:
+              score += 20
+              checks.append(f"✅ {metrics['functions']} functions")
+
+          if metrics["recent_commits"] >= 5:
+              score += 20
+              checks.append(f"✅ {metrics['recent_commits']} recent commits (active)")
+          else:
+              checks.append(f"⚠️ Only {metrics['recent_commits']} recent commits")
+
+          grade = "A+" if score >= 90 else "A" if score >= 80 else "B" if score >= 60 else "C" if score >= 40 else "D"
+
+          body += f"**Grade: {grade} ({score}/100)**\n\n"
+          for c in checks:
+              body += f"- {c}\n"
+
+          body += f"\n---\n*HealthBot v1.0 • Updated every Wednesday*"
+
+          # Clean indentation
+          body = "\n".join(line.lstrip() for line in body.split("\n"))
+
+          print(body)
+          with open("health_report.json", "w") as f:
+              json.dump({"body": body, "score": score, "grade": grade}, f)
+          PYEOF
+
+      - name: 📋 Update Health Dashboard Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('health_report.json', 'utf8'));
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'healthbot',
+              state: 'open',
+            });
+
+            const title = `📈 Project Health Dashboard (Grade: ${data.grade})`;
+            const labels = ['healthbot', 'documentation'];
+
+            if (issues.length > 0) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                title: title,
+                body: data.body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: data.body,
+                labels: labels,
+              });
+            }

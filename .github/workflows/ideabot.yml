@@ -1,0 +1,227 @@
+name: 🧠 IdeaBot — Codebase Improvement Scanner
+
+# Runs weekly (or on-demand) to scan the ENTIRE codebase and create
+# GitHub Issues with improvement suggestions. The bot knows your code.
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM UTC
+  workflow_dispatch:  # Manual trigger
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  scan-and-suggest:
+    name: 🔬 Deep Codebase Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package
+        run: pip install -e ".[dev]"
+
+      - name: 🧠 Analyze Codebase & Generate Ideas
+        id: ideas
+        run: |
+          python << 'PYEOF'
+          import os, re, json, collections
+
+          findings = {
+              "missing_tests": [],
+              "large_files": [],
+              "complex_functions": [],
+              "missing_docstrings": [],
+              "deprecated_patterns": [],
+              "optimization_opportunities": [],
+              "env_coverage": [],
+          }
+
+          # 1. Find modules without corresponding tests
+          modules = set()
+          tests = set()
+          for root, dirs, files in os.walk("cognicore"):
+              for f in files:
+                  if f.endswith(".py") and not f.startswith("__"):
+                      modules.add(f.replace(".py", ""))
+          for root, dirs, files in os.walk("tests"):
+              for f in files:
+                  if f.startswith("test_") and f.endswith(".py"):
+                      tests.add(f.replace("test_", "").replace(".py", ""))
+
+          untested = modules - tests - {"cli", "dashboard", "__init__"}
+          for m in sorted(untested)[:10]:
+              findings["missing_tests"].append(m)
+
+          # 2. Find large files (>300 lines)
+          for root, dirs, files in os.walk("cognicore"):
+              for f in files:
+                  if not f.endswith(".py"):
+                      continue
+                  path = os.path.join(root, f)
+                  with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+                      lines = len(fh.readlines())
+                  if lines > 300:
+                      findings["large_files"].append({"file": path.replace("\\", "/"), "lines": lines})
+
+          # 3. Find complex functions (>50 lines)
+          for root, dirs, files in os.walk("cognicore"):
+              for f in files:
+                  if not f.endswith(".py"):
+                      continue
+                  path = os.path.join(root, f)
+                  with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+                      content = fh.read()
+
+                  for match in re.finditer(r"^(\s*)def (\w+)\(", content, re.MULTILINE):
+                      indent = len(match.group(1))
+                      func_name = match.group(2)
+                      start = content[:match.start()].count("\n")
+                      # Count lines until next function or class at same/lower indent
+                      remaining = content[match.end():]
+                      func_lines = 0
+                      for line in remaining.split("\n"):
+                          if line.strip() and not line.startswith(" " * (indent + 1)) and not line.strip().startswith("#"):
+                              if re.match(r"\s*(def |class )", line) and len(line) - len(line.lstrip()) <= indent:
+                                  break
+                          func_lines += 1
+                      if func_lines > 50:
+                          findings["complex_functions"].append({
+                              "file": path.replace("\\", "/"),
+                              "function": func_name,
+                              "lines": func_lines,
+                          })
+
+          # 4. Find public functions without docstrings
+          for root, dirs, files in os.walk("cognicore"):
+              for f in files:
+                  if not f.endswith(".py") or f.startswith("__"):
+                      continue
+                  path = os.path.join(root, f)
+                  with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+                      lines = fh.readlines()
+                  for i, line in enumerate(lines):
+                      if re.match(r"\s+def [a-z]\w+\(", line) and not line.strip().startswith("def _"):
+                          # Check next non-empty line for docstring
+                          has_doc = False
+                          for j in range(i+1, min(i+3, len(lines))):
+                              if '"""' in lines[j] or "'''" in lines[j]:
+                                  has_doc = True
+                                  break
+                          if not has_doc:
+                              func_match = re.search(r"def (\w+)", line)
+                              if func_match:
+                                  findings["missing_docstrings"].append({
+                                      "file": path.replace("\\", "/"),
+                                      "function": func_match.group(1),
+                                      "line": i + 1,
+                                  })
+
+          # 5. Check environment test coverage
+          import cognicore
+          envs = cognicore.list_envs()
+          for env_info in envs:
+              env_id = env_info["id"]
+              # Check if any test file references this env
+              found = False
+              for root, dirs, files in os.walk("tests"):
+                  for f in files:
+                      if f.endswith(".py"):
+                          with open(os.path.join(root, f), "r", encoding="utf-8", errors="ignore") as fh:
+                              if env_id in fh.read():
+                                  found = True
+                                  break
+                  if found:
+                      break
+              if not found:
+                  findings["env_coverage"].append(env_id)
+
+          # Generate issue body
+          body = []
+          body.append("## 🧠 IdeaBot Weekly Codebase Report\n")
+          body.append(f"**Scanned:** {len(modules)} modules | {len(envs)} environments | {len(tests)} test files\n")
+
+          if findings["missing_tests"]:
+              body.append(f"\n### 🧪 Modules Without Tests ({len(findings['missing_tests'])})\n")
+              body.append("These modules have no corresponding `test_*.py` file:\n")
+              for m in findings["missing_tests"]:
+                  body.append(f"- [ ] `{m}` → create `tests/test_{m}.py`")
+
+          if findings["large_files"]:
+              body.append(f"\n### 📏 Large Files (>{300} lines)\n")
+              body.append("Consider splitting these into smaller modules:\n")
+              for f in sorted(findings["large_files"], key=lambda x: -x["lines"])[:5]:
+                  body.append(f"- `{f['file']}` — **{f['lines']} lines**")
+
+          if findings["complex_functions"]:
+              body.append(f"\n### 🔧 Complex Functions (>50 lines)\n")
+              body.append("These may benefit from refactoring:\n")
+              for f in sorted(findings["complex_functions"], key=lambda x: -x["lines"])[:5]:
+                  body.append(f"- `{f['file']}::{f['function']}()` — **{f['lines']} lines**")
+
+          if findings["missing_docstrings"]:
+              n = len(findings["missing_docstrings"])
+              body.append(f"\n### 📝 Missing Docstrings ({n} public functions)\n")
+              for f in findings["missing_docstrings"][:10]:
+                  body.append(f"- `{f['file']}:{f['line']}` — `{f['function']}()`")
+              if n > 10:
+                  body.append(f"- *...and {n-10} more*")
+
+          if findings["env_coverage"]:
+              body.append(f"\n### 🌍 Untested Environments ({len(findings['env_coverage'])})\n")
+              body.append("These environments have no test coverage:\n")
+              for e in findings["env_coverage"][:10]:
+                  body.append(f"- [ ] `{e}`")
+
+          body.append(f"\n---\n*IdeaBot v1.0 • Auto-generated on Monday*")
+
+          report = "\n".join(body)
+          print(report)
+
+          with open("ideabot_report.json", "w") as f:
+              json.dump({"body": report, "findings": {k: len(v) for k, v in findings.items()}}, f)
+          PYEOF
+
+      - name: 📋 Create or Update Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('ideabot_report.json', 'utf8'));
+
+            // Check for existing IdeaBot issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'ideabot',
+              state: 'open',
+            });
+
+            const title = `🧠 IdeaBot: Weekly Codebase Report`;
+            const labels = ['ideabot', 'enhancement', 'good first issue'];
+
+            if (issues.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                body: data.body,
+              });
+              console.log(`Updated issue #${issues[0].number}`);
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: data.body,
+                labels: labels,
+              });
+              console.log('Created new IdeaBot issue');
+            }

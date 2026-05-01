@@ -1,0 +1,234 @@
+name: 🛡️ SecurityBot — Vulnerability Scanner
+
+# Scans every push for security issues:
+# - Hardcoded secrets/tokens/passwords
+# - SQL injection patterns
+# - Unsafe deserialization (pickle, yaml.load)
+# - Command injection risks (os.system, subprocess with shell=True)
+# - Insecure HTTP usage
+# Posts findings as PR comments or creates security issues
+
+on:
+  push:
+    branches: [main]
+    paths: ['cognicore/**']
+  pull_request:
+    paths: ['cognicore/**']
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  security-events: write
+
+jobs:
+  security-scan:
+    name: 🔐 Deep Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        run: pip install bandit safety
+
+      - name: 🔐 Run SecurityBot Analysis
+        id: security
+        run: |
+          python << 'PYEOF'
+          import os, re, json
+
+          VULN_PATTERNS = {
+              "hardcoded_secret": {
+                  "patterns": [
+                      r'(?:api[_-]?key|secret|password|token|auth)\s*=\s*["\'][^"\']{8,}["\']',
+                      r'sk-[a-zA-Z0-9]{20,}',
+                      r'pypi-[a-zA-Z0-9]{20,}',
+                      r'ghp_[a-zA-Z0-9]{36}',
+                      r'AKIA[0-9A-Z]{16}',
+                      r'Bearer\s+[a-zA-Z0-9\-._~+/]+=*',
+                  ],
+                  "severity": "CRITICAL",
+                  "fix": "Use environment variables: `os.environ.get('KEY_NAME')`",
+              },
+              "sql_injection": {
+                  "patterns": [
+                      r'execute\s*\(\s*f["\']',
+                      r'execute\s*\(\s*["\'].*%s',
+                      r'cursor\.execute\s*\(\s*f',
+                  ],
+                  "severity": "HIGH",
+                  "fix": "Use parameterized queries: `cursor.execute('SELECT * WHERE id=?', (id,))`",
+              },
+              "unsafe_deserialization": {
+                  "patterns": [
+                      r'pickle\.loads?\(',
+                      r'yaml\.load\s*\([^)]*\)\s*$',
+                      r'yaml\.load\s*\([^)]*(?!Loader)',
+                      r'eval\s*\(',
+                      r'exec\s*\(',
+                  ],
+                  "severity": "HIGH",
+                  "fix": "Use `json.loads()` or `yaml.safe_load()` instead",
+              },
+              "command_injection": {
+                  "patterns": [
+                      r'os\.system\s*\(',
+                      r'subprocess\.\w+\([^)]*shell\s*=\s*True',
+                      r'os\.popen\s*\(',
+                  ],
+                  "severity": "HIGH",
+                  "fix": "Use `subprocess.run()` with `shell=False` and a list of args",
+              },
+              "insecure_http": {
+                  "patterns": [
+                      r'http://(?!localhost|127\.0\.0\.1|0\.0\.0\.0)',
+                  ],
+                  "severity": "MEDIUM",
+                  "fix": "Use HTTPS instead of HTTP",
+              },
+              "debug_left_on": {
+                  "patterns": [
+                      r'debug\s*=\s*True',
+                      r'DEBUG\s*=\s*True',
+                      r'\.run\([^)]*debug\s*=\s*True',
+                  ],
+                  "severity": "MEDIUM",
+                  "fix": "Remove debug mode for production code",
+              },
+          }
+
+          findings = []
+          scanned = 0
+
+          for root, dirs, files in os.walk("cognicore"):
+              dirs[:] = [d for d in dirs if d != "__pycache__"]
+              for fname in files:
+                  if not fname.endswith(".py"):
+                      continue
+                  path = os.path.join(root, fname).replace("\\", "/")
+                  scanned += 1
+
+                  with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                      lines = f.readlines()
+
+                  for i, line in enumerate(lines, 1):
+                      stripped = line.strip()
+                      if stripped.startswith("#"):
+                          continue
+                      for vuln_type, config in VULN_PATTERNS.items():
+                          for pattern in config["patterns"]:
+                              if re.search(pattern, line, re.IGNORECASE):
+                                  # Skip test files and comments and docstrings
+                                  if '"""' in line or "'''" in line:
+                                      continue
+                                  findings.append({
+                                      "file": path,
+                                      "line": i,
+                                      "type": vuln_type,
+                                      "severity": config["severity"],
+                                      "fix": config["fix"],
+                                      "code": stripped[:100],
+                                  })
+
+          # Build report
+          report = []
+          report.append("## 🛡️ SecurityBot Scan Results\n")
+          report.append(f"**Scanned:** {scanned} files\n")
+
+          if findings:
+              critical = [f for f in findings if f["severity"] == "CRITICAL"]
+              high = [f for f in findings if f["severity"] == "HIGH"]
+              medium = [f for f in findings if f["severity"] == "MEDIUM"]
+
+              if critical:
+                  report.append(f"\n### 🚨 CRITICAL ({len(critical)})\n")
+                  for f in critical[:10]:
+                      report.append(f"- **`{f['file']}:{f['line']}`** — {f['type']}")
+                      report.append(f"  - Code: `{f['code'][:60]}...`")
+                      report.append(f"  - Fix: {f['fix']}")
+
+              if high:
+                  report.append(f"\n### ⚠️ HIGH ({len(high)})\n")
+                  for f in high[:10]:
+                      report.append(f"- **`{f['file']}:{f['line']}`** — {f['type']}")
+                      report.append(f"  - Fix: {f['fix']}")
+
+              if medium:
+                  report.append(f"\n### 📋 MEDIUM ({len(medium)})\n")
+                  for f in medium[:5]:
+                      report.append(f"- `{f['file']}:{f['line']}` — {f['type']}")
+          else:
+              report.append("\n### ✅ No vulnerabilities detected!\n")
+              report.append("All security checks passed.")
+
+          report.append(f"\n---\n*SecurityBot v1.0 • Automated Security Scan*")
+
+          body = "\n".join(report)
+          print(body)
+
+          with open("security_report.json", "w") as f:
+              json.dump({
+                  "body": body,
+                  "critical": len([x for x in findings if x["severity"] == "CRITICAL"]),
+                  "total": len(findings),
+              }, f)
+          PYEOF
+
+      - name: 🔐 Bandit Security Analysis
+        run: bandit -r cognicore/ -f json -o bandit_results.json -ll -q || true
+
+      - name: 💬 Post Security Report
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('security_report.json', 'utf8'));
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.body.includes('🛡️ SecurityBot Scan Results')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: data.body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: data.body,
+              });
+            }
+
+      - name: 🚨 Create Security Issue (if critical on main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('security_report.json', 'utf8'));
+
+            if (data.critical > 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 SecurityBot: ${data.critical} critical vulnerability(s) detected`,
+                body: data.body,
+                labels: ['security', 'bug', 'priority: critical'],
+              });
+            }
