@@ -236,12 +236,16 @@ We track these in [GitHub Issues](https://github.com/Kaushalt2004/cognicore-my-o
 
 ## 🔮 Roadmap
 
-**Coming soon:**
-- `cognicore-cybersec` — Security-focused environments (phishing, malware, CVE analysis)
-- `cognicore-finance` — Trading agent evaluation (risk assessment, compliance)
-- `cognicore-eval` — LLM evaluation suite (hallucination, factuality, toxicity)
-- `cognicore debug agent.py` — CLI debugger with breakpoints on failure patterns
-- Vector-based semantic memory (embeddings instead of exact matching)
+| Version | Target | Feature |
+|---------|--------|---------|
+| **v0.5.0** | June 2026 | Embedding-based semantic memory (optional `sentence-transformers`) |
+| **v0.5.0** | June 2026 | Parallel episode execution (`asyncio`) |
+| **v0.6.0** | Aug 2026 | Real-world dataset loader (HuggingFace integration) |
+| **v0.6.0** | Aug 2026 | `cognicore-eval` — LLM evaluation suite (hallucination, factuality) |
+| **v0.7.0** | Oct 2026 | `cognicore debug agent.py` — CLI debugger with breakpoints |
+| **v1.0.0** | Dec 2026 | Stable API, full documentation, production-ready |
+
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
 ---
 
