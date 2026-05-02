@@ -104,9 +104,10 @@ class TestRandomAgent:
         agent = RandomAgent()
         env = cognicore.make("SafetyClassification-v1", difficulty="easy")
         obs = env.reset()
+        done = False
         for _ in range(10):
             action = agent.act(obs)
             obs, reward, done, _, info = env.step(action)
             if done:
                 break
-        assert env._done is True
+        assert done is True

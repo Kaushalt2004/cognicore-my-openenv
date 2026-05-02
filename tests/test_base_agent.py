@@ -160,7 +160,8 @@ class TestRandomAgent:
         env = cognicore.make("SafetyClassification-v1", difficulty="easy")
         obs = env.reset()
         steps = 0
-        while not env._done:
+        done = False
+        while not done:
             action = agent.act(obs)
             obs, reward, done, _, info = env.step(action)
             steps += 1
