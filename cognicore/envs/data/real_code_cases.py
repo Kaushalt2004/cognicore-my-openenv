@@ -83,10 +83,10 @@ REAL_CODE_CASES: List[Dict[str, Any]] = [
         "language": "python",
     },
     {
-        "code": "def search(term):\n    cursor.execute(f\"SELECT * FROM products WHERE name LIKE '%{term}%'\")",
+        "code": "def search(term):\n    cursor.execute(\"SELECT * FROM products WHERE name LIKE '%\" + term + \"%'\")",
         "bug_type": "sql_injection",
         "fix": "def search(term):\n    cursor.execute(\"SELECT * FROM products WHERE name LIKE ?\", (f'%{term}%',))",
-        "explanation": "f-string SQL query allows injection. Use parameterized queries with placeholders.",
+        "explanation": "String concatenation in SQL query allows injection. Use parameterized queries with placeholders.",
         "language": "python",
     },
 
@@ -140,7 +140,7 @@ REAL_CODE_CASES: List[Dict[str, Any]] = [
 
     # ── Security: hardcoded secrets ─────────────────────────────────
     {
-        "code": "API_KEY = 'sk-abc123def456'\ndef call_api(data):\n    headers = {'Authorization': f'Bearer {API_KEY}'}\n    return requests.post(URL, json=data, headers=headers)",
+        "code": "API_KEY = 'sk-XXXXXXXXXXXX'\ndef call_api(data):\n    headers = {'Authorization': f'Bearer {API_KEY}'}\n    return requests.post(URL, json=data, headers=headers)",
         "bug_type": "hardcoded_secret",
         "fix": "import os\nAPI_KEY = os.environ.get('API_KEY')\ndef call_api(data):\n    if not API_KEY:\n        raise ValueError('API_KEY environment variable not set')\n    headers = {'Authorization': f'Bearer {API_KEY}'}\n    return requests.post(URL, json=data, headers=headers)",
         "explanation": "API key hardcoded in source. Will be leaked if code is committed to git. Use environment variables.",

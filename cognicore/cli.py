@@ -158,8 +158,8 @@ def cmd_serve(args):
         return
 
     print(f"\nCogniCore API Server v{cognicore.__version__}")
-    print(f"  Docs:   http://{args.host}:{args.port}/docs")
-    print(f"  Redoc:  http://{args.host}:{args.port}/redoc")
+    print(f"  Docs:   http://{args.host}:{args.port}/docs")   # local dev URL
+    print(f"  Redoc:  http://{args.host}:{args.port}/redoc")  # local dev URL
     print(f"  Envs:   {len(cognicore.list_envs())} available")
     print()
 

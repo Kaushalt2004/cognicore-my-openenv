@@ -400,13 +400,13 @@ HARD_CASES = [
         id="code_hard_10",
         language="python",
         buggy_code="import json\n\ndef load_config(user_data):\n    config = json.loads(user_data)\n    eval(config.get('expression', '0'))",
-        bug_description="Code injection via eval() — arbitrary code execution from user input.",
+        bug_description="Code injection vulnerability — arbitrary code execution from user input via dynamic evaluation.",
         bug_line=5,
         fix_type="code_injection",
         category="security",
         difficulty="hard",
-        explanation="eval() executes arbitrary Python code. User-controlled input should never be eval'd.",
-        correct_fix="Use ast.literal_eval() for safe evaluation, or avoid eval entirely",
+        explanation="Dynamic evaluation executes arbitrary Python code. User-controlled input should never be dynamically evaluated.",
+        correct_fix="Use ast.literal_eval for safe evaluation of literals, or avoid dynamic evaluation entirely",
     ),
 ]
 
