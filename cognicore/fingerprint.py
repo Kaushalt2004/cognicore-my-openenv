@@ -34,6 +34,7 @@ class AgentDNA:
         self.vector = vector
 
     def to_list(self) -> List[float]:
+        """Return the DNA vector as an ordered list of float values."""
         return list(self.vector.values())
 
     def distance(self, other: "AgentDNA") -> float:
@@ -57,6 +58,7 @@ class AgentDNA:
         return dot / (mag_a * mag_b)
 
     def print_dna(self):
+        """Log a human-readable bar-chart of the agent's DNA vector."""
         logger.info(f"\n  Agent DNA: {self.agent_name}")
         for k, v in sorted(self.vector.items()):
             bar_len = int(abs(v) * 20)

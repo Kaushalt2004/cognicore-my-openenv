@@ -200,12 +200,14 @@ class LifelongAgent:
 
     @property
     def lifetime_accuracy(self) -> float:
+        """Overall accuracy across all steps taken in all sessions."""
         if self.total_steps == 0:
             return 0
         return self.total_correct / self.total_steps
 
     @property
     def age_hours(self) -> float:
+        """Number of hours since the agent was created."""
         return (time.time() - self.created_at) / 3600
 
     def biography(self) -> Dict[str, Any]:

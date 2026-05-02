@@ -123,6 +123,14 @@ class MetaRewardOptimizer:
         return total
 
     def stats(self) -> Dict[str, Any]:
+        """Return current optimization statistics.
+
+        Returns
+        -------
+        dict
+            Dictionary with keys: ``generation``, ``observations``,
+            ``weights``, and ``improving_rate``.
+        """
         return {
             "generation": self._generation,
             "observations": len(self._history),
