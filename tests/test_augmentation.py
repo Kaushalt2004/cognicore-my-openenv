@@ -64,10 +64,7 @@ class TestDataAugmenterStrategies:
     def test_case_variation_upper(self):
         aug = DataAugmenter(seed=1)
         text = "hello world"
-        # Multiple augmentations should include uppercase
         results = aug.augment(text, strategies=["case"], count=5)
-        uppers = [r for r in results if r == text.upper()]
-        # At least one variant
         assert len(results) >= 1
 
     def test_noise_injection(self):

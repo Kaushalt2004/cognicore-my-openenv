@@ -141,6 +141,15 @@ __all__ = [
     # Agents
     "BaseAgent",
     "RandomAgent",
+    "AgentProtocol",
+    # Errors
+    "CogniCoreError",
+    "InvalidEnvironmentError",
+    "InvalidActionError",
+    "InvalidConfigError",
+    "EnvironmentNotResetError",
+    "EpisodeFinishedError",
+    "AgentInterfaceError",
     # Middleware
     "Memory",
     "ReflectionEngine",

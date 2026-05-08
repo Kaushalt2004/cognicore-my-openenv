@@ -8,14 +8,13 @@ type contracts and provide clear error messages.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict
 
 from cognicore.core.base_env import CogniCoreEnv
-from cognicore.core.types import EpisodeStats, StructuredReward
+from cognicore.core.types import EpisodeStats
 from cognicore.core.errors import (
     AgentInterfaceError,
     CogniCoreError,
-    EnvironmentNotResetError,
 )
 
 logger = logging.getLogger("cognicore")

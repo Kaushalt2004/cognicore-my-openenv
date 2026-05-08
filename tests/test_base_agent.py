@@ -3,7 +3,6 @@
 import pytest
 import cognicore
 from cognicore.agents.base_agent import BaseAgent, AgentProtocol, RandomAgent
-from cognicore.core.types import EpisodeStats, StructuredReward
 
 
 class _MinimalAgent(BaseAgent):

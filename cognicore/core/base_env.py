@@ -38,7 +38,7 @@ from cognicore.middleware.reflection import ReflectionEngine
 from cognicore.middleware.rewards import RewardBuilder
 from cognicore.middleware.propose_revise import ProposeReviseProtocol
 from cognicore.middleware.safety_monitor import SafetyMonitor
-from cognicore.core.errors import EpisodeFinishedError, InvalidActionError
+from cognicore.core.errors import EpisodeFinishedError
 
 logger = logging.getLogger("cognicore.env")
 
