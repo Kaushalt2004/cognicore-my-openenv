@@ -1,5 +1,6 @@
 """Quick test: verify all 5 industry fixes work."""
 import cognicore as cc
+from cognicore.smart_agents import AutoLearner
 
 # 1. Imports + version
 print(f"v{cc.__version__} | Exports: {len(cc.__all__)}")
@@ -39,7 +40,6 @@ except cc.EpisodeFinishedError as e:
 
 # 7. Normal flow still works
 print("\nTrain + Evaluate:")
-from cognicore.smart_agents import AutoLearner
 agent = AutoLearner()
 env = cc.make("SafetyClassification-v1")
 cc.train(agent, env, episodes=3)

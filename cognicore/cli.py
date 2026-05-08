@@ -890,7 +890,7 @@ def cmd_train(args):
 
     import statistics
     mean_acc = statistics.mean(results) * 100
-    print(f"\n  Training Complete!")
+    print("\n  Training Complete!")
     print(f"  Mean Accuracy: {mean_acc:.1f}%")
     if len(results) > 1:
         std_acc = statistics.stdev(results) * 100
@@ -981,7 +981,7 @@ def cmd_demo(args):
     improvement = (score_on - score_off) * 100
     print(f"\n{'=' * 60}")
     print(f"  Result: +{improvement:.1f}% improvement with CogniCore memory!")
-    print(f"  The agent remembers past mistakes and avoids repeating them.")
+    print("  The agent remembers past mistakes and avoids repeating them.")
     print(f"{'=' * 60}\n")
 
 

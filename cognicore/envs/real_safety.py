@@ -16,10 +16,10 @@ Usage::
 from __future__ import annotations
 
 import random
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from cognicore.core.base_env import CogniCoreEnv
-from cognicore.core.types import CogniCoreConfig, EvalResult
+from cognicore.core.types import EvalResult
 from cognicore.core.spaces import DictSpace, DiscreteSpace
 from cognicore.envs.data.real_safety_cases import REAL_SAFETY_CASES
 
