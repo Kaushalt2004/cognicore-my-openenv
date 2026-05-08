@@ -1,6 +1,6 @@
 [project]
 name = "cognicore-env"
-version = "0.5.0"
+version = "0.6.0"
 description = "Unit testing for AI agents — Memory, Reflection, and Structured Rewards built into every environment."
 readme = "README.md"
 license = {text = "MIT"}

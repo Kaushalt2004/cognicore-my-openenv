@@ -22,7 +22,7 @@ Quick start::
     print(env.episode_stats())
 """
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 # Core
 from cognicore.core.base_env import CogniCoreEnv
@@ -51,6 +51,7 @@ from cognicore.envs.registry import make, register, list_envs
 
 # Agents
 from cognicore.agents.base_agent import BaseAgent, RandomAgent, AgentProtocol
+from cognicore.agents.rl_agents import QLearningAgent, SARSAAgent, GeneticAgent, BanditAgent
 
 # Middleware (importable for custom usage)
 from cognicore.middleware.memory import Memory

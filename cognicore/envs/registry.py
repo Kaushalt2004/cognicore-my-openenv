@@ -320,3 +320,54 @@ register(
     default_kwargs={"difficulty": "hard"},
 )
 
+# ── RL Environments (actual reinforcement learning) ─────────────────
+
+register(
+    "GridWorld-v1",
+    entry_point="cognicore.envs.gridworld:GridWorldEnv",
+    description="GridWorld navigation: agent navigates NxN grid, avoids traps, reaches goal. Real RL with reward shaping.",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "GridWorld-Easy-v1",
+    entry_point="cognicore.envs.gridworld:GridWorldEnv",
+    description="GridWorld — Easy (5x5 grid, 3 traps).",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "GridWorld-Medium-v1",
+    entry_point="cognicore.envs.gridworld:GridWorldEnv",
+    description="GridWorld — Medium (7x7 grid, 7 traps).",
+    default_kwargs={"difficulty": "medium"},
+)
+register(
+    "GridWorld-Hard-v1",
+    entry_point="cognicore.envs.gridworld:GridWorldEnv",
+    description="GridWorld — Hard (10x10 grid, 15 traps).",
+    default_kwargs={"difficulty": "hard"},
+)
+
+register(
+    "ResourceGathering-v1",
+    entry_point="cognicore.envs.resource_gathering:ResourceGatheringEnv",
+    description="Multi-objective resource gathering: food/wood/stone collection, building, energy management.",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "ResourceGathering-Easy-v1",
+    entry_point="cognicore.envs.resource_gathering:ResourceGatheringEnv",
+    description="ResourceGathering — Easy (high energy, cheap buildings).",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "ResourceGathering-Medium-v1",
+    entry_point="cognicore.envs.resource_gathering:ResourceGatheringEnv",
+    description="ResourceGathering — Medium (moderate energy, balanced costs).",
+    default_kwargs={"difficulty": "medium"},
+)
+register(
+    "ResourceGathering-Hard-v1",
+    entry_point="cognicore.envs.resource_gathering:ResourceGatheringEnv",
+    description="ResourceGathering — Hard (low energy, expensive buildings, scarce resources).",
+    default_kwargs={"difficulty": "hard"},
+)
