@@ -586,6 +586,8 @@ class SurvivalGym(gym.Env):
 
 def register_gymnasium_envs():
     """Register all CogniCore envs with Gymnasium."""
+    from cognicore.gym.battle_arena import BattleArenaGym
+
     _envs = {
         "cognicore/MazeRunner-v0":       (MazeRunnerGym, {"size": 8}),
         "cognicore/MazeRunner-Medium-v0": (MazeRunnerGym, {"size": 12}),
@@ -594,6 +596,7 @@ def register_gymnasium_envs():
         "cognicore/GridWorld-Hard-v0":   (GridWorldGym, {"size": 10, "num_traps": 15}),
         "cognicore/Trading-v0":          (TradingGym, {"max_steps": 200}),
         "cognicore/Survival-v0":         (SurvivalGym, {"max_steps": 200}),
+        "cognicore/BattleArena-v0":      (BattleArenaGym, {"size": 7, "max_steps": 100}),
     }
 
     for env_id, (cls, kwargs) in _envs.items():
@@ -605,8 +608,9 @@ def register_gymnasium_envs():
                 max_episode_steps=kwargs.get("max_steps", kwargs.get("max_episode_steps", 500)),
             )
         except gym.error.NameAlreadyRegistered:
-            pass  # Already registered
+            pass
 
 
 # Auto-register on import
 register_gymnasium_envs()
+
