@@ -49,9 +49,16 @@ from cognicore.core.errors import (
 # Registry
 from cognicore.envs.registry import make, register, list_envs
 
-# Agents
+# Agents — RL
 from cognicore.agents.base_agent import BaseAgent, RandomAgent, AgentProtocol
 from cognicore.agents.rl_agents import QLearningAgent, SARSAAgent, GeneticAgent, BanditAgent
+# Agents — Real ML (trains locally, no APIs)
+from cognicore.agents.ml_agents import DeepQAgent, SklearnAgent, XGBoostAgent, PolicyGradientAgent
+# Agents — Company APIs (optional, needs API keys)
+from cognicore.agents.company_models import (
+    OpenAIAgent, GeminiAgent, ClaudeAgent,
+    OllamaAgent, HuggingFaceAgent, OpenAICompatibleAgent,
+)
 
 # Middleware (importable for custom usage)
 from cognicore.middleware.memory import Memory
