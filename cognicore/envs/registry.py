@@ -371,3 +371,85 @@ register(
     description="ResourceGathering — Hard (low energy, expensive buildings, scarce resources).",
     default_kwargs={"difficulty": "hard"},
 )
+
+# ── MazeRunner (procedural maze, FIXED walls, memory-critical) ──
+
+register(
+    "MazeRunner-v1",
+    entry_point="cognicore.envs.maze:MazeRunnerEnv",
+    description="Procedurally generated maze. Fixed walls — memory of dead ends is critical.",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "MazeRunner-Easy-v1",
+    entry_point="cognicore.envs.maze:MazeRunnerEnv",
+    description="MazeRunner — Easy (8x8 maze, wide corridors).",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "MazeRunner-Medium-v1",
+    entry_point="cognicore.envs.maze:MazeRunnerEnv",
+    description="MazeRunner — Medium (12x12 maze, narrow corridors).",
+    default_kwargs={"difficulty": "medium"},
+)
+register(
+    "MazeRunner-Hard-v1",
+    entry_point="cognicore.envs.maze:MazeRunnerEnv",
+    description="MazeRunner — Hard (16x16 maze, dead ends, minimal corridors).",
+    default_kwargs={"difficulty": "hard"},
+)
+
+# ── Trading (financial decisions, portfolio management) ──
+
+register(
+    "Trading-v1",
+    entry_point="cognicore.envs.trading:TradingEnv",
+    description="Trading environment. BUY/SELL/HOLD with market dynamics.",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "Trading-Easy-v1",
+    entry_point="cognicore.envs.trading:TradingEnv",
+    description="Trading — Easy (1 asset, low volatility, clear trends).",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "Trading-Medium-v1",
+    entry_point="cognicore.envs.trading:TradingEnv",
+    description="Trading — Medium (3 assets, regime changes, moderate volatility).",
+    default_kwargs={"difficulty": "medium"},
+)
+register(
+    "Trading-Hard-v1",
+    entry_point="cognicore.envs.trading:TradingEnv",
+    description="Trading — Hard (5 assets, high volatility, transaction costs, fat tails).",
+    default_kwargs={"difficulty": "hard"},
+)
+
+# ── Survival (long-horizon planning, crafting, threats) ──
+
+register(
+    "Survival-v1",
+    entry_point="cognicore.envs.survival:SurvivalEnv",
+    description="Survival environment. Manage health, hunger, shelter, threats.",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "Survival-Easy-v1",
+    entry_point="cognicore.envs.survival:SurvivalEnv",
+    description="Survival — Easy (low threats, slow decay).",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "Survival-Medium-v1",
+    entry_point="cognicore.envs.survival:SurvivalEnv",
+    description="Survival — Medium (moderate threats, weather events).",
+    default_kwargs={"difficulty": "medium"},
+)
+register(
+    "Survival-Hard-v1",
+    entry_point="cognicore.envs.survival:SurvivalEnv",
+    description="Survival — Hard (frequent threats, fast decay, harsh weather).",
+    default_kwargs={"difficulty": "hard"},
+)
+

@@ -60,6 +60,9 @@ from cognicore.agents.company_models import (
     OllamaAgent, HuggingFaceAgent, OpenAICompatibleAgent,
 )
 
+# Core Features
+from cognicore.core.cognitive_boost import CognitiveBoost, Arena, AutoCurriculum, TransferAgent
+
 # Middleware (importable for custom usage)
 from cognicore.middleware.memory import Memory
 from cognicore.middleware.reflection import ReflectionEngine
@@ -67,6 +70,7 @@ from cognicore.middleware.safety_monitor import SafetyMonitor
 
 # Adapters
 from cognicore.adapters.gymnasium import GymnasiumAdapter
+
 
 # Persistence & Leaderboard
 from cognicore.memory_manager import MemoryManager
