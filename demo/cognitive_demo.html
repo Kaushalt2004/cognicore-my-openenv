@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CogniCore — Cognitive AI Testing</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#06060c;--s1:#0c0c18;--s2:#14142a;--b:#252550;--t:#e8e8f0;--td:#6a6a8a;--accent:#00e5a0;--gold:#ffd666;--red:#ff5577;--blue:#5599ff;--purple:#9966ff;--r:14px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.app{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:20px 28px}
+
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:20px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.logo h1{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo span{font-size:10px;padding:2px 8px;border-radius:16px;background:var(--s2);color:var(--td);font-family:'JetBrains Mono'}
+.conn{font-size:11px;color:var(--td);font-family:'JetBrains Mono';display:flex;align-items:center;gap:6px}
+.conn .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.hero{text-align:center;padding:32px 0 20px}
+.hero h2{font-size:36px;font-weight:900;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.hero p{font-size:14px;color:var(--td);max-width:600px;margin:0 auto 20px}
+.btn{padding:12px 28px;border:none;border-radius:10px;font-family:'Inter';font-size:14px;font-weight:700;cursor:pointer;transition:all .3s}
+.btn-hero{background:linear-gradient(135deg,var(--accent),#0099aa);color:#000;box-shadow:0 4px 20px rgba(0,229,160,0.3)}
+.btn-hero:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,229,160,0.5)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:linear-gradient(135deg,rgba(12,12,24,0.95),rgba(20,20,42,0.95));border:1px solid rgba(255,255,255,0.06);border-radius:var(--r);padding:20px;backdrop-filter:blur(20px);position:relative;overflow:hidden;animation:fadeIn .4s}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,160,0.3),transparent)}
+.card h3{font-size:14px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.card .sub{font-size:11px;color:var(--td);margin-bottom:12px}
+.card-full{grid-column:1/-1}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.metric{background:var(--s1);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:12px;text-align:center}
+.metric .val{font-size:24px;font-weight:800;font-family:'JetBrains Mono';background:linear-gradient(135deg,var(--accent),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.metric .lbl{font-size:10px;color:var(--td);margin-top:2px}
+
+.feed{max-height:400px;overflow-y:auto;font-family:'JetBrains Mono';font-size:11px;background:var(--bg);border-radius:10px;padding:10px}
+.feed::-webkit-scrollbar{width:3px}
+.feed::-webkit-scrollbar-thumb{background:var(--b);border-radius:3px}
+.ep-card{padding:8px 10px;margin-bottom:4px;border-radius:8px;border-left:3px solid var(--b);background:rgba(255,255,255,0.01);transition:all .3s}
+.ep-card.correct{border-left-color:var(--accent);background:rgba(0,229,160,0.03)}
+.ep-card.wrong{border-left-color:var(--red);background:rgba(255,85,119,0.03)}
+.ep-card .top{display:flex;justify-content:space-between;margin-bottom:3px}
+.ep-card .env{font-weight:600;font-size:11px}
+.ep-card .result{font-weight:600}
+.ep-card .task{font-size:10px;color:var(--td);line-height:1.3;max-height:30px;overflow:hidden}
+.ep-card .meta{font-size:10px;color:var(--td);margin-top:3px;display:flex;gap:12px}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--td);padding:8px 10px;border-bottom:1px solid var(--b)}
+td{padding:8px 10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.03);font-family:'JetBrains Mono'}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.bar-label{width:100px;font-size:11px;font-weight:600;text-align:right}
+.bar-track{flex:1;height:22px;background:var(--bg);border-radius:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;transition:width 1s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;padding-left:8px;font-size:10px;font-weight:600;font-family:'JetBrains Mono'}
+</style></head>
+<body>
+<canvas id="bg"></canvas>
+<div class="app">
+<header class="hdr">
+  <div class="logo"><div class="logo-dot"></div><h1>CogniCore</h1><span>v0.7</span></div>
+  <div class="conn"><div class="dot"></div><span id="status">Connecting...</span></div>
+</header>
+
+<section class="hero">
+  <h2>Cognitive AI Testing Lab</h2>
+  <p>Real-time testing of AI agents on Code Debugging, Safety Classification, Math Reasoning & Conversation — with cognitive memory and reflection.</p>
+  <button class="btn btn-hero" id="btn-run" onclick="runDemo()">⚡ Run Full Cognitive Test</button>
+</section>
+
+<div class="metrics">
+  <div class="metric"><div class="val" id="m-episodes">0</div><div class="lbl">Episodes</div></div>
+  <div class="metric"><div class="val" id="m-correct">0</div><div class="lbl">Correct</div></div>
+  <div class="metric"><div class="val" id="m-acc">0%</div><div class="lbl">Accuracy</div></div>
+  <div class="metric"><div class="val" id="m-mem">0</div><div class="lbl">Memory Entries</div></div>
+  <div class="metric"><div class="val" id="m-reward">0</div><div class="lbl">Total Reward</div></div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h3>📋 Live Testing Feed</h3>
+    <div class="sub">Real-time cognitive environment episodes</div>
+    <div class="feed" id="feed"></div>
+  </div>
+  <div class="card">
+    <h3>📊 Environment Results</h3>
+    <div class="sub">Accuracy per environment</div>
+    <div id="env-bars"></div>
+    <table id="results-table" style="margin-top:12px">
+      <thead><tr><th>Environment</th><th>Accuracy</th><th>Memory</th><th>Reflections</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<script>
+// Particles
+const c=document.getElementById('bg'),ctx=c.getContext('2d');
+c.width=innerWidth;c.height=innerHeight;
+const pts=Array.from({length:40},()=>({x:Math.random()*c.width,y:Math.random()*c.height,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:Math.random()*1.5+.5}));
+function draw(){ctx.clearRect(0,0,c.width,c.height);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=c.width;if(p.x>c.width)p.x=0;if(p.y<0)p.y=c.height;if(p.y>c.height)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,229,160,0.12)';ctx.fill();});pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<100){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(0,229,160,${.04*(1-d/100)})`;ctx.stroke();}}));requestAnimationFrame(draw)}
+draw();
+
+let ws,totalEp=0,totalCorrect=0,totalReward=0,totalMem=0;
+const envColors={'CodeDebugging':'#00e5a0','SafetyClassification':'#5599ff','MathReasoning':'#ffd666','Conversation':'#9966ff'};
+
+function connect(){
+  ws=new WebSocket(`ws://${location.host}/ws`);
+  ws.onopen=()=>document.getElementById('status').textContent='Connected';
+  ws.onclose=()=>{document.getElementById('status').textContent='Reconnecting...';setTimeout(connect,2000)};
+  ws.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    if(d.type==='episode') handleEpisode(d);
+    else if(d.type==='env_done') handleEnvDone(d);
+    else if(d.type==='demo_done'){document.getElementById('btn-run').disabled=false;document.getElementById('btn-run').textContent='⚡ Run Again';}
+    else if(d.type==='status') addStatus(d.msg);
+  };
+}
+connect();
+
+function runDemo(){
+  totalEp=0;totalCorrect=0;totalReward=0;totalMem=0;
+  document.getElementById('feed').innerHTML='';
+  document.getElementById('env-bars').innerHTML='';
+  document.getElementById('results-table').querySelector('tbody').innerHTML='';
+  document.getElementById('btn-run').disabled=true;
+  document.getElementById('btn-run').textContent='Testing...';
+  ws.send(JSON.stringify({action:'run_cognitive_demo'}));
+}
+
+function handleEpisode(d){
+  totalEp++;
+  if(d.correct) totalCorrect++;
+  totalReward+=d.reward;
+  totalMem=Math.max(totalMem,d.memory_entries);
+  
+  document.getElementById('m-episodes').textContent=totalEp;
+  document.getElementById('m-correct').textContent=totalCorrect;
+  document.getElementById('m-acc').textContent=totalEp?Math.round(totalCorrect/totalEp*100)+'%':'0%';
+  document.getElementById('m-mem').textContent=totalMem;
+  document.getElementById('m-reward').textContent=totalReward.toFixed(1);
+  
+  const envBase=d.env.split('-')[0];
+  const color=envColors[envBase]||'#fff';
+  const cls=d.correct?'correct':'wrong';
+  const mark=d.correct?'✅':'❌';
+  
+  const card=document.createElement('div');
+  card.className=`ep-card ${cls}`;
+  card.innerHTML=`<div class="top"><span class="env" style="color:${color}">${d.env} #${d.episode}</span><span class="result">${mark} r=${d.reward.toFixed(2)}</span></div><div class="task">${d.task}</div><div class="meta"><span>Memory: ${d.memory_entries}</span><span>MemBonus: ${d.memory_bonus.toFixed(2)}</span><span>ReflBonus: ${d.reflection_bonus.toFixed(2)}</span><span>${d.category}</span></div>`;
+  
+  const feed=document.getElementById('feed');
+  feed.prepend(card);
+  if(feed.children.length>100) feed.removeChild(feed.lastChild);
+}
+
+function handleEnvDone(d){
+  const s=d.stats;
+  const envBase=d.env.split('-')[0];
+  const color=envColors[envBase]||'var(--accent)';
+  const pct=Math.round(s.accuracy*100);
+  
+  document.getElementById('env-bars').innerHTML+=`<div class="bar-row"><span class="bar-label" style="color:${color}">${d.env.split('-')[0]}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(5,pct)}%;background:${color}">${pct}% (${s.correct}/${s.episodes})</div></div></div>`;
+  
+  const tbody=document.getElementById('results-table').querySelector('tbody');
+  tbody.innerHTML+=`<tr><td style="color:${color}">${d.env}</td><td>${pct}%</td><td>${s.memory_entries}</td><td>${s.reflections}</td></tr>`;
+}
+
+function addStatus(msg){
+  const card=document.createElement('div');
+  card.className='ep-card';
+  card.innerHTML=`<div class="top"><span class="env" style="color:var(--td)">SYSTEM</span></div><div class="task">${msg}</div>`;
+  document.getElementById('feed').prepend(card);
+}
+</script>
+</body></html>

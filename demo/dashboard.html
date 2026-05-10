@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CogniCore — AI Training Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#06060c;--s1:#0c0c18;--s2:#14142a;--s3:#1c1c36;--b:#252550;--t:#e8e8f0;--td:#6a6a8a;--accent:#00e5a0;--ag:#00ffb8;--gold:#ffd666;--red:#ff5577;--blue:#5599ff;--purple:#9966ff;--r:16px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;overflow-x:hidden}
+canvas#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+.app{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:20px 32px}
+
+/* Header */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 0;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:24px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-dot{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 16px var(--accent)}
+.logo h1{font-size:24px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo span{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--s2);color:var(--td);font-family:'JetBrains Mono'}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.status{font-size:12px;font-family:'JetBrains Mono';color:var(--td);display:flex;align-items:center;gap:6px}
+.status .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Cards */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+.card{background:linear-gradient(135deg,rgba(12,12,24,0.9),rgba(20,20,42,0.9));border:1px solid rgba(255,255,255,0.06);border-radius:var(--r);padding:24px;backdrop-filter:blur(20px);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,160,0.3),transparent)}
+.card h2{font-size:15px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card .sub{font-size:12px;color:var(--td);margin-bottom:16px}
+.card-full{grid-column:1/-1}
+
+/* Buttons */
+.btn{padding:10px 24px;border:none;border-radius:10px;font-family:'Inter';font-size:13px;font-weight:600;cursor:pointer;transition:all .3s}
+.btn-hero{background:linear-gradient(135deg,var(--accent),#0099aa);color:#000;font-size:15px;padding:14px 32px;box-shadow:0 4px 24px rgba(0,229,160,0.3)}
+.btn-hero:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,229,160,0.5)}
+.btn-sm{padding:8px 16px;background:var(--s2);color:var(--t);border:1px solid var(--b)}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+select{background:var(--s2);border:1px solid var(--b);color:var(--t);padding:10px 14px;border-radius:10px;font-family:'Inter';font-size:13px;cursor:pointer}
+
+/* Hero */
+.hero{text-align:center;padding:48px 0 32px}
+.hero h2{font-size:42px;font-weight:900;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+.hero p{font-size:16px;color:var(--td);max-width:600px;margin:0 auto 28px}
+.hero-actions{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap}
+
+/* Chart */
+.chart-wrap{position:relative;background:var(--bg);border-radius:12px;padding:8px}
+canvas.chart{width:100%!important;height:280px!important;display:block}
+
+/* Live feed */
+.feed{max-height:300px;overflow-y:auto;font-family:'JetBrains Mono';font-size:12px;background:var(--bg);border-radius:10px;padding:12px}
+.feed::-webkit-scrollbar{width:4px}
+.feed::-webkit-scrollbar-thumb{background:var(--b);border-radius:4px}
+.feed-line{padding:3px 0;display:flex;gap:8px;border-bottom:1px solid rgba(255,255,255,0.02)}
+.feed-time{color:var(--td);min-width:50px}
+.feed-algo{font-weight:600;min-width:40px}
+.feed-msg{color:var(--t)}
+.c-ppo{color:var(--accent)}.c-dqn{color:var(--blue)}.c-a2c{color:var(--purple)}.c-random{color:var(--red)}
+
+/* Results table */
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--td);padding:10px 12px;border-bottom:1px solid var(--b)}
+td{padding:12px;font-size:14px;border-bottom:1px solid rgba(255,255,255,0.03);font-family:'JetBrains Mono'}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.rank-1{color:var(--gold)}.rank-2{color:#ccc}.rank-3{color:#cd7f32}
+
+/* Metric cards */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric{background:var(--s1);border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:16px;text-align:center}
+.metric .val{font-size:28px;font-weight:800;font-family:'JetBrains Mono';background:linear-gradient(135deg,var(--accent),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.metric .lbl{font-size:11px;color:var(--td);margin-top:4px}
+
+/* Bar chart */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bar-label{width:80px;font-size:12px;font-weight:600;text-align:right}
+.bar-track{flex:1;height:28px;background:var(--bg);border-radius:8px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:8px;transition:width 1.5s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;font-weight:600;font-family:'JetBrains Mono'}
+
+/* Progress */
+.progress{height:3px;background:var(--s2);border-radius:2px;margin-top:8px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--blue));border-radius:2px;transition:width .3s;width:0}
+
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.card{animation:slideUp .5s ease}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div class="app">
+  <header class="hdr">
+    <div class="logo"><div class="logo-dot"></div><h1>CogniCore</h1><span>v0.7.0</span></div>
+    <div class="hdr-right">
+      <div class="status"><div class="dot"></div><span id="conn-status">Connecting...</span></div>
+    </div>
+  </header>
+
+  <section class="hero" id="hero">
+    <h2>AI Training Lab</h2>
+    <p>Real-time reinforcement learning experiments. PPO vs DQN vs A2C training on CogniCore environments with live metric streaming.</p>
+    <div class="hero-actions">
+      <select id="env-select">
+        <option value="cognicore/Survival-v0">🏕 Survival-v0 (Long-horizon)</option>
+        <option value="cognicore/GridWorld-v0">🗺 GridWorld-v0 (Navigation)</option>
+        <option value="cognicore/Trading-v0">📈 Trading-v0 (Finance)</option>
+        <option value="cognicore/BattleArena-v0">⚔ BattleArena-v0 (Combat)</option>
+      </select>
+      <select id="steps-select">
+        <option value="20000">20K steps (fast)</option>
+        <option value="50000" selected>50K steps</option>
+        <option value="100000">100K steps (thorough)</option>
+      </select>
+      <button class="btn btn-hero" id="btn-run" onclick="startExperiment()">⚡ Run Experiment</button>
+      <button class="btn btn-sm" id="btn-bench" onclick="startBenchmark()">📊 Full Benchmark</button>
+    </div>
+    <div class="progress" id="main-progress"><div class="progress-fill" id="progress-bar"></div></div>
+  </section>
+
+  <div class="metrics" id="metrics">
+    <div class="metric"><div class="val" id="m-episodes">0</div><div class="lbl">Episodes</div></div>
+    <div class="metric"><div class="val" id="m-best">—</div><div class="lbl">Best Reward</div></div>
+    <div class="metric"><div class="val" id="m-algo">—</div><div class="lbl">Current Algo</div></div>
+    <div class="metric"><div class="val" id="m-fps">—</div><div class="lbl">Steps/sec</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>📈 Training Curves — Live</h2>
+      <div class="sub">Episode reward over time, per algorithm</div>
+      <div class="chart-wrap"><canvas class="chart" id="train-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>📊 Live Feed</h2>
+      <div class="sub">Real-time training events</div>
+      <div class="feed" id="feed"></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>🏆 Algorithm Comparison</h2>
+      <div class="sub">Final evaluation scores (20 episodes each)</div>
+      <div id="comparison"></div>
+    </div>
+    <div class="card">
+      <h2>📋 Results Table</h2>
+      <div class="sub">Detailed metrics per algorithm</div>
+      <table id="results-table">
+        <thead><tr><th>Rank</th><th>Algorithm</th><th>Mean Reward</th><th>Std</th><th>Train Time</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid" style="display:none" id="bench-section">
+    <div class="card card-full">
+      <h2>📊 Cross-Environment Benchmark</h2>
+      <div class="sub">PPO performance across all CogniCore environments</div>
+      <div id="bench-bars"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Particles
+const pc=document.getElementById('particles'),pctx=pc.getContext('2d');
+pc.width=window.innerWidth;pc.height=window.innerHeight;
+const pts=Array.from({length:60},()=>({x:Math.random()*pc.width,y:Math.random()*pc.height,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*2+.5}));
+function drawParticles(){pctx.clearRect(0,0,pc.width,pc.height);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=pc.width;if(p.x>pc.width)p.x=0;if(p.y<0)p.y=pc.height;if(p.y>pc.height)p.y=0;pctx.beginPath();pctx.arc(p.x,p.y,p.r,0,Math.PI*2);pctx.fillStyle='rgba(0,229,160,0.15)';pctx.fill();});pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<120){pctx.beginPath();pctx.moveTo(a.x,a.y);pctx.lineTo(b.x,b.y);pctx.strokeStyle=`rgba(0,229,160,${.06*(1-d/120)})`;pctx.stroke();}}));requestAnimationFrame(drawParticles)}
+drawParticles();window.addEventListener('resize',()=>{pc.width=innerWidth;pc.height=innerHeight});
+
+// WebSocket
+let ws;
+const trainData={PPO:[],DQN:[],A2C:[]};
+const colors={PPO:'#00e5a0',DQN:'#5599ff',A2C:'#9966ff',Random:'#ff5577'};
+let totalEp=0,bestR=-Infinity,startTime=0;
+
+function connect(){
+  ws=new WebSocket(`ws://${location.host}/ws`);
+  ws.onopen=()=>{document.getElementById('conn-status').textContent='Connected';};
+  ws.onclose=()=>{document.getElementById('conn-status').textContent='Disconnected';setTimeout(connect,2000)};
+  ws.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    if(d.type==='train_step'){
+      if(!trainData[d.algo])trainData[d.algo]=[];
+      trainData[d.algo].push(d.reward);
+      totalEp++;
+      if(d.reward>bestR)bestR=d.reward;
+      document.getElementById('m-episodes').textContent=totalEp;
+      document.getElementById('m-best').textContent=bestR.toFixed(1);
+      document.getElementById('m-algo').textContent=d.algo;
+      const elapsed=(Date.now()-startTime)/1000;
+      document.getElementById('m-fps').textContent=Math.round(d.timestep/Math.max(elapsed,1));
+      drawChart();addFeed(d.algo,`Ep ${d.episode}: reward=${d.reward}, len=${d.length}`);
+    }
+    else if(d.type==='eval_result'){addResult(d);addFeed(d.algo,`✓ Eval: ${d.mean} ± ${d.std} (${d.time||0}s)`);}
+    else if(d.type==='experiment_done'){document.getElementById('btn-run').disabled=false;document.getElementById('btn-run').textContent='⚡ Run Experiment';document.getElementById('progress-bar').style.width='100%';}
+    else if(d.type==='bench_result'){addBenchBar(d);}
+    else if(d.type==='benchmark_done'){document.getElementById('btn-bench').disabled=false;document.getElementById('btn-bench').textContent='📊 Full Benchmark';}
+    else if(d.type==='status'){addFeed('SYS',d.msg);}
+  };
+}
+connect();
+
+function startExperiment(){
+  const env=document.getElementById('env-select').value;
+  const steps=parseInt(document.getElementById('steps-select').value);
+  Object.keys(trainData).forEach(k=>trainData[k]=[]);
+  totalEp=0;bestR=-Infinity;startTime=Date.now();
+  document.getElementById('feed').innerHTML='';
+  document.getElementById('results-table').querySelector('tbody').innerHTML='';
+  document.getElementById('comparison').innerHTML='';
+  document.getElementById('progress-bar').style.width='0';
+  document.getElementById('btn-run').disabled=true;
+  document.getElementById('btn-run').textContent='Training...';
+  ws.send(JSON.stringify({action:'run_experiment',env,steps}));
+  animateProgress(steps*3);
+}
+
+function startBenchmark(){
+  document.getElementById('bench-section').style.display='grid';
+  document.getElementById('bench-bars').innerHTML='';
+  document.getElementById('btn-bench').disabled=true;
+  document.getElementById('btn-bench').textContent='Running...';
+  startTime=Date.now();
+  ws.send(JSON.stringify({action:'run_benchmark'}));
+}
+
+function animateProgress(totalSteps){
+  let pct=0;
+  const iv=setInterval(()=>{pct=Math.min(95,pct+.5);document.getElementById('progress-bar').style.width=pct+'%';if(pct>=95)clearInterval(iv);},300);
+}
+
+// Chart
+function drawChart(){
+  const c=document.getElementById('train-chart'),ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1;c.width=c.offsetWidth*dpr;c.height=280*dpr;ctx.scale(dpr,dpr);
+  const w=c.offsetWidth,h=280;
+  ctx.fillStyle='#06060c';ctx.fillRect(0,0,w,h);
+  const all=Object.values(trainData).flat();if(!all.length)return;
+  const pad=50,minR=Math.min(...all),maxR=Math.max(...all),range=maxR-minR||1;
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;
+  for(let i=0;i<5;i++){const y=pad+(h-2*pad)*i/4;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-10,y);ctx.stroke();ctx.fillStyle='#6a6a8a';ctx.font='10px JetBrains Mono';ctx.textAlign='right';ctx.fillText((maxR-range*i/4).toFixed(0),pad-6,y+4);}
+  // Lines
+  Object.entries(trainData).forEach(([name,data])=>{
+    if(!data.length)return;
+    const step=(w-pad-10)/Math.max(data.length-1,1);
+    // Moving avg
+    const win=Math.max(3,Math.floor(data.length/20));
+    ctx.beginPath();ctx.strokeStyle=colors[name];ctx.lineWidth=2.5;ctx.globalAlpha=.9;
+    for(let i=win;i<data.length;i++){
+      const avg=data.slice(i-win,i).reduce((a,b)=>a+b,0)/win;
+      const x=pad+i*step,y=pad+(h-2*pad)*(1-(avg-minR)/range);
+      i===win?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();ctx.globalAlpha=1;
+    // Label
+    const lastAvg=data.slice(-win).reduce((a,b)=>a+b,0)/win;
+    const ly=pad+(h-2*pad)*(1-(lastAvg-minR)/range);
+    ctx.fillStyle=colors[name];ctx.font='bold 11px Inter';ctx.textAlign='left';
+    ctx.fillText(name,w-pad+4,ly+4);
+  });
+  // X label
+  ctx.fillStyle='#6a6a8a';ctx.font='10px Inter';ctx.textAlign='center';ctx.fillText('Episode',w/2,h-4);
+}
+
+function addFeed(algo,msg){
+  const f=document.getElementById('feed');
+  const t=((Date.now()-startTime)/1000).toFixed(1);
+  const cls=`c-${algo.toLowerCase()}`;
+  f.innerHTML=`<div class="feed-line"><span class="feed-time">${t}s</span><span class="feed-algo ${cls}">${algo}</span><span class="feed-msg">${msg}</span></div>`+f.innerHTML;
+  if(f.children.length>200)f.removeChild(f.lastChild);
+}
+
+const evalResults=[];
+function addResult(d){
+  evalResults.push(d);
+  const sorted=[...evalResults].sort((a,b)=>b.mean-a.mean);
+  const medals=['🥇','🥈','🥉'];
+  const tbody=document.getElementById('results-table').querySelector('tbody');
+  tbody.innerHTML=sorted.map((r,i)=>{
+    const cls=i<3?`rank-${i+1}`:'';
+    const rank=i<3?medals[i]:`${i+1}.`;
+    return `<tr class="${cls}"><td>${rank}</td><td style="color:${colors[r.algo]||'#fff'}">${r.algo}</td><td>${r.mean>0?'+':''}${r.mean}</td><td>±${r.std}</td><td>${r.time||0}s</td></tr>`;
+  }).join('');
+  // Comparison bars
+  const comp=document.getElementById('comparison');
+  const maxM=Math.max(...sorted.map(r=>Math.abs(r.mean)),1);
+  comp.innerHTML=sorted.map(r=>{
+    const pct=Math.max(5,Math.abs(r.mean)/maxM*100);
+    return `<div class="bar-row"><span class="bar-label" style="color:${colors[r.algo]}">${r.algo}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[r.algo]}">${r.mean>0?'+':''}${r.mean}</div></div></div>`;
+  }).join('');
+}
+
+function addBenchBar(d){
+  const el=document.getElementById('bench-bars');
+  el.innerHTML+=`<div class="bar-row"><span class="bar-label">${d.env.split('/')[1]}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(10,50+d.mean/4)}%;background:var(--accent)">${d.mean>0?'+':''}${d.mean} ± ${d.std}</div></div></div>`;
+}
+</script>
+</body>
+</html>

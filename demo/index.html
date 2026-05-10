@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CogniCore — Visual Demo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-icon">🧠</span>
+      <span class="logo-text">CogniCore</span>
+      <span class="version">v0.7</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-tab="maze">Maze Runner</button>
+      <button class="nav-btn" data-tab="arena">Arena</button>
+      <button class="nav-btn" data-tab="survival">Survival</button>
+      <button class="nav-btn" data-tab="bench">Benchmarks</button>
+    </nav>
+    <div class="header-actions">
+      <span class="badge">8 Gymnasium Envs</span>
+      <span class="badge accent">SB3 Compatible</span>
+    </div>
+  </header>
+
+  <!-- Maze Runner Tab -->
+  <section id="tab-maze" class="tab-content active">
+    <div class="split-view">
+      <div class="panel maze-panel">
+        <div class="panel-header">
+          <h2>MazeRunner-v0</h2>
+          <div class="controls">
+            <button id="btn-start" class="btn btn-primary">▶ Train Agent</button>
+            <button id="btn-reset" class="btn btn-ghost">↺ Reset</button>
+            <select id="maze-size" class="select">
+              <option value="8">8×8 Easy</option>
+              <option value="12">12×12 Medium</option>
+              <option value="16">16×16 Hard</option>
+            </select>
+          </div>
+        </div>
+        <canvas id="maze-canvas" width="480" height="480"></canvas>
+        <div class="maze-stats">
+          <div class="stat"><span class="stat-label">Episode</span><span id="s-ep" class="stat-value">0</span></div>
+          <div class="stat"><span class="stat-label">Steps</span><span id="s-steps" class="stat-value">0</span></div>
+          <div class="stat"><span class="stat-label">Reward</span><span id="s-reward" class="stat-value">0.0</span></div>
+          <div class="stat"><span class="stat-label">Best</span><span id="s-best" class="stat-value">—</span></div>
+          <div class="stat"><span class="stat-label">Explored</span><span id="s-explored" class="stat-value">0%</span></div>
+        </div>
+      </div>
+      <div class="panel chart-panel">
+        <div class="panel-header"><h2>Learning Curve</h2></div>
+        <canvas id="chart-canvas" width="500" height="250"></canvas>
+        <div class="panel-header" style="margin-top:16px"><h2>Memory Map</h2></div>
+        <canvas id="memory-canvas" width="500" height="200"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Arena Tab -->
+  <section id="tab-arena" class="tab-content">
+    <div class="arena-grid">
+      <div class="panel">
+        <div class="panel-header"><h2>🏆 ELO Arena — Live Tournament</h2></div>
+        <div class="arena-bracket" id="arena-bracket"></div>
+        <button id="btn-arena" class="btn btn-primary" style="margin-top:16px">▶ Run Tournament</button>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>Leaderboard</h2></div>
+        <table class="leaderboard" id="leaderboard">
+          <thead><tr><th>Rank</th><th>Agent</th><th>ELO</th><th>W</th><th>L</th><th>Win%</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <canvas id="elo-chart" width="500" height="200" style="margin-top:16px"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Survival Tab -->
+  <section id="tab-survival" class="tab-content">
+    <div class="split-view">
+      <div class="panel">
+        <div class="panel-header"><h2>Survival-v0</h2>
+          <button id="btn-survive" class="btn btn-primary">▶ Run Episode</button>
+        </div>
+        <div class="survival-bars" id="survival-bars"></div>
+        <div class="survival-log" id="survival-log"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>Survival Timeline</h2></div>
+        <canvas id="survival-chart" width="500" height="400"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benchmarks Tab -->
+  <section id="tab-bench" class="tab-content">
+    <div class="bench-grid" id="bench-grid"></div>
+  </section>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
