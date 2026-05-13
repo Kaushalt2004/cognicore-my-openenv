@@ -1,368 +1,62 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CogniCore — Live Agent Demo</title>
+<title>CogniCore — Cognitive Agent Learning System</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:#050508;color:#e4e4f0;height:100vh;overflow:hidden}
-.app{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto;height:100vh;gap:1px;background:rgba(255,255,255,.03)}
-.top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:#050508}
-.logo{display:flex;align-items:center;gap:8px}
-.logo span{width:8px;height:8px;border-radius:50%;background:#00e5a0;box-shadow:0 0 12px #00e5a0}
-.logo h1{font-size:18px;font-weight:800;background:linear-gradient(135deg,#00e5a0,#4488ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.controls{display:flex;gap:8px;align-items:center}
-.controls select,.controls button{font-family:'Inter';font-size:12px;border-radius:8px;padding:7px 14px;border:none;cursor:pointer}
-.controls select{background:#12122a;color:#e4e4f0;border:1px solid #252550}
-.btn{background:linear-gradient(135deg,#00e5a0,#009988);color:#000;font-weight:700;box-shadow:0 2px 12px rgba(0,229,160,.3)}
-.btn:hover{box-shadow:0 4px 20px rgba(0,229,160,.5)}
-.panel{background:#050508;position:relative;overflow:hidden}
-.panel canvas{width:100%;height:100%;display:block}
-.label{position:absolute;top:8px;left:12px;font-size:10px;font-weight:700;color:#5a5a80;text-transform:uppercase;letter-spacing:1.5px;z-index:2}
-.bottom{grid-column:1/-1;display:flex;background:#050508;border-top:1px solid rgba(255,255,255,.04)}
-.stat{flex:1;text-align:center;padding:8px 0}
-.stat .v{font-size:18px;font-weight:800;font-family:'JetBrains Mono';background:linear-gradient(135deg,#00e5a0,#4488ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.stat .l{font-size:9px;color:#5a5a80;text-transform:uppercase;letter-spacing:1px}
-</style></head>
-<body>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<canvas id="particles"></canvas>
 <div class="app">
+<!-- TOP BAR -->
 <div class="top">
-  <div class="logo"><span></span><h1>CogniCore — Live Agent Demo</h1></div>
-  <div class="controls">
-    <select id="size"><option value="8">8×8 Grid</option><option value="10" selected>10×10 Grid</option><option value="15">15×15 Grid</option></select>
-    <select id="speed"><option value="1">1× Speed</option><option value="3" selected>3× Speed</option><option value="10">10× Speed</option></select>
-    <select id="view"><option value="agent">Agent View</option><option value="heatmap">Q-Value Heatmap</option><option value="policy">Policy Arrows</option><option value="both">Heatmap + Policy</option></select>
-    <button class="btn" onclick="start()">▶ START TRAINING</button>
-    <button class="btn" style="background:#12122a;color:#e4e4f0;border:1px solid #252550" onclick="reset()">↻ RESET</button>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#00e5a0" stroke-width="1.5"/><circle cx="12" cy="12" r="4" fill="#00e5a0" opacity=".6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="#00e5a0" stroke-width="1" opacity=".4"/></svg>
+    <h1>CogniCore</h1><span class="ver">v0.7</span>
+  </div>
+  <div class="ctrls">
+    <select id="size"><option value="8">8×8</option><option value="10" selected>10×10</option><option value="15">15×15</option></select>
+    <select id="speed"><option value="1">1×</option><option value="3">3×</option><option value="10" selected>10×</option></select>
+    <select id="view"><option value="agent">Agent</option><option value="heatmap">Heatmap</option><option value="policy">Policy</option><option value="both">Heat+Policy</option></select>
+    <div class="toggle on" id="t-mem" onclick="this.classList.toggle('on')"><div class="dot"></div>Memory</div>
+    <div class="toggle on" id="t-refl" onclick="this.classList.toggle('on')"><div class="dot"></div>Reflect</div>
+    <button class="btn-go" onclick="start()">▶ TRAIN</button>
+    <button class="btn-rst" onclick="doReset()">↻</button>
+  </div>
+  <div class="status"><div class="pulse"></div><span id="st">Ready</span></div>
+</div>
+<!-- LEFT: Environment -->
+<div class="left"><canvas id="c-env"></canvas></div>
+<!-- RIGHT: Dashboard -->
+<div class="right">
+  <div class="card card-wide"><h4><i>📈</i> Training Progress</h4><canvas id="c-chart"></canvas></div>
+  <div class="card"><h4><i>🧠</i> Agent Memory</h4><div class="mem-feed" id="mem-feed"></div></div>
+  <div class="card"><h4><i>💡</i> Reflection Engine</h4><div class="refl-feed" id="refl-feed"></div></div>
+  <div class="card card-wide">
+    <div class="metrics" id="met-row">
+      <div class="met"><div class="v" id="m-wr">0%</div><div class="l">Win Rate</div></div>
+      <div class="met"><div class="v" id="m-avg">0</div><div class="l">Avg Reward</div></div>
+      <div class="met"><div class="v" id="m-best">—</div><div class="l">Best</div></div>
+      <div class="met"><div class="v" id="m-q">0</div><div class="l">Q-Table</div></div>
+      <div class="met"><div class="v" id="m-mh">0</div><div class="l">Mem Hits</div></div>
+      <div class="met"><div class="v" id="m-rc">0</div><div class="l">Reflections</div></div>
+      <div class="met"><div class="v" id="m-mr">—</div><div class="l">Mistakes ↓</div></div>
+    </div>
+    <h4 style="margin-top:8px"><i>⚡</i> Learning Phase</h4>
+    <div class="phase-bar"><div class="phase-seg" id="ph0"></div><div class="phase-seg" id="ph1"></div><div class="phase-seg" id="ph2"></div><div class="phase-seg" id="ph3"></div></div>
+    <div class="phase-labels"><span id="pl0">Exploring</span><span id="pl1">Learning</span><span id="pl2">Adapting</span><span id="pl3">Mastered</span></div>
   </div>
 </div>
-<div class="panel" id="p-env"><div class="label">🎮 Environment — Live Agent (Q-Learning)</div><canvas id="c-env"></canvas></div>
-<div class="panel" id="p-chart"><div class="label">📈 Training Curve — Episode Reward</div><canvas id="c-chart"></canvas></div>
+<!-- BOTTOM -->
 <div class="bottom">
   <div class="stat"><div class="v" id="s-ep">0</div><div class="l">Episode</div></div>
-  <div class="stat"><div class="v" id="s-step">0</div><div class="l">Steps</div></div>
-  <div class="stat"><div class="v" id="s-rew">0</div><div class="l">Reward</div></div>
-  <div class="stat"><div class="v" id="s-best">—</div><div class="l">Best</div></div>
-  <div class="stat"><div class="v" id="s-eps">1.00</div><div class="l">Epsilon</div></div>
-  <div class="stat"><div class="v" id="s-q">0</div><div class="l">Q-Table</div></div>
+  <div class="stat"><div class="v" id="s-st">0</div><div class="l">Steps</div></div>
+  <div class="stat"><div class="v" id="s-rw">0</div><div class="l">Reward</div></div>
+  <div class="stat"><div class="v" id="s-be">—</div><div class="l">Best</div></div>
+  <div class="stat"><div class="v" id="s-ep2">1.00</div><div class="l">Epsilon</div></div>
+  <div class="stat"><div class="v" id="s-qs">0</div><div class="l">Q-States</div></div>
   <div class="stat"><div class="v" id="s-wr">0%</div><div class="l">Win Rate</div></div>
-  <div class="stat"><div class="v" id="s-phase">Ready</div><div class="l">Phase</div></div>
+  <div class="stat"><div class="v" id="s-ph">Ready</div><div class="l">Phase</div></div>
 </div>
 </div>
-<script>
-const CE=document.getElementById('c-env'),XE=CE.getContext('2d');
-const CC=document.getElementById('c-chart'),XC=CC.getContext('2d');
-let SZ=10,TRAPS=12,running=false,animId=null;
-
-// ─── Environment ───
-class GridWorld{
-  constructor(sz){
-    this.sz=sz;this.reset();
-    this.traps=new Set();this.walls=new Set();
-    // Generate maze walls
-    for(let r=0;r<sz;r++)for(let c=0;c<sz;c++){
-      if(r===0||r===sz-1||c===0||c===sz-1)this.walls.add(`${r},${c}`);
-    }
-    // Random internal walls
-    for(let i=0;i<sz*1.5;i++){
-      let r=2+Math.floor(Math.random()*(sz-4)),c=2+Math.floor(Math.random()*(sz-4));
-      if(!(r===1&&c===1)&&!(r===sz-2&&c===sz-2))this.walls.add(`${r},${c}`);
-    }
-    // Traps
-    for(let i=0;i<TRAPS;i++){
-      let r,c;do{r=1+Math.floor(Math.random()*(sz-2));c=1+Math.floor(Math.random()*(sz-2))}
-      while((r===1&&c===1)||(r===sz-2&&c===sz-2)||this.walls.has(`${r},${c}`)||this.traps.has(`${r},${c}`));
-      this.traps.add(`${r},${c}`);
-    }
-  }
-  reset(){this.agent=[1,1];this.goal=[this.sz-2,this.sz-2];this.steps=0;this.reward=0;this.visits={};this.path=[];this.visit('1,1');return this.state()}
-  state(){return`${this.agent[0]},${this.agent[1]}`}
-  visit(k){this.visits[k]=(this.visits[k]||0)+1;this.path.push([...this.agent])}
-  step(a){
-    const dirs=[[-1,0],[1,0],[0,-1],[0,1]];
-    const[dr,dc]=dirs[a];
-    const nr=this.agent[0]+dr,nc=this.agent[1]+dc;
-    const k=`${nr},${nc}`;
-    this.steps++;
-    if(this.walls.has(k)||nr<0||nr>=this.sz||nc<0||nc>=this.sz)return{s:this.state(),r:-0.3,done:false};
-    const oldD=Math.abs(this.goal[0]-this.agent[0])+Math.abs(this.goal[1]-this.agent[1]);
-    this.agent=[nr,nc];this.visit(k);
-    const newD=Math.abs(this.goal[0]-nr)+Math.abs(this.goal[1]-nc);
-    if(this.traps.has(k))return{s:this.state(),r:-5,done:true};
-    if(nr===this.goal[0]&&nc===this.goal[1])return{s:this.state(),r:20,done:true};
-    let r=newD<oldD?0.1:-0.15;
-    if((this.visits[k]||0)>2)r-=0.1;
-    this.reward+=r;
-    return{s:this.state(),r,done:this.steps>this.sz*this.sz*2};
-  }
-}
-
-// ─── Q-Learning Agent ───
-class QAgent{
-  constructor(){this.q={};this.lr=0.2;this.gamma=0.95;this.eps=1;this.decay=0.998;this.minEps=0.02}
-  key(s,a){return s+'_'+a}
-  getQ(s,a){return this.q[this.key(s,a)]||0}
-  setQ(s,a,v){this.q[this.key(s,a)]=v}
-  act(s){
-    if(Math.random()<this.eps)return Math.floor(Math.random()*4);
-    let best=-1e9,ba=0;
-    for(let a=0;a<4;a++){const v=this.getQ(s,a);if(v>best){best=v;ba=a}}
-    return ba;
-  }
-  learn(s,a,r,s2,done){
-    let mx=done?0:-1e9;
-    if(!done)for(let a2=0;a2<4;a2++)mx=Math.max(mx,this.getQ(s2,a2));
-    this.setQ(s,a,this.getQ(s,a)+this.lr*(r+this.gamma*mx-this.getQ(s,a)));
-  }
-  decay_eps(){this.eps=Math.max(this.minEps,this.eps*this.decay)}
-  qSize(){return Object.keys(this.q).length}
-}
-
-let env,agent,rewards=[],episode=0,bestR=-Infinity,wins=0,totalEp=0,stepCount=0;
-
-function init(){
-  SZ=+document.getElementById('size').value;
-  TRAPS=Math.floor(SZ*1.2);
-  env=new GridWorld(SZ);agent=new QAgent();
-  rewards=[];episode=0;bestR=-Infinity;wins=0;totalEp=0;stepCount=0;
-  resize();drawEnv();drawChart();
-}
-
-function resize(){
-  const dpr=devicePixelRatio||1;
-  [CE,CC].forEach(c=>{const r=c.parentElement.getBoundingClientRect();c.width=r.width*dpr;c.height=r.height*dpr;c.getContext('2d').scale(dpr,dpr)})
-}
-window.addEventListener('resize',resize);
-
-// ─── RENDER ENVIRONMENT ───
-function drawEnv(){
-  const w=CE.parentElement.offsetWidth,h=CE.parentElement.offsetHeight;
-  const cs=Math.min(Math.floor((w-60)/env.sz),Math.floor((h-60)/env.sz));
-  const ox=(w-cs*env.sz)/2,oy=(h-cs*env.sz)/2+10;
-  const view=document.getElementById('view').value;
-  const showHeat=view==='heatmap'||view==='both';
-  const showPolicy=view==='policy'||view==='both';
-  XE.fillStyle='#050508';XE.fillRect(0,0,w,h);
-  const arrows=['↑','↓','←','→'];
-  const adx=[0,0,-1,1],ady=[-1,1,0,0];
-
-  // Compute Q-value range for heatmap
-  let qMin=0,qMax=0;
-  if(showHeat||showPolicy){
-    for(let r=0;r<env.sz;r++)for(let c=0;c<env.sz;c++){
-      const k=`${r},${c}`;
-      if(env.walls.has(k))continue;
-      for(let a=0;a<4;a++){const v=agent.getQ(k,a);if(v<qMin)qMin=v;if(v>qMax)qMax=v;}
-    }
-  }
-  const qRng=qMax-qMin||1;
-
-  // Grid cells
-  for(let r=0;r<env.sz;r++)for(let c=0;c<env.sz;c++){
-    const x=ox+c*cs,y=oy+r*cs,k=`${r},${c}`;
-    if(env.walls.has(k)){
-      XE.fillStyle='#16162e';XE.fillRect(x,y,cs,cs);
-      XE.fillStyle='#1e1e3a';XE.fillRect(x+1,y+1,cs-2,cs-2);
-    }else if(showHeat){
-      // Q-value heatmap: red(bad) -> black -> green(good)
-      let bestQ=-1e9;
-      for(let a=0;a<4;a++)bestQ=Math.max(bestQ,agent.getQ(k,a));
-      const t=(bestQ-qMin)/qRng; // 0..1
-      const red=Math.round(255*(1-t)*.6),grn=Math.round(255*t*.8),blu=Math.round(40+t*30);
-      XE.fillStyle=`rgb(${red},${grn},${blu})`;XE.fillRect(x,y,cs,cs);
-      // Show value text
-      if(cs>28){XE.fillStyle=`rgba(255,255,255,${.3+t*.4})`;XE.font=`bold ${Math.min(cs/4,10)}px JetBrains Mono`;XE.textAlign='center';XE.textBaseline='middle';XE.fillText(bestQ.toFixed(1),x+cs/2,y+cs/2)}
-    }else{
-      const v=env.visits[k]||0,vi=Math.min(v*8,40);
-      XE.fillStyle=`rgb(${10+vi},${12+vi/2},${20+vi})`;XE.fillRect(x,y,cs,cs);
-    }
-    XE.strokeStyle='rgba(255,255,255,.03)';XE.strokeRect(x,y,cs,cs);
-
-    // Policy arrows
-    if(showPolicy&&!env.walls.has(k)&&!env.traps.has(k)){
-      let bestA=0,bestV=-1e9;
-      for(let a=0;a<4;a++){const v=agent.getQ(k,a);if(v>bestV){bestV=v;bestA=a}}
-      if(bestV!==0){// Only show if agent has learned something
-        const arrowLen=cs*.3;
-        const cx2=x+cs/2,cy2=y+cs/2;
-        const dx=adx[bestA]*arrowLen,dy=ady[bestA]*arrowLen;
-        XE.strokeStyle='rgba(0,229,160,.5)';XE.lineWidth=2;
-        XE.beginPath();XE.moveTo(cx2-dx*.5,cy2-dy*.5);XE.lineTo(cx2+dx*.5,cy2+dy*.5);XE.stroke();
-        // Arrowhead
-        const angle=Math.atan2(dy,dx);
-        XE.beginPath();XE.moveTo(cx2+dx*.5,cy2+dy*.5);
-        XE.lineTo(cx2+dx*.5-6*Math.cos(angle-.5),cy2+dy*.5-6*Math.sin(angle-.5));
-        XE.lineTo(cx2+dx*.5-6*Math.cos(angle+.5),cy2+dy*.5-6*Math.sin(angle+.5));
-        XE.closePath();XE.fillStyle='rgba(0,229,160,.5)';XE.fill();
-      }
-    }
-  }
-
-  // Path trail
-  if(view==='agent'&&env.path.length>1){
-    XE.strokeStyle='rgba(0,229,160,.12)';XE.lineWidth=2;XE.beginPath();
-    env.path.forEach(([r,c],i)=>{const x=ox+c*cs+cs/2,y2=oy+r*cs+cs/2;i?XE.lineTo(x,y2):XE.moveTo(x,y2)});
-    XE.stroke();
-  }
-
-  // Traps
-  env.traps.forEach(t=>{
-    const[r,c]=t.split(',').map(Number);const x=ox+c*cs,y=oy+r*cs;
-    XE.fillStyle='rgba(255,68,102,.7)';XE.beginPath();XE.roundRect(x+cs*.15,y+cs*.15,cs*.7,cs*.7,4);XE.fill();
-    XE.fillStyle='#fff';XE.font=`bold ${cs/3}px Inter`;XE.textAlign='center';XE.textBaseline='middle';
-    XE.fillText('☠',x+cs/2,y+cs/2);
-  });
-
-  // Goal
-  const pulse=Math.sin(Date.now()/300)*.15+.85;
-  const gx=ox+env.goal[1]*cs,gy=oy+env.goal[0]*cs;
-  const gg=XE.createRadialGradient(gx+cs/2,gy+cs/2,0,gx+cs/2,gy+cs/2,cs*1.5);
-  gg.addColorStop(0,`rgba(255,214,102,${pulse*.2})`);gg.addColorStop(1,'transparent');
-  XE.fillStyle=gg;XE.fillRect(gx-cs,gy-cs,cs*3,cs*3);
-  XE.fillStyle=`rgba(255,214,102,${pulse})`;XE.beginPath();XE.roundRect(gx+3,gy+3,cs-6,cs-6,cs/6);XE.fill();
-  XE.fillStyle='#000';XE.font=`bold ${cs/2.2}px Inter`;XE.fillText('★',gx+cs/2,gy+cs/2);
-
-  // Agent
-  const ax=ox+env.agent[1]*cs,ay=oy+env.agent[0]*cs;
-  const ag=XE.createRadialGradient(ax+cs/2,ay+cs/2,0,ax+cs/2,ay+cs/2,cs*1.8);
-  ag.addColorStop(0,'rgba(0,229,160,.2)');ag.addColorStop(1,'transparent');
-  XE.fillStyle=ag;XE.fillRect(ax-cs,ay-cs,cs*3,cs*3);
-  XE.fillStyle=`rgba(0,255,180,${pulse})`;XE.beginPath();XE.roundRect(ax+2,ay+2,cs-4,cs-4,cs/5);XE.fill();
-  XE.fillStyle='#000';XE.fillText('●',ax+cs/2,ay+cs/2);
-
-  // HUD
-  XE.fillStyle='rgba(5,5,8,.8)';XE.beginPath();XE.roundRect(8,h-52,220,44,8);XE.fill();
-  XE.fillStyle='#00e5a0';XE.font='bold 11px JetBrains Mono';XE.textAlign='left';XE.textBaseline='top';
-  XE.fillText(`Ep:${episode} Step:${env.steps} R:${env.reward.toFixed(1)}`,16,h-44);
-  XE.fillStyle='#5a5a80';XE.fillText(`ε=${agent.eps.toFixed(3)} Q-states:${agent.qSize()}`,16,h-28);
-  const phaseText=agent.eps>0.5?'EXPLORING':agent.eps>0.1?'LEARNING':'EXPLOITING';
-  const phaseCol=agent.eps>0.5?'#ffd666':agent.eps>0.1?'#4488ff':'#00e5a0';
-  XE.fillStyle='rgba(5,5,8,.8)';XE.beginPath();XE.roundRect(w-140,h-38,128,28,8);XE.fill();
-  XE.fillStyle=phaseCol;XE.font='bold 10px Inter';XE.textAlign='right';XE.fillText(phaseText,w-20,h-28);
-  // View label
-  const vl={agent:'AGENT VIEW',heatmap:'Q-VALUE HEATMAP',policy:'POLICY ARROWS',both:'HEATMAP + POLICY'};
-  XE.fillStyle='rgba(5,5,8,.8)';XE.beginPath();XE.roundRect(w-160,10,148,22,6);XE.fill();
-  XE.fillStyle='#4488ff';XE.font='bold 9px Inter';XE.fillText(vl[view]||'',w-20,18);
-}
-
-// ─── RENDER CHART ───
-function drawChart(){
-  const w=CC.parentElement.offsetWidth,h=CC.parentElement.offsetHeight;
-  XC.fillStyle='#050508';XC.fillRect(0,0,w,h);
-  if(!rewards.length)return;
-
-  const pad=50,rw=w-pad-20,rh=h-pad-30;
-  const mn=Math.min(...rewards,-5),mx=Math.max(...rewards,5),rng=mx-mn||1;
-
-  // Grid lines
-  XC.strokeStyle='rgba(255,255,255,.04)';XC.lineWidth=1;
-  for(let i=0;i<=5;i++){
-    const y=pad+rh*i/5;
-    XC.beginPath();XC.moveTo(pad,y);XC.lineTo(pad+rw,y);XC.stroke();
-    XC.fillStyle='#5a5a80';XC.font='10px JetBrains Mono';XC.textAlign='right';XC.textBaseline='middle';
-    XC.fillText((mx-rng*i/5).toFixed(0),pad-6,y);
-  }
-  // Zero line
-  const zy=pad+rh*(1-(-mn)/rng);
-  if(zy>pad&&zy<pad+rh){XC.strokeStyle='rgba(255,255,255,.08)';XC.setLineDash([4,4]);XC.beginPath();XC.moveTo(pad,zy);XC.lineTo(pad+rw,zy);XC.stroke();XC.setLineDash([])}
-
-  const sx=rw/Math.max(rewards.length-1,1);
-
-  // Raw scatter (faint dots)
-  rewards.forEach((r,i)=>{
-    const x=pad+i*sx,y=pad+rh*(1-(r-mn)/rng);
-    XC.fillStyle=r>0?'rgba(0,229,160,.15)':'rgba(255,68,102,.15)';
-    XC.beginPath();XC.arc(x,y,2,0,6.28);XC.fill();
-  });
-
-  // Moving average line
-  const win=Math.max(10,Math.floor(rewards.length/12));
-  if(rewards.length>win){
-    // Gradient fill under curve
-    XC.beginPath();
-    let firstY;
-    for(let i=win;i<rewards.length;i++){
-      const avg=rewards.slice(i-win,i).reduce((a,b)=>a+b)/win;
-      const x=pad+i*sx,y=pad+rh*(1-(avg-mn)/rng);
-      if(i===win){XC.moveTo(x,y);firstY=y}else XC.lineTo(x,y);
-    }
-    const lastX=pad+(rewards.length-1)*sx;
-    XC.lineTo(lastX,pad+rh);XC.lineTo(pad+win*sx,pad+rh);XC.closePath();
-    const grd=XC.createLinearGradient(0,pad,0,pad+rh);
-    grd.addColorStop(0,'rgba(0,229,160,.12)');grd.addColorStop(1,'rgba(0,229,160,0)');
-    XC.fillStyle=grd;XC.fill();
-
-    // Line
-    XC.beginPath();XC.strokeStyle='#00e5a0';XC.lineWidth=2.5;
-    for(let i=win;i<rewards.length;i++){
-      const avg=rewards.slice(i-win,i).reduce((a,b)=>a+b)/win;
-      const x=pad+i*sx,y=pad+rh*(1-(avg-mn)/rng);
-      i===win?XC.moveTo(x,y):XC.lineTo(x,y);
-    }
-    XC.stroke();
-  }
-
-  // Labels
-  XC.fillStyle='rgba(0,229,160,.3)';XC.font='10px Inter';XC.textAlign='left';XC.textBaseline='top';
-  XC.fillText('● Raw rewards',pad+4,10);
-  XC.fillStyle='#00e5a0';XC.fillText(`━ Moving Avg (${win})`,pad+100,10);
-  XC.fillStyle='#5a5a80';XC.font='9px Inter';XC.textAlign='center';
-  XC.fillText('Episode',w/2,h-8);
-
-  // Best marker
-  if(rewards.length>1){
-    const bi=rewards.indexOf(Math.max(...rewards));
-    const bx=pad+bi*sx,by=pad+rh*(1-(rewards[bi]-mn)/rng);
-    XC.fillStyle='#ffd666';XC.beginPath();XC.arc(bx,by,5,0,6.28);XC.fill();
-    XC.font='bold 10px JetBrains Mono';XC.textAlign='center';XC.textBaseline='bottom';
-    XC.fillText(`Best: ${rewards[bi].toFixed(1)}`,bx,by-8);
-  }
-}
-
-// ─── TRAINING LOOP ───
-async function start(){
-  if(running)return;
-  running=true;
-  const speed=+document.getElementById('speed').value;
-  const delay=speed>=10?0:speed>=3?16:50;
-
-  while(running){
-    let s=env.reset();
-    episode++;totalEp++;
-    let epR=0,done=false;
-
-    while(!done&&running){
-      const a=agent.act(s);
-      const{s:s2,r,done:d}=env.step(a);
-      agent.learn(s,a,r,s2,d);
-      s=s2;epR+=r;done=d;stepCount++;
-
-      if(delay>0||stepCount%3===0){drawEnv();await sleep(delay)}
-    }
-
-    rewards.push(epR);
-    if(epR>bestR)bestR=epR;
-    if(epR>10)wins++;
-    agent.decay_eps();
-
-    // Update stats
-    document.getElementById('s-ep').textContent=episode;
-    document.getElementById('s-step').textContent=stepCount;
-    document.getElementById('s-rew').textContent=epR.toFixed(1);
-    document.getElementById('s-best').textContent=bestR.toFixed(1);
-    document.getElementById('s-eps').textContent=agent.eps.toFixed(3);
-    document.getElementById('s-q').textContent=agent.qSize();
-    document.getElementById('s-wr').textContent=Math.round(wins/totalEp*100)+'%';
-    document.getElementById('s-phase').textContent=agent.eps>0.5?'Exploring':agent.eps>0.1?'Learning':'Mastered';
-
-    drawChart();
-    if(delay===0)await sleep(1);
-  }
-}
-
-function reset(){running=false;init()}
-function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-
-init();
-</script>
+<script src="engine.js"></script>
 </body></html>
