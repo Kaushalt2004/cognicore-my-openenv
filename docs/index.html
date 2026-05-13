@@ -31,6 +31,7 @@ body{font-family:'Inter',sans-serif;background:#050508;color:#e4e4f0;height:100v
   <div class="controls">
     <select id="size"><option value="8">8×8 Grid</option><option value="10" selected>10×10 Grid</option><option value="15">15×15 Grid</option></select>
     <select id="speed"><option value="1">1× Speed</option><option value="3" selected>3× Speed</option><option value="10">10× Speed</option></select>
+    <select id="view"><option value="agent">Agent View</option><option value="heatmap">Q-Value Heatmap</option><option value="policy">Policy Arrows</option><option value="both">Heatmap + Policy</option></select>
     <button class="btn" onclick="start()">▶ START TRAINING</button>
     <button class="btn" style="background:#12122a;color:#e4e4f0;border:1px solid #252550" onclick="reset()">↻ RESET</button>
   </div>
@@ -138,25 +139,67 @@ function drawEnv(){
   const w=CE.parentElement.offsetWidth,h=CE.parentElement.offsetHeight;
   const cs=Math.min(Math.floor((w-60)/env.sz),Math.floor((h-60)/env.sz));
   const ox=(w-cs*env.sz)/2,oy=(h-cs*env.sz)/2+10;
+  const view=document.getElementById('view').value;
+  const showHeat=view==='heatmap'||view==='both';
+  const showPolicy=view==='policy'||view==='both';
   XE.fillStyle='#050508';XE.fillRect(0,0,w,h);
+  const arrows=['↑','↓','←','→'];
+  const adx=[0,0,-1,1],ady=[-1,1,0,0];
 
-  // Grid
+  // Compute Q-value range for heatmap
+  let qMin=0,qMax=0;
+  if(showHeat||showPolicy){
+    for(let r=0;r<env.sz;r++)for(let c=0;c<env.sz;c++){
+      const k=`${r},${c}`;
+      if(env.walls.has(k))continue;
+      for(let a=0;a<4;a++){const v=agent.getQ(k,a);if(v<qMin)qMin=v;if(v>qMax)qMax=v;}
+    }
+  }
+  const qRng=qMax-qMin||1;
+
+  // Grid cells
   for(let r=0;r<env.sz;r++)for(let c=0;c<env.sz;c++){
     const x=ox+c*cs,y=oy+r*cs,k=`${r},${c}`;
     if(env.walls.has(k)){
       XE.fillStyle='#16162e';XE.fillRect(x,y,cs,cs);
       XE.fillStyle='#1e1e3a';XE.fillRect(x+1,y+1,cs-2,cs-2);
+    }else if(showHeat){
+      // Q-value heatmap: red(bad) -> black -> green(good)
+      let bestQ=-1e9;
+      for(let a=0;a<4;a++)bestQ=Math.max(bestQ,agent.getQ(k,a));
+      const t=(bestQ-qMin)/qRng; // 0..1
+      const red=Math.round(255*(1-t)*.6),grn=Math.round(255*t*.8),blu=Math.round(40+t*30);
+      XE.fillStyle=`rgb(${red},${grn},${blu})`;XE.fillRect(x,y,cs,cs);
+      // Show value text
+      if(cs>28){XE.fillStyle=`rgba(255,255,255,${.3+t*.4})`;XE.font=`bold ${Math.min(cs/4,10)}px JetBrains Mono`;XE.textAlign='center';XE.textBaseline='middle';XE.fillText(bestQ.toFixed(1),x+cs/2,y+cs/2)}
     }else{
-      const v=env.visits[k]||0;
-      const vi=Math.min(v*8,40);
-      XE.fillStyle=`rgb(${10+vi},${12+vi/2},${20+vi})`;
-      XE.fillRect(x,y,cs,cs);
+      const v=env.visits[k]||0,vi=Math.min(v*8,40);
+      XE.fillStyle=`rgb(${10+vi},${12+vi/2},${20+vi})`;XE.fillRect(x,y,cs,cs);
     }
-    XE.strokeStyle='rgba(255,255,255,.02)';XE.strokeRect(x,y,cs,cs);
+    XE.strokeStyle='rgba(255,255,255,.03)';XE.strokeRect(x,y,cs,cs);
+
+    // Policy arrows
+    if(showPolicy&&!env.walls.has(k)&&!env.traps.has(k)){
+      let bestA=0,bestV=-1e9;
+      for(let a=0;a<4;a++){const v=agent.getQ(k,a);if(v>bestV){bestV=v;bestA=a}}
+      if(bestV!==0){// Only show if agent has learned something
+        const arrowLen=cs*.3;
+        const cx2=x+cs/2,cy2=y+cs/2;
+        const dx=adx[bestA]*arrowLen,dy=ady[bestA]*arrowLen;
+        XE.strokeStyle='rgba(0,229,160,.5)';XE.lineWidth=2;
+        XE.beginPath();XE.moveTo(cx2-dx*.5,cy2-dy*.5);XE.lineTo(cx2+dx*.5,cy2+dy*.5);XE.stroke();
+        // Arrowhead
+        const angle=Math.atan2(dy,dx);
+        XE.beginPath();XE.moveTo(cx2+dx*.5,cy2+dy*.5);
+        XE.lineTo(cx2+dx*.5-6*Math.cos(angle-.5),cy2+dy*.5-6*Math.sin(angle-.5));
+        XE.lineTo(cx2+dx*.5-6*Math.cos(angle+.5),cy2+dy*.5-6*Math.sin(angle+.5));
+        XE.closePath();XE.fillStyle='rgba(0,229,160,.5)';XE.fill();
+      }
+    }
   }
 
   // Path trail
-  if(env.path.length>1){
+  if(view==='agent'&&env.path.length>1){
     XE.strokeStyle='rgba(0,229,160,.12)';XE.lineWidth=2;XE.beginPath();
     env.path.forEach(([r,c],i)=>{const x=ox+c*cs+cs/2,y2=oy+r*cs+cs/2;i?XE.lineTo(x,y2):XE.moveTo(x,y2)});
     XE.stroke();
@@ -164,50 +207,42 @@ function drawEnv(){
 
   // Traps
   env.traps.forEach(t=>{
-    const[r,c]=t.split(',').map(Number);
-    const x=ox+c*cs,y=oy+r*cs;
-    const tg=XE.createRadialGradient(x+cs/2,y+cs/2,0,x+cs/2,y+cs/2,cs*.7);
-    tg.addColorStop(0,'rgba(255,68,102,.4)');tg.addColorStop(1,'rgba(255,68,102,.05)');
-    XE.fillStyle=tg;XE.fillRect(x,y,cs,cs);
-    XE.fillStyle='rgba(255,68,102,.8)';
-    XE.beginPath();XE.roundRect(x+cs*.2,y+cs*.2,cs*.6,cs*.6,3);XE.fill();
+    const[r,c]=t.split(',').map(Number);const x=ox+c*cs,y=oy+r*cs;
+    XE.fillStyle='rgba(255,68,102,.7)';XE.beginPath();XE.roundRect(x+cs*.15,y+cs*.15,cs*.7,cs*.7,4);XE.fill();
     XE.fillStyle='#fff';XE.font=`bold ${cs/3}px Inter`;XE.textAlign='center';XE.textBaseline='middle';
     XE.fillText('☠',x+cs/2,y+cs/2);
   });
 
-  // Goal — pulsing gold
+  // Goal
   const pulse=Math.sin(Date.now()/300)*.15+.85;
   const gx=ox+env.goal[1]*cs,gy=oy+env.goal[0]*cs;
   const gg=XE.createRadialGradient(gx+cs/2,gy+cs/2,0,gx+cs/2,gy+cs/2,cs*1.5);
   gg.addColorStop(0,`rgba(255,214,102,${pulse*.2})`);gg.addColorStop(1,'transparent');
   XE.fillStyle=gg;XE.fillRect(gx-cs,gy-cs,cs*3,cs*3);
-  XE.fillStyle=`rgba(255,214,102,${pulse})`;
-  XE.beginPath();XE.roundRect(gx+3,gy+3,cs-6,cs-6,cs/6);XE.fill();
-  XE.fillStyle='#000';XE.font=`bold ${cs/2.2}px Inter`;
-  XE.fillText('★',gx+cs/2,gy+cs/2);
+  XE.fillStyle=`rgba(255,214,102,${pulse})`;XE.beginPath();XE.roundRect(gx+3,gy+3,cs-6,cs-6,cs/6);XE.fill();
+  XE.fillStyle='#000';XE.font=`bold ${cs/2.2}px Inter`;XE.fillText('★',gx+cs/2,gy+cs/2);
 
-  // Agent — glowing teal
+  // Agent
   const ax=ox+env.agent[1]*cs,ay=oy+env.agent[0]*cs;
   const ag=XE.createRadialGradient(ax+cs/2,ay+cs/2,0,ax+cs/2,ay+cs/2,cs*1.8);
   ag.addColorStop(0,'rgba(0,229,160,.2)');ag.addColorStop(1,'transparent');
   XE.fillStyle=ag;XE.fillRect(ax-cs,ay-cs,cs*3,cs*3);
-  XE.fillStyle=`rgba(0,255,180,${pulse})`;
-  XE.beginPath();XE.roundRect(ax+2,ay+2,cs-4,cs-4,cs/5);XE.fill();
+  XE.fillStyle=`rgba(0,255,180,${pulse})`;XE.beginPath();XE.roundRect(ax+2,ay+2,cs-4,cs-4,cs/5);XE.fill();
   XE.fillStyle='#000';XE.fillText('●',ax+cs/2,ay+cs/2);
 
-  // HUD overlay
-  XE.fillStyle='rgba(5,5,8,.75)';
-  XE.beginPath();XE.roundRect(12,h-50,200,40,8);XE.fill();
+  // HUD
+  XE.fillStyle='rgba(5,5,8,.8)';XE.beginPath();XE.roundRect(8,h-52,220,44,8);XE.fill();
   XE.fillStyle='#00e5a0';XE.font='bold 11px JetBrains Mono';XE.textAlign='left';XE.textBaseline='top';
-  XE.fillText(`Ep:${episode} Step:${env.steps} R:${env.reward.toFixed(1)}`,20,h-42);
-  XE.fillStyle='#5a5a80';XE.fillText(`ε=${agent.eps.toFixed(3)} Q=${agent.qSize()}`,20,h-26);
-
-  // Phase indicator
-  const phaseText=agent.eps>0.5?'EXPLORING':'EXPLOITING';
-  const phaseCol=agent.eps>0.5?'#ffd666':'#00e5a0';
-  XE.fillStyle='rgba(5,5,8,.75)';XE.beginPath();XE.roundRect(w-130,h-38,118,28,8);XE.fill();
-  XE.fillStyle=phaseCol;XE.font='bold 10px Inter';XE.textAlign='right';
-  XE.fillText(phaseText,w-20,h-28);
+  XE.fillText(`Ep:${episode} Step:${env.steps} R:${env.reward.toFixed(1)}`,16,h-44);
+  XE.fillStyle='#5a5a80';XE.fillText(`ε=${agent.eps.toFixed(3)} Q-states:${agent.qSize()}`,16,h-28);
+  const phaseText=agent.eps>0.5?'EXPLORING':agent.eps>0.1?'LEARNING':'EXPLOITING';
+  const phaseCol=agent.eps>0.5?'#ffd666':agent.eps>0.1?'#4488ff':'#00e5a0';
+  XE.fillStyle='rgba(5,5,8,.8)';XE.beginPath();XE.roundRect(w-140,h-38,128,28,8);XE.fill();
+  XE.fillStyle=phaseCol;XE.font='bold 10px Inter';XE.textAlign='right';XE.fillText(phaseText,w-20,h-28);
+  // View label
+  const vl={agent:'AGENT VIEW',heatmap:'Q-VALUE HEATMAP',policy:'POLICY ARROWS',both:'HEATMAP + POLICY'};
+  XE.fillStyle='rgba(5,5,8,.8)';XE.beginPath();XE.roundRect(w-160,10,148,22,6);XE.fill();
+  XE.fillStyle='#4488ff';XE.font='bold 9px Inter';XE.fillText(vl[view]||'',w-20,18);
 }
 
 // ─── RENDER CHART ───
