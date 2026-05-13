@@ -236,4 +236,207 @@ async function start(){
 }
 function doReset(){running=false;init()}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// ═══ CODE DEBUGGER ENV ═══
+const CODE_SNIPPETS=[
+  {code:['def fib(n):','  if n<=1: return n','  return fib(n-1)+fib(n-2)','  # SLOW for large n'],bug:3,fixes:['memoize','iterate','cache'],best:1,desc:'Fibonacci recursion'},
+  {code:['arr = [3,1,4,1,5]','for i in range(len(arr)):','  for j in range(len(arr)):','    if arr[j]>arr[j+1]:','      arr[j],arr[j+1]=arr[j+1],arr[j]'],bug:2,fixes:['range(len-1)','range(i,len)','add bounds check'],best:0,desc:'Bubble sort bounds'},
+  {code:['def search(lst, val):','  for i in range(len(lst)):','    if lst[i] == val:','      return i','  return i  # BUG'],bug:4,fixes:['return -1','return None','raise Error'],best:0,desc:'Search return bug'},
+  {code:['cache = {}','def get(key):','  return cache[key]','  # KeyError if missing'],bug:2,fixes:['.get(key,None)','try/except','if key in'],best:0,desc:'Dict key error'},
+  {code:['f = open("data.txt")','data = f.read()','process(data)','# File never closed'],bug:3,fixes:['with statement','finally block','f.close()'],best:0,desc:'Resource leak'},
+  {code:['users = get_users()','for u in users:','  send_email(u.email)','  # No rate limiting'],bug:3,fixes:['add sleep','batch send','async queue'],best:2,desc:'Rate limit'},
+  {code:['def divide(a,b):','  return a/b','  # ZeroDivisionError'],bug:1,fixes:['check b!=0','try/except','default val'],best:0,desc:'Division by zero'},
+  {code:['lst=[1,2,3]','lst.remove(4)','# ValueError'],bug:1,fixes:['if 4 in lst','try/except','discard set'],best:0,desc:'Remove missing'},
+];
+class CodeDebugEnv{
+  constructor(){this.nActions=CODE_SNIPPETS[0].fixes.length*CODE_SNIPPETS[0].code.length;this.reset()}
+  reset(){this.snippet=CODE_SNIPPETS[~~(Math.random()*CODE_SNIPPETS.length)];this.steps=0;this.reward=0;this.attempts=[];this.solved=false;this.visits={};this.path=[];return this.state()}
+  state(){return`code_${CODE_SNIPPETS.indexOf(this.snippet)}_${this.steps}`}
+  step(a){
+    const bugLine=a%this.snippet.code.length;const fixIdx=~~(a/this.snippet.code.length)%3;this.steps++;
+    this.attempts.push({line:bugLine,fix:fixIdx});
+    const correct=bugLine===this.snippet.bug&&fixIdx===this.snippet.best;
+    if(correct){this.solved=true;return{s:this.state(),r:15-this.steps,done:true,event:'fixed',detail:`Fixed: ${this.snippet.desc} → ${this.snippet.fixes[fixIdx]}`}}
+    const closeLine=Math.abs(bugLine-this.snippet.bug)<=1;
+    const r=closeLine?-0.5:-1.5;this.reward+=r;
+    return{s:this.state(),r,done:this.steps>=6,event:this.steps>=6?'timeout':'wrong',detail:`Tried line ${bugLine}: ${this.snippet.fixes[fixIdx]}`};
+  }
+}
+
+// ═══ MULTI-AGENT ENV ═══
+class MultiAgentEnv{
+  constructor(sz){this.sz=sz||8;this.reset()}
+  reset(){
+    this.agents=[{pos:[1,1],id:0,color:'#00e5a0'},{pos:[1,this.sz-2],id:1,color:'#4488ff'},{pos:[this.sz-2,1],id:2,color:'#9966ff'}];
+    this.resources=[];for(let i=0;i<5;i++){let r,c;do{r=1+~~(Math.random()*(this.sz-2));c=1+~~(Math.random()*(this.sz-2))}while(this.agents.some(a=>a.pos[0]===r&&a.pos[1]===c));this.resources.push([r,c])}
+    this.collected=0;this.steps=0;this.reward=0;this.visits={};this.path=[];this.walls=new Set();
+    for(let r=0;r<this.sz;r++)for(let c=0;c<this.sz;c++)if(r===0||r===this.sz-1||c===0||c===this.sz-1)this.walls.add(`${r},${c}`);
+    return this.state();
+  }
+  state(){return this.agents.map(a=>a.pos.join(',')).join('|')}
+  step(a){
+    const dirs=[[-1,0],[1,0],[0,-1],[0,1]];this.steps++;
+    this.agents.forEach((ag,i)=>{const d=dirs[(a+i)%4];const nr=ag.pos[0]+d[0],nc=ag.pos[1]+d[1];if(!this.walls.has(`${nr},${nc}`)&&nr>=0&&nr<this.sz&&nc>=0&&nc<this.sz)ag.pos=[nr,nc]});
+    let r=-.05;
+    this.resources=this.resources.filter(res=>{const hit=this.agents.some(a=>a.pos[0]===res[0]&&a.pos[1]===res[1]);if(hit){r+=5;this.collected++}return!hit});
+    if(this.resources.length===0)return{s:this.state(),r:r+10,done:true,event:'goal',detail:`All ${this.collected} resources collected!`};
+    this.reward+=r;this.path.push([...this.agents[0].pos]);
+    return{s:this.state(),r,done:this.steps>100,event:r>0?'collect':null,detail:r>0?`Resource collected (${this.collected}/5)`:null};
+  }
+}
+
+// ═══ NPC SIM ENV ═══
+class NPCSimEnv{
+  constructor(){this.reset()}
+  reset(){
+    this.npc={pos:[4,4],mood:50,trust:50,aggression:20,memory:[]};
+    this.player={pos:[2,2]};this.sz=8;this.steps=0;this.reward=0;this.visits={};this.path=[];this.walls=new Set();
+    for(let r=0;r<this.sz;r++)for(let c=0;c<this.sz;c++)if(r===0||r===this.sz-1||c===0||c===this.sz-1)this.walls.add(`${r},${c}`);
+    return this.state();
+  }
+  state(){return`npc_${this.npc.mood>50?'h':'s'}_${this.npc.trust>50?'t':'u'}_${this.steps}`}
+  step(a){
+    // 0=approach,1=gift,2=threaten,3=trade,4=retreat,5=talk
+    const actions=['approach','gift','threaten','trade','retreat','talk'];
+    const act=actions[a%6];this.steps++;
+    let r=0,event=null,detail=null;
+    if(act==='gift'){this.npc.mood=Math.min(100,this.npc.mood+15);this.npc.trust+=10;r=3;event='good';detail='Gift accepted. NPC trust increased.'}
+    else if(act==='threaten'){this.npc.aggression+=20;this.npc.trust-=15;this.npc.mood-=20;r=-4;event='bad';detail='NPC hostility increased!'}
+    else if(act==='trade'){if(this.npc.trust>40){r=8;event='good';detail=`Trade successful (trust:${this.npc.trust})`}else{r=-2;event='bad';detail='Trade rejected — low trust'}}
+    else if(act==='talk'){this.npc.mood+=5;this.npc.trust+=3;r=1;detail='Conversation initiated'}
+    else if(act==='approach'){if(this.npc.aggression>60){r=-3;event='bad';detail='NPC attacked! Too aggressive'}else{r=0.5;detail='Approached cautiously'}}
+    else{r=-0.5;detail='Retreated'}
+    this.npc.memory.push(act);this.reward+=r;this.path.push([this.npc.mood,this.npc.trust]);
+    const done=this.steps>=20||this.npc.trust>=90||this.npc.aggression>=90;
+    if(this.npc.trust>=90){r+=15;event='goal';detail='Full trust achieved!'}
+    if(this.npc.aggression>=90){r-=10;event='trap';detail='NPC became hostile!'}
+    return{s:this.state(),r,done,event,detail};
+  }
+}
+
+let currentEnvType='grid';
+function switchEnv(type){currentEnvType=type;running=false;setTimeout(()=>init(),50)}
+
+// Override init
+const _origInit=init;
+function init(){
+  currentEnvType=document.getElementById('envType').value;
+  SZ=+document.getElementById('size').value;TRAPS=~~(SZ*1.2);
+  if(currentEnvType==='code')env=new CodeDebugEnv();
+  else if(currentEnvType==='multi')env=new MultiAgentEnv(SZ);
+  else if(currentEnvType==='npc')env=new NPCSimEnv();
+  else env=new GridWorld(SZ);
+  agent=new QAgent();if(currentEnvType==='code')agent.decay=0.99;if(currentEnvType==='npc'){agent.decay=0.99;agent.lr=0.3}
+  rewards=[];episode=0;bestR=-Infinity;wins=0;totalEp=0;stepCount=0;
+  memoryBank={};memHits=0;reflCount=0;trapMemory={};successPaths=[];
+  memMsgs.length=0;reflMsgs.length=0;
+  document.getElementById('mem-feed').innerHTML='';
+  document.getElementById('refl-feed').innerHTML='';
+  resize();drawEnvDispatch();drawChart();updateStats(0);updatePhase();
+}
+
+function drawEnvDispatch(){
+  if(currentEnvType==='code')drawCodeEnv();
+  else if(currentEnvType==='multi')drawMultiEnv();
+  else if(currentEnvType==='npc')drawNPCEnv();
+  else drawEnv();
+}
+
+function drawCodeEnv(){
+  const w=CE.parentElement.offsetWidth,h=CE.parentElement.offsetHeight;
+  XE.fillStyle='#04060e';XE.fillRect(0,0,w,h);
+  if(!env.snippet)return;
+  XE.fillStyle='rgba(10,14,26,.9)';XE.beginPath();XE.roundRect(12,12,w-24,h-24,10);XE.fill();
+  XE.strokeStyle='rgba(0,229,160,.1)';XE.stroke();
+  XE.fillStyle='#00e5a0';XE.font='bold 12px JetBrains Mono';XE.textAlign='left';XE.textBaseline='top';
+  XE.fillText(`💻 ${env.snippet.desc}`,24,24);
+  const lh=22;
+  env.snippet.code.forEach((line,i)=>{
+    const y=56+i*lh;const isB=i===env.snippet.bug;
+    if(isB){XE.fillStyle='rgba(255,68,102,.1)';XE.fillRect(20,y-2,w-40,lh);XE.fillStyle='#ff4466'}
+    else XE.fillStyle='#aab0cc';
+    XE.font='12px JetBrains Mono';XE.fillText(`${i+1} │ ${line}`,28,y);
+    // Show attempt markers
+    env.attempts.filter(a=>a.line===i).forEach(()=>{XE.fillStyle='rgba(255,68,102,.5)';XE.fillText('✗',w-40,y)});
+  });
+  if(env.solved){XE.fillStyle='rgba(0,229,160,.15)';XE.fillRect(20,56+env.snippet.bug*lh-2,w-40,lh);
+    XE.fillStyle='#00e5a0';XE.font='bold 12px JetBrains Mono';XE.fillText('✓ FIXED',w-80,56+env.snippet.bug*lh)}
+  XE.fillStyle='#5a6488';XE.font='10px JetBrains Mono';
+  XE.fillText(`Attempts: ${env.attempts.length}/6`,24,h-40);
+  XE.fillText(`Fixes: ${env.snippet.fixes.join(' | ')}`,24,h-24);
+}
+
+function drawMultiEnv(){
+  const w=CE.parentElement.offsetWidth,h=CE.parentElement.offsetHeight;
+  const cs=Math.min(~~((w-40)/env.sz),~~((h-40)/env.sz));
+  const ox=(w-cs*env.sz)/2,oy=(h-cs*env.sz)/2;
+  XE.fillStyle='#04060e';XE.fillRect(0,0,w,h);
+  for(let r=0;r<env.sz;r++)for(let c=0;c<env.sz;c++){
+    const k=`${r},${c}`,x=ox+c*cs,y=oy+r*cs;
+    XE.fillStyle=env.walls.has(k)?'#141828':'#080e18';XE.fillRect(x,y,cs,cs);XE.strokeStyle='rgba(255,255,255,.02)';XE.strokeRect(x,y,cs,cs);
+  }
+  env.resources.forEach(([r,c])=>{const x=ox+c*cs,y=oy+r*cs;XE.fillStyle='rgba(255,214,102,.7)';XE.beginPath();XE.roundRect(x+cs*.2,y+cs*.2,cs*.6,cs*.6,3);XE.fill();XE.fillStyle='#000';XE.font=`${cs/3}px Inter`;XE.textAlign='center';XE.textBaseline='middle';XE.fillText('◆',x+cs/2,y+cs/2)});
+  const pulse=Math.sin(Date.now()/300)*.15+.85;
+  env.agents.forEach(ag=>{const x=ox+ag.pos[1]*cs,y=oy+ag.pos[0]*cs;XE.fillStyle=ag.color+'cc';XE.beginPath();XE.roundRect(x+2,y+2,cs-4,cs-4,cs/4);XE.fill();XE.fillStyle='#000';XE.font=`bold ${cs/3}px Inter`;XE.fillText(`A${ag.id}`,x+cs/2,y+cs/2)});
+  XE.fillStyle='rgba(4,6,14,.8)';XE.beginPath();XE.roundRect(6,h-30,180,24,4);XE.fill();
+  XE.fillStyle='#00e5a0';XE.font='10px JetBrains Mono';XE.textAlign='left';XE.textBaseline='top';XE.fillText(`Resources: ${env.collected}/5  Steps: ${env.steps}`,12,h-24);
+}
+
+function drawNPCEnv(){
+  const w=CE.parentElement.offsetWidth,h=CE.parentElement.offsetHeight;
+  XE.fillStyle='#04060e';XE.fillRect(0,0,w,h);
+  XE.fillStyle='rgba(10,14,26,.9)';XE.beginPath();XE.roundRect(12,12,w-24,h-24,10);XE.fill();
+  const npc=env.npc;const cy=h/2-20;
+  // NPC face
+  const faceColor=npc.mood>60?'#00e5a0':npc.mood>30?'#ffd666':'#ff4466';
+  XE.fillStyle=faceColor+'33';XE.beginPath();XE.arc(w/2,cy,50,0,6.28);XE.fill();
+  XE.strokeStyle=faceColor;XE.lineWidth=2;XE.stroke();
+  XE.fillStyle=faceColor;XE.font='bold 14px Inter';XE.textAlign='center';XE.textBaseline='middle';
+  XE.fillText(npc.mood>60?'😊':npc.mood>30?'😐':'😡',w/2,cy);
+  // Bars
+  const barW=w-80,barH=10,barX=40,barY=cy+70;
+  [['Mood',npc.mood,'#00e5a0'],['Trust',npc.trust,'#4488ff'],['Aggression',npc.aggression,'#ff4466']].forEach(([l,v,c],i)=>{
+    const y=barY+i*28;XE.fillStyle='#0a0e1a';XE.beginPath();XE.roundRect(barX,y,barW,barH,4);XE.fill();
+    XE.fillStyle=c;XE.beginPath();XE.roundRect(barX,y,barW*v/100,barH,4);XE.fill();
+    XE.fillStyle='#5a6488';XE.font='9px Inter';XE.textAlign='left';XE.textBaseline='bottom';XE.fillText(`${l}: ${v}`,barX,y-2);
+  });
+  // Last actions
+  XE.fillStyle='#5a6488';XE.font='9px JetBrains Mono';XE.textAlign='left';XE.textBaseline='top';
+  npc.memory.slice(-5).forEach((m,i)=>XE.fillText(`> ${m}`,24,h-80+i*14));
+}
+
+// Override training loop to dispatch correctly
+async function start(){
+  if(running)return;running=true;
+  document.getElementById('st').textContent='Training...';
+  const speed=+document.getElementById('speed').value;const delay=speed>=10?0:speed>=3?16:50;
+  const nActions=currentEnvType==='code'?15:currentEnvType==='npc'?6:4;
+  while(running){
+    let s=env.reset();episode++;totalEp++;let epR=0,done=false;
+    while(!done&&running){
+      const useMem=document.getElementById('t-mem').classList.contains('on');
+      const a=agent.act(s,useMem);
+      const result=env.step(a%nActions);
+      agent.learn(s,a%nActions,result.r,result.s,result.done);
+      processMemoryGeneric(s,a%nActions,result);
+      s=result.s;epR+=result.r;done=result.done;stepCount++;
+      if(delay>0||stepCount%3===0){drawEnvDispatch();await sleep(delay)}
+    }
+    rewards.push(epR);if(epR>bestR)bestR=epR;if(epR>10)wins++;
+    agent.decay_eps();processReflection(episode,epR,wins,totalEp);
+    updateStats(epR);updatePhase();drawChart();
+    if(delay===0)await sleep(1);
+  }
+}
+
+function processMemoryGeneric(s,a,result){
+  const useMemory=document.getElementById('t-mem').classList.contains('on');
+  if(!useMemory)return;
+  if(result.event==='fixed'||result.event==='goal'){memHits++;addMemory('good',result.detail||'Success!');successPaths.push(s)}
+  else if(result.event==='trap'||result.event==='bad'){memHits++;trapMemory[s]=(trapMemory[s]||0)+1;addMemory('bad',result.detail||`Failed at ${s}`)}
+  else if(result.event==='collect'||result.event==='good'){memHits++;addMemory('info',result.detail||'Progress')}
+  else if(result.detail&&Math.random()<0.05)addMemory('info',result.detail);
+}
+
+function doReset(){running=false;init()}
 init();
