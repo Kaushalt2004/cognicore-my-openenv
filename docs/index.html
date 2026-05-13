@@ -2,38 +2,42 @@
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CogniCore — Cognitive Agent Learning System</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="description" content="Real-time AI agent learning with cognitive memory, reflection, and adaptive behavior. Train agents across GridWorld, Code Debugging, Multi-Agent Coordination, and NPC Simulation.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' fill='none' stroke='%2300e5a0' stroke-width='2'/><circle cx='12' cy='12' r='4' fill='%2300e5a0'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head><body>
 <canvas id="particles"></canvas>
 <div class="app">
-<!-- TOP BAR -->
 <div class="top">
   <div class="logo">
-    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#00e5a0" stroke-width="1.5"/><circle cx="12" cy="12" r="4" fill="#00e5a0" opacity=".6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="#00e5a0" stroke-width="1" opacity=".4"/></svg>
+    <svg viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="url(#g1)" stroke-width="1.5"/>
+      <circle cx="12" cy="12" r="4" fill="url(#g1)" opacity=".7"/>
+      <path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.5 2.5M16.5 16.5L19 19M5 19l2.5-2.5M16.5 7.5L19 5" stroke="url(#g1)" stroke-width=".8" opacity=".35"/>
+      <defs><linearGradient id="g1" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#00e5a0"/><stop offset=".5" stop-color="#00ccff"/><stop offset="1" stop-color="#9966ff"/></linearGradient></defs>
+    </svg>
     <h1>CogniCore</h1><span class="ver">v0.7</span>
   </div>
   <div class="ctrls">
-    <select id="envType" onchange="switchEnv(this.value)"><option value="grid" selected>🎮 GridWorld</option><option value="code">💻 Code Debugger</option><option value="multi">🤖 Multi-Agent</option><option value="npc">🧠 NPC Sim</option></select>
+    <select id="envType" onchange="switchEnv(this.value)"><option value="grid" selected>🎮 GridWorld</option><option value="code">💻 Code Debug</option><option value="multi">🤖 Multi-Agent</option><option value="npc">🧠 NPC Sim</option></select>
     <select id="size"><option value="8">8×8</option><option value="10" selected>10×10</option><option value="15">15×15</option></select>
     <select id="speed"><option value="1">1×</option><option value="3">3×</option><option value="10" selected>10×</option></select>
     <select id="view"><option value="agent">Agent</option><option value="heatmap">Heatmap</option><option value="policy">Policy</option><option value="both">Heat+Policy</option></select>
     <div class="toggle on" id="t-mem" onclick="this.classList.toggle('on')"><div class="dot"></div>Memory</div>
     <div class="toggle on" id="t-refl" onclick="this.classList.toggle('on')"><div class="dot"></div>Reflect</div>
-    <button class="btn-go" onclick="start()">▶ TRAIN</button>
+    <button class="btn-go" onclick="start()">▶ Train</button>
     <button class="btn-rst" onclick="doReset()">↻</button>
   </div>
   <div class="status"><div class="pulse"></div><span id="st">Ready</span></div>
 </div>
-<!-- LEFT: Environment -->
 <div class="left"><canvas id="c-env"></canvas></div>
-<!-- RIGHT: Dashboard -->
 <div class="right">
   <div class="card card-wide"><h4><i>📈</i> Training Progress</h4><canvas id="c-chart"></canvas></div>
   <div class="card"><h4><i>🧠</i> Agent Memory</h4><div class="mem-feed" id="mem-feed"></div></div>
   <div class="card"><h4><i>💡</i> Reflection Engine</h4><div class="refl-feed" id="refl-feed"></div></div>
   <div class="card card-wide">
-    <div class="metrics" id="met-row">
+    <div class="metrics">
       <div class="met"><div class="v" id="m-wr">0%</div><div class="l">Win Rate</div></div>
       <div class="met"><div class="v" id="m-avg">0</div><div class="l">Avg Reward</div></div>
       <div class="met"><div class="v" id="m-best">—</div><div class="l">Best</div></div>
@@ -47,7 +51,6 @@
     <div class="phase-labels"><span id="pl0">Exploring</span><span id="pl1">Learning</span><span id="pl2">Adapting</span><span id="pl3">Mastered</span></div>
   </div>
 </div>
-<!-- BOTTOM -->
 <div class="bottom">
   <div class="stat"><div class="v" id="s-ep">0</div><div class="l">Episode</div></div>
   <div class="stat"><div class="v" id="s-st">0</div><div class="l">Steps</div></div>
