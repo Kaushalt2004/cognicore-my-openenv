@@ -453,3 +453,83 @@ register(
     default_kwargs={"difficulty": "hard"},
 )
 
+# ── Multi-Agent Coordination ─────────────────────────────────────────
+
+register(
+    "MultiAgent-v1",
+    entry_point="cognicore.envs.multi_agent:MultiAgentEnv",
+    description="Multi-agent coordination: drones, warehouse bots, traffic control. Memory tracks team strategies.",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "MultiAgent-Easy-v1",
+    entry_point="cognicore.envs.multi_agent:MultiAgentEnv",
+    description="MultiAgent — Easy (3 agents, simple resource collection).",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "MultiAgent-Medium-v1",
+    entry_point="cognicore.envs.multi_agent:MultiAgentEnv",
+    description="MultiAgent — Medium (4 agents, search-rescue, warehouse ops).",
+    default_kwargs={"difficulty": "medium"},
+)
+register(
+    "MultiAgent-Hard-v1",
+    entry_point="cognicore.envs.multi_agent:MultiAgentEnv",
+    description="MultiAgent — Hard (5 agents, swarm defense, supply chain optimization).",
+    default_kwargs={"difficulty": "hard"},
+)
+
+# ── NPC Simulation ───────────────────────────────────────────────────
+
+register(
+    "NPCSimulation-v1",
+    entry_point="cognicore.envs.npc_simulation:NPCSimulationEnv",
+    description="NPC interaction: build trust, manage mood/aggression, negotiate. Memory remembers past interactions.",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "NPCSimulation-Easy-v1",
+    entry_point="cognicore.envs.npc_simulation:NPCSimulationEnv",
+    description="NPCSimulation — Easy (merchants, guards, villagers).",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "NPCSimulation-Medium-v1",
+    entry_point="cognicore.envs.npc_simulation:NPCSimulationEnv",
+    description="NPCSimulation — Medium (spy extraction, dragon negotiation, hostage crisis).",
+    default_kwargs={"difficulty": "medium"},
+)
+register(
+    "NPCSimulation-Hard-v1",
+    entry_point="cognicore.envs.npc_simulation:NPCSimulationEnv",
+    description="NPCSimulation — Hard (political councils, AI alignment scenarios).",
+    default_kwargs={"difficulty": "hard"},
+)
+
+# ── Autonomous Workflow Agent ────────────────────────────────────────
+
+register(
+    "WorkflowAgent-v1",
+    entry_point="cognicore.envs.workflow_agent:WorkflowAgentEnv",
+    description="Autonomous workflow execution: plan, execute, recover from failures. Memory stores strategies.",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "WorkflowAgent-Easy-v1",
+    entry_point="cognicore.envs.workflow_agent:WorkflowAgentEnv",
+    description="WorkflowAgent — Easy (data pipelines, app deployment, email campaigns).",
+    default_kwargs={"difficulty": "easy"},
+)
+register(
+    "WorkflowAgent-Medium-v1",
+    entry_point="cognicore.envs.workflow_agent:WorkflowAgentEnv",
+    description="WorkflowAgent — Medium (ML training pipelines, incident response).",
+    default_kwargs={"difficulty": "medium"},
+)
+register(
+    "WorkflowAgent-Hard-v1",
+    entry_point="cognicore.envs.workflow_agent:WorkflowAgentEnv",
+    description="WorkflowAgent — Hard (microservice migration, zero-downtime cutover).",
+    default_kwargs={"difficulty": "hard"},
+)
