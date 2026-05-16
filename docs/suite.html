@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CogniCore — Universal Agent Evaluation Suite</title>
+<meta name="description" content="Enterprise-grade AI cognition testing platform for evaluating runtime memory, reflection, and adaptation across LLM, RL, browser, and multi-agent systems.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="suite.css">
+</head>
+<body>
+<header id="hdr">
+  <div class="hdr-l">
+    <svg class="logo-svg" width="26" height="26" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="url(#g)" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="7" stroke="url(#g)" stroke-width="1" fill="none" opacity=".4"/><circle cx="14" cy="14" r="2.5" fill="url(#g)"/><defs><linearGradient id="g" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#00e5a0"/><stop offset=".5" stop-color="#00ccff"/><stop offset="1" stop-color="#9966ff"/></linearGradient></defs></svg>
+    <div><span class="hdr-title">CogniCore</span><span class="hdr-sub">Universal Agent Evaluation Suite</span></div>
+  </div>
+  <div class="hdr-c">
+    <div class="hdr-s"><span class="hl">SESSION</span><span class="hv mono" id="h-sess">EVAL-2026-0516</span></div>
+    <div class="hdr-s"><span class="hl">STATUS</span><span class="hv mono"><span class="dot-live"></span>LIVE</span></div>
+    <div class="hdr-s"><span class="hl">AGENTS</span><span class="hv mono" id="h-agents">7</span></div>
+    <div class="hdr-s"><span class="hl">ENVS</span><span class="hv mono">4</span></div>
+    <div class="hdr-s"><span class="hl">SCORE</span><span class="hv mono green" id="h-score">--</span></div>
+    <div class="hdr-s"><span class="hl">HEALTH</span><span class="hv mono green" id="h-health">OK</span></div>
+  </div>
+  <div class="hdr-r">
+    <button class="btn-go" id="btn-go" onclick="toggleRun()">Start Evaluation</button>
+    <button class="btn-rst" onclick="doReset()">Reset</button>
+  </div>
+</header>
+
+<main id="main">
+  <!-- LEFT: Connected AI Systems -->
+  <section class="col col-l" id="col-l">
+    <div class="ph"><h2>Connected AI Systems</h2><span class="badge cyan" id="b-agents">7 agents</span></div>
+    <div class="agent-list" id="agent-list"></div>
+  </section>
+
+  <!-- CENTER: Live Environments -->
+  <section class="col col-c">
+    <div class="ph"><h2>Live Testing Environments</h2>
+      <div class="env-tabs" id="env-tabs">
+        <button class="etab active" data-env="code" onclick="switchEnvTab(this)">Code</button>
+        <button class="etab" data-env="browser" onclick="switchEnvTab(this)">Browser</button>
+        <button class="etab" data-env="rl" onclick="switchEnvTab(this)">RL Grid</button>
+        <button class="etab" data-env="multi" onclick="switchEnvTab(this)">Multi-Agent</button>
+      </div>
+    </div>
+    <div class="env-canvas-wrap"><canvas id="envC"></canvas><div class="overlays" id="overlays"></div></div>
+    <!-- Bottom: Compatibility Matrix -->
+    <div class="compat-wrap">
+      <div class="ph"><h2>Universal Compatibility</h2><span class="badge green">9 frameworks</span></div>
+      <div class="compat-scroll"><table class="compat-tbl" id="compat-tbl"><thead><tr>
+        <th>Framework</th><th>Status</th><th>Memory</th><th>Reflection</th><th>Benchmark</th><th>Adaptation</th><th>Stability</th>
+      </tr></thead><tbody id="compat-body"></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- RIGHT: Analytics -->
+  <section class="col col-r">
+    <div class="r-section">
+      <div class="ph"><h2>Cognitive KPIs</h2><span class="badge red-pulse">LIVE</span></div>
+      <div class="kpi-grid" id="kpi-grid"></div>
+    </div>
+    <div class="r-section">
+      <div class="ph"><h2>Baseline vs CogniCore</h2></div>
+      <canvas id="chartC" height="130"></canvas>
+    </div>
+    <div class="r-section flex1">
+      <div class="ph"><h2>Memory Engine</h2><span class="badge cyan" id="mem-n">0</span></div>
+      <div class="feed" id="mem-feed"></div>
+    </div>
+    <div class="r-section flex1">
+      <div class="ph"><h2>Reflection Engine</h2></div>
+      <div class="feed terminal" id="refl-feed"></div>
+    </div>
+  </section>
+</main>
+<script src="suite.js"></script>
+</body>
+</html>
