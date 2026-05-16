@@ -14,7 +14,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='repla
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cognicore.runtime import CogniCoreRuntime, RuntimeConfig
 
-GEMINI_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "AIzaSyAU7lsEZZwr2o1p-K2w5uMRSKY3vu4fkiY"
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
 
 def clog(tag, msg, detail=""):
     C = {"PATCH REJECTED":"\033[31m", "MEMORY RETRIEVAL":"\033[33m",
