@@ -35,6 +35,9 @@ from cognicore.core.types import (
     StructuredReward,
 )
 from cognicore.core.spaces import DiscreteSpace, DictSpace, TextSpace
+
+# Runtime — universal cognition wrapper
+from cognicore.runtime import CogniCoreRuntime, RuntimeConfig, ExecutionResult
 from cognicore.core.api import train, evaluate
 from cognicore.core.errors import (
     CogniCoreError,
